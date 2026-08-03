@@ -4,9 +4,9 @@ Voice-based online Mafia with a human Game Master, for remote friend groups. Str
 
 Everyone joins one persistent voice room for the whole session. The GM's phase controls change who can hear whom via server-side audio subscriptions — nobody moves between rooms.
 
-**Full spec: `docs/design-spec.md`.** Read it before any architectural decision. This file is the standing rules; the spec is the reasoning.
+**Full spec: `docs/nightfall-design-spec.md`.** Read it before any architectural decision. This file is the standing rules; the spec is the reasoning.
 
-**Current step: 1 — `game-core`.** Steps are defined in the spec, section 8. Do not build ahead of the current step.
+**Current step: 4 — LiveKit integration and the audio graph.** Steps are defined in the spec, section 8. Do not build ahead of the current step.
 
 ---
 
@@ -20,7 +20,7 @@ Everyone joins one persistent voice room for the whole session. The GM's phase c
 | Live state | Upstash Redis |
 | Durable | Neon Postgres + Prisma |
 | Auth | `jose` JWT |
-| OTP | WhatsApp Cloud API |
+| OTP | Resend (email) |
 | Styling | Tailwind mapped onto Nocturne CSS variables |
 | Icons | Phosphor |
 | Tests | Vitest |
@@ -36,7 +36,9 @@ src/game-core/    pure logic — no I/O, ever
 src/room-store/   Redis read/modify/write, optimistic concurrency
 src/voice/        the ONLY module that imports LiveKit
 src/realtime/     Socket.io handlers
+src/auth/         jose JWT — mints and verifies the player token
 src/app/          Next.js routes and UI
+src/config.ts     env read once at boot; throws on a missing secret
 design/nocturne/  design system — styles.css is authoritative
 design/           Nightfall.dc.html is a 152KB reference comp; never read it whole
 docs/             spec
@@ -87,6 +89,8 @@ These are not preferences. Breaking one is a defect.
 
 ## Workflow
 
+- **Surface conflicts; do not invent requirements.** When the spec, this file and the task disagree — or a requirement cannot hold as written — stop before writing code. Name the conflict, give the options with a recommendation, and get a decision. A guess that compiles is still a guess.
+- **Emit a PLAN before multi-step work.** Anything spanning more than one file or one commit opens with a short numbered plan: what changes, in what order, and how each step gets verified. Wait for it to be accepted before the first edit.
 - **TDD, no exceptions.** No production code without a failing test first. Watch it fail for the right reason before implementing. Wrote code before the test? Delete it and start over.
 - **Verify before claiming.** Run the command and read the output before saying anything passes, builds, or works. No success claims without evidence in the transcript.
 - **Report and stop before pushing.** Never `git push` without explicit instruction.

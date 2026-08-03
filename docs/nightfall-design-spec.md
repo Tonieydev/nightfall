@@ -16,7 +16,7 @@ Remote friend groups play Mafia the way they play it in person: one open call, a
 
 **Moat:** none at launch, and this is accepted. The technology is reproducible in two weeks by any competent developer. There are no network effects — Mafia is a closed-group game, so the product spreads virally without becoming defensible. The only durable asset is **crew memory**: accumulated history for a group that returns weekly. That is captured from day one in `SessionPlayer` and built on later.
 
-**Monetization:** none in MVP. When it arrives it will be a seat cap — free to 8 players, paid above — because that is the only lever where the paywall sits directly on the cost curve.
+**Monetization:** None. Free to use, no charges, no subscription. Permanent.
 
 ---
 
@@ -180,7 +180,7 @@ Shared devices are common in this market. On join, if the device already holds a
 
 ```prisma
 Crew            id, code, name, hostPlayerId, createdAt, lastPlayedAt
-Player          id, phone?, createdAt
+Player          id, email?, createdAt
 CrewMembership  crewId, playerId, displayName, role(HOST|MEMBER), joinedAt
                 @@unique([crewId, playerId])
 Session         id, crewId, roomCode, gmPlayerId, startedAt, endedAt,
@@ -206,25 +206,25 @@ The GM does not play. Narrated sessions are tracked as a visible stat so running
 
 Host transfer exists at crew level. Without it, a lost phone orphans a crew permanently.
 
-### Phone claim
+### Email claim
 
-Join is **never** gated on a phone number. Crew link → name → mic → play. Fifteen seconds.
+Join is **never** gated on an email address. Crew link → name → mic → play. Fifteen seconds.
 
 The claim is offered after the first game ends, when a player has something worth protecting: *"You won 3 of 5 as Mafia. Save your record?"* Optional, skippable, re-offered later. Value first, friction second.
 
-**Delivery: WhatsApp Cloud API**, the same integration already in production on Payvex. Nigerian SMS is expensive and unreliable; WhatsApp lands instantly and the audience is already there. SMS as fallback on delivery failure.
+**Delivery: Resend.** A Meta Business account, template approval and a WhatsApp Cloud API integration are a disproportionate dependency for an optional record-keeping feature on a free game. Email carries no approval process and no per-message cost.
 
-Mechanics: 6 digits, 10-minute TTL, single use, hashed at rest. Rate limits in Upstash — 3 per phone per hour, 5 per IP. `Player.phone` nullable, unique when set, E.164.
+Mechanics: 6 digits, 10-minute TTL, single use, hashed at rest. Rate limits in Upstash — 3 per address per hour, 5 per IP. `Player.email` nullable, unique when set, lowercased.
 
 ### The merge case — build with the schema
 
-A player joins on a new device before claiming and gets a fresh `Player` row. They then claim a phone already bound to their old row. Two identities, one human.
+A player joins on a new device before claiming and gets a fresh `Player` row. They then claim an email already bound to their old row. Two identities, one human.
 
 The merge reassigns `SessionPlayer` and `CrewMembership` from the orphan to the canonical player, resolves `@@unique([crewId, playerId])` collisions by keeping the older membership, and soft-deletes the orphan — **in one transaction**. This fires within the first week of real use. It is not a later concern.
 
 ### Privacy
 
-Phone numbers are never displayed to other players and never appear in projected state. Leaving a crew wipes that member's `SessionPlayer` rows. Deleting the account wipes the phone. NDPA applies.
+Email addresses are never displayed to other players and never appear in projected state. Leaving a crew wipes that member's `SessionPlayer` rows. Deleting the account wipes the address. NDPA applies.
 
 ---
 
@@ -337,7 +337,7 @@ Votes landing on a player's card should read as weight accumulating, not a count
 | Live state | Upstash Redis | Existing |
 | Durable | Neon Postgres + Prisma | Existing |
 | Auth | `jose` JWT — **no Clerk** | No accounts by design |
-| OTP | WhatsApp Cloud API | Existing production integration |
+| OTP | Resend | Email delivery; no Meta dependency to maintain |
 | Icons | Phosphor | Mandated by Nocturne |
 | Errors | Sentry | Existing |
 | Tests | Vitest | `game-core` |
@@ -367,7 +367,7 @@ Step 1 comes first because it is the only step where a mistake is expensive to u
 
 - No AI or automated game master. A human always narrates.
 - No accounts beyond optional phone claim.
-- No payments in MVP.
+- No payments, no subscriptions, no paid tiers — ever.
 - No native app. Responsive web only.
 - No cross-crew leaderboards, global profiles, or friend graph.
 - No dead chat by default. Config flag, off — the dead sit and listen, as at a table.
@@ -380,13 +380,14 @@ Step 1 comes first because it is the only step where a mistake is expensive to u
 | Decision | Rationale |
 |---|---|
 | Free MVP, no Paystack | A payment gate on an unproven party game produces a zero-signal launch |
-| Seats as the future paywall | The only lever sitting directly on the cost curve |
+| Free forever | Cost governors are the only bound on infra spend; concurrent-room ceiling is load-bearing |
 | Mafia get 45s of private voice | Deviates from the physical game; bounded, and better remote |
 | GM audible in every phase | Kills dead air, restores the narrator's spine |
 | Public live voting | Secret ballot would remove town's main read |
 | Any member can GM | Removes single-point-of-failure on one person's availability |
 | Crew link permanent, room code ephemeral | A pinned WhatsApp link is a standing invitation |
 | Phone claim deferred to post-game | Value before friction |
+| WhatsApp OTP → email OTP | Trivial free game; drop the Meta dependency. Accept lower claim conversion; claim is optional |
 | Chat clears per phase, 140 chars | Preserves the fallback, kills the audit trail |
 | Nocturne is authoritative on visuals | The system beats the improvised direction |
 | Single repo, Railway | Solo developer; the split costs daily and buys nothing |
