@@ -1,0 +1,2368 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-f7709f3f-63d7-4a93-99d7-d83f15986c85/styles.css">
+  <script src="_ds/nocturne-f7709f3f-63d7-4a93-99d7-d83f15986c85/_ds_bundle.js"></script>
+  <style>
+    body { margin:0; background: var(--color-bg); }
+    a { color: var(--color-accent); }
+    a:hover { color: var(--color-accent-400); }
+    button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+    @keyframes nf-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    @keyframes nf-breathe { 0%,100% { opacity: .35; } 50% { opacity: .85; } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);font-size:15px;line-height:1.55">
+
+  <div style="display:flex;align-items:center;gap:var(--space-6);padding:var(--space-4) var(--space-8);position:sticky;top:0;z-index:40;background:color-mix(in srgb, var(--color-bg) 92%, transparent);backdrop-filter:blur(10px)">
+    <div style="display:flex;align-items:center;gap:var(--space-3);margin-right:auto">
+      <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor" style="color:var(--color-accent)"><path d="M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z"></path></svg>
+      <span style="font-size:17px;font-weight:500;letter-spacing:-0.01em">Nightfall</span>
+      <span style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-600);padding-left:var(--space-2)">Game master console</span>
+    </div>
+    <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:var(--space-1);padding:var(--space-1);border-radius:var(--radius-md);border:1px solid var(--color-divider)">
+        <sc-for list="{{ stages }}" as="st" hint-placeholder-count="3">
+          <button onClick="{{ st.go }}" style="border:0;cursor:pointer;font:inherit;font-size:13px;padding:var(--space-2) var(--space-4);border-radius:var(--radius-sm);background:{{ st.bg }};color:{{ st.fg }};transition:background .18s cubic-bezier(.16,1,.3,1),color .18s" style-hover="background:var(--color-accent-900);color:var(--color-accent-300)" style-active="background:var(--color-accent-800)">{{ st.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ hasCode }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;gap:var(--space-3);font-size:12px;color:var(--color-neutral-500);white-space:nowrap">
+        <span>Session</span>
+        <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0.14em;color:var(--color-text);border:1px solid var(--color-divider);border-radius:var(--radius-sm);padding:var(--space-1) var(--space-3);background:var(--color-surface)">{{ code }}</span>
+        <span style="color:var(--color-neutral-700)">/</span>
+        <span>Moderator</span>
+        <span style="color:var(--color-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">{{ moderatorName }}</span>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isTable }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ toggleSound }}" aria-label="{{ soundLabel }}" title="{{ soundLabel }}" style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;cursor:pointer;background:transparent;border:1px solid {{ soundBd }};border-radius:var(--radius-md);color:{{ soundFg }};flex:none;transition:border-color .18s,color .18s" style-hover="border-color:var(--color-accent-700)">
+        <sc-if value="{{ soundOn }}" hint-placeholder-val="{{ true }}">
+          <svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor"><path d="M155.51,24.81a8,8,0,0,0-8.42.88L77.25,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H77.25l69.84,54.31A8,8,0,0,0,160,224V32A8,8,0,0,0,155.51,24.81ZM32,96H72v64H32Zm112,111.64-56-43.55V91.91l56-43.55Zm54-106.08a40,40,0,0,1,0,52.88,8,8,0,0,1-12-10.58,24,24,0,0,0,0-31.72,8,8,0,1,1,12-10.58Z"></path></svg>
+        </sc-if>
+        <sc-if value="{{ soundOff }}" hint-placeholder-val="{{ false }}">
+          <svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor"><path d="M155.51,24.81a8,8,0,0,0-8.42.88L77.25,80H32A16,16,0,0,0,16,96v64a16,16,0,0,0,16,16H77.25l69.84,54.31A8,8,0,0,0,160,224V32A8,8,0,0,0,155.51,24.81ZM32,96H72v64H32Zm112,111.64-56-43.55V91.91l56-43.55ZM229.66,109.66,211.31,128l18.35,18.34a8,8,0,0,1-11.32,11.32L200,139.31l-18.34,18.35a8,8,0,0,1-11.32-11.32L188.69,128l-18.35-18.34a8,8,0,0,1,11.32-11.32L200,116.69l18.34-18.35a8,8,0,0,1,11.32,11.32Z"></path></svg>
+        </sc-if>
+      </button>
+    </sc-if>
+    <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ openProfile }}" aria-label="Your profile" style="display:flex;align-items:center;gap:var(--space-2);cursor:pointer;font:inherit;background:transparent;border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:var(--space-1) var(--space-3) var(--space-1) var(--space-1);color:var(--color-text);transition:border-color .18s" style-hover="border-color:var(--color-accent-700)">
+        <span style="width:24px;height:24px;border-radius:50%;background:{{ profileAvatarBg }};color:{{ profileAvatarFg }};font-size:11px;display:inline-flex;align-items:center;justify-content:center">{{ accountInitial }}</span>
+        <span style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">{{ accountName }}</span>
+      </button>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ isAccount }}" hint-placeholder-val="{{ true }}">
+    <section data-screen-label="Sign up" style="position:relative;animation:nf-in .5s cubic-bezier(.16,1,.3,1) both">
+      <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(52% 42% at 16% 4%, var(--color-accent-900), transparent 72%);opacity:0.8"></div>
+      <div style="position:relative;max-width:1180px;margin:0 auto;padding:calc(var(--space-8) * 2.5) var(--space-8) calc(var(--space-8) * 4);display:flex;flex-wrap:wrap;gap:calc(var(--space-8) * 2);align-items:flex-start">
+        <div style="flex:1 1 360px;min-width:0">
+          <h1 style="font-size:40px;line-height:1.08;letter-spacing:-0.025em;margin:0 0 var(--space-6);max-width:22ch">Keep your seat between game nights.</h1>
+          <p style="font-size:16px;color:var(--color-neutral-400);max-width:44ch;margin:0 0 calc(var(--space-8) * 1.5);text-wrap:pretty">One account carries your name to every table, whether you are running the night or playing it.</p>
+          <div style="max-width:40ch">
+            <div style="padding:var(--space-4) 0;border-top:1px solid var(--color-divider);font-size:14px;color:var(--color-neutral-400)">The name the table sees, saved once.</div>
+            <div style="padding:var(--space-4) 0;border-top:1px solid var(--color-divider);font-size:14px;color:var(--color-neutral-400)">Every session you have hosted, with its roster.</div>
+            <div style="padding:var(--space-4) 0;border-top:1px solid var(--color-divider);font-size:14px;color:var(--color-neutral-400)">Rejoin a room from any device without a new code.</div>
+          </div>
+        </div>
+
+        <div style="flex:0 1 380px;min-width:290px">
+          <div class="card elev-sm" style="padding:calc(var(--space-8) * 1.25);gap:0">
+            <div class="seg" style="margin-bottom:var(--space-6);width:100%">
+              <sc-for list="{{ authOpts }}" as="ao" hint-placeholder-count="2">
+                <label class="seg-opt" style="flex:1;justify-content:center;white-space:nowrap;box-shadow:{{ ao.shadow }};color:{{ ao.fg }}">
+                  <input type="radio" name="nf-auth" checked="{{ ao.on }}" onChange="{{ ao.pick }}">
+                  <span>{{ ao.label }}</span>
+                </label>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ true }}">
+              <div class="field" style="margin-bottom:var(--space-4)">
+                <label>Display name</label>
+                <input class="input" value="{{ fName }}" onChange="{{ setFName }}" placeholder="What the table calls you" style="min-height:42px">
+              </div>
+            </sc-if>
+            <div class="field" style="margin-bottom:var(--space-4)">
+              <label>Email</label>
+              <input class="input" type="email" value="{{ fEmail }}" onChange="{{ setFEmail }}" placeholder="you@example.com" style="min-height:42px">
+            </div>
+            <div class="field" style="margin-bottom:var(--space-4)">
+              <label>Password</label>
+              <input class="input" type="password" value="{{ fPass }}" onChange="{{ setFPass }}" style="min-height:42px">
+              <span style="font-size:11px;color:var(--color-neutral-600);margin-top:var(--space-1);display:block">At least 8 characters.</span>
+            </div>
+
+            <sc-if value="{{ hasAuthError }}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="font-size:12px;color:var(--color-accent-300);background:var(--color-accent-900);border-radius:var(--radius-sm);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4)">{{ authError }}</div>
+            </sc-if>
+
+            <button class="btn btn-primary btn-block" onClick="{{ submitAuth }}" style="height:42px">{{ authCta }}</button>
+            <button class="btn btn-ghost btn-block" onClick="{{ guest }}" style="height:38px;margin-top:var(--space-2)">Run one night as a guest</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Host setup" style="animation:nf-in .5s cubic-bezier(.16,1,.3,1) both">
+      <div style="position:relative;max-width:1180px;margin:0 auto;padding:calc(var(--space-8) * 2.5) var(--space-8) calc(var(--space-8) * 3.5)">
+      <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(56% 44% at 14% 6%, var(--color-accent-900), transparent 72%);opacity:0.75"></div>
+      <div style="position:relative;display:flex;flex-wrap:wrap;gap:calc(var(--space-8) * 2.5);align-items:flex-start">
+        <div style="flex:1 1 440px;min-width:0">
+          <h1 style="font-size:40px;line-height:1.08;letter-spacing:-0.025em;margin:0 0 var(--space-6);max-width:24ch">Run mafia for friends who are not in the room.</h1>
+          <p style="font-size:16px;color:var(--color-neutral-400);max-width:46ch;margin:0 0 calc(var(--space-8) * 1.5);text-wrap:pretty">You moderate. Nightfall changes who can hear whom, so nobody has to leave the call.</p>
+
+          <div class="card elev-sm" style="padding:var(--space-6);gap:0;max-width:460px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-6)">
+              <div>
+                <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:var(--space-2)">One game night</div>
+                <div style="font-size:34px;font-weight:500;letter-spacing:-0.02em;line-height:1">{{ priceText }}</div>
+              </div>
+              <div style="font-size:12px;color:var(--color-neutral-500);text-align:right;max-width:16ch">Flat per session. Not per round, not per player.</div>
+            </div>
+
+            <hr class="hr" style="margin:var(--space-6) calc(var(--space-6) * -1)">
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-6)">
+              <div>
+                <div style="font-size:13px;margin-bottom:var(--space-1)">Seat cap</div>
+                <div style="font-size:12px;color:var(--color-neutral-600)">{{ ratioText }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--space-1)">
+                <button class="btn btn-secondary btn-icon" onClick="{{ seatsDown }}" aria-label="Fewer seats">
+                  <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z"></path></svg>
+                </button>
+                <div style="min-width:52px;text-align:center;font-size:20px;font-variant-numeric:tabular-nums">{{ seats }}</div>
+                <button class="btn btn-secondary btn-icon" onClick="{{ seatsUp }}" aria-label="More seats">
+                  <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <sc-if value="{{ notPaid }}" hint-placeholder-val="{{ true }}">
+              <div>
+                <button class="btn btn-primary btn-block" onClick="{{ pay }}" disabled="{{ payPending }}" style="margin-top:var(--space-6);height:40px">{{ payLabel }}</button>
+                <div style="font-size:11px;color:var(--color-neutral-600);margin-top:var(--space-3)">{{ payHint }}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ paid }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:var(--space-6);padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-accent-900)">
+                <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:var(--space-3)">Room unlocked</div>
+                <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap">
+                  <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:26px;letter-spacing:0.2em">{{ code }}</span>
+                  <span style="font-size:12px;color:var(--color-accent-400)">{{ seatsText }}</span>
+                </div>
+                <button class="btn btn-primary btn-block" onClick="{{ enterTable }}" disabled="{{ enterDisabled }}" style="margin-top:var(--space-4);height:40px">Open the console</button>
+                <div style="font-size:11px;color:var(--color-neutral-500);margin-top:var(--space-3)">{{ enterHint }}</div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="flex:0 1 290px;display:flex;flex-direction:column;gap:var(--space-4);align-items:flex-start">
+          <div style="width:290px;height:630px;overflow:hidden;border-radius:35px;box-shadow:var(--shadow-md)">
+            <div style="width:402px;height:874px;transform:scale(0.7213);transform-origin:0 0">
+              <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="true" hint-size="402px,874px">
+                <div style="padding:calc(var(--space-8) * 3) var(--space-8) calc(var(--space-8) * 1.75);height:100%;display:flex;flex-direction:column;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)">
+                  <div style="font-size:15px;font-weight:500;letter-spacing:-0.01em">Join the session</div>
+                  <div style="font-size:12px;color:var(--color-neutral-500);margin-top:var(--space-1);margin-bottom:var(--space-8)">Ask the host for the code.</div>
+
+                  <div class="field" style="margin-bottom:var(--space-4)">
+                    <label>Your name</label>
+                    <input class="input" value="{{ joinName }}" onChange="{{ setJoinName }}" style="min-height:42px">
+                  </div>
+                  <div class="field" style="margin-bottom:var(--space-6)">
+                    <label>Room code</label>
+                    <input class="input" value="{{ code }}" readOnly="true" style="min-height:42px;font-family:ui-monospace,Menlo,monospace;letter-spacing:0.18em" placeholder="6 characters">
+                  </div>
+
+                  <button class="btn btn-secondary btn-block" onClick="{{ grantMic }}" style="height:42px;justify-content:flex-start;gap:var(--space-3);padding-inline:var(--space-4)">
+                    <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V232a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z"></path></svg>
+                    <span>{{ micLabel }}</span>
+                  </button>
+
+                  <button class="btn btn-primary btn-block" onClick="{{ join }}" disabled="{{ joinDisabled }}" style="height:44px;margin-top:var(--space-3)">{{ joinLabel }}</button>
+
+                  <div style="margin-top:auto;font-size:11px;color:var(--color-neutral-700);text-wrap:pretty">Your mic stays under the game master's control for the whole session.</div>
+                </div>
+              </x-import>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      </div>
+
+      <div style="position:relative;overflow:hidden;background:var(--color-section);padding:calc(var(--space-8) * 2.5) var(--space-8)">
+        <div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(72% 130% at 80% 0%, var(--color-section-glow), transparent 66%)"></div>
+        <img class="lighten" src="assets/photo.jpg" alt="" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.14;pointer-events:none">
+        <div style="position:relative;max-width:1180px;margin:0 auto;display:flex;flex-wrap:wrap;gap:calc(var(--space-8) * 2);align-items:flex-start">
+          <div style="flex:1 1 280px">
+            <h2 style="font-size:28px;font-weight:500;line-height:1.15;letter-spacing:-0.022em;margin:0 0 var(--space-4);max-width:20ch;text-wrap:pretty">One room all night. The room changes around them.</h2>
+            <p style="font-size:14px;color:var(--color-neutral-300);margin:0;max-width:38ch;text-wrap:pretty">No rejoining and no second call for the mafia. Your phase buttons rewrite the audio subscriptions on the server, and every player's mic indicator follows.</p>
+          </div>
+          <div style="flex:2 1 560px;display:flex;flex-wrap:wrap;row-gap:var(--space-8)">
+            <div style="flex:1 1 148px;padding-right:var(--space-6)">
+              <div style="width:22px;height:2px;background:var(--color-accent-400);margin-bottom:var(--space-4)"></div>
+              <div style="font-size:15px;font-weight:500;margin-bottom:var(--space-2)">Everyone sleep</div>
+              <div style="font-size:13px;color:var(--color-neutral-300);text-wrap:pretty">Every subscription dropped. Silence for the whole table.</div>
+            </div>
+            <div style="flex:1 1 148px;padding:0 var(--space-6);border-left:1px solid var(--color-section-ghost)">
+              <div style="width:22px;height:2px;background:var(--color-accent-400);margin-bottom:var(--space-4)"></div>
+              <div style="font-size:15px;font-weight:500;margin-bottom:var(--space-2)">Mafia wake up</div>
+              <div style="font-size:13px;color:var(--color-neutral-300);text-wrap:pretty">The mafia hear each other and nobody else.</div>
+            </div>
+            <div style="flex:1 1 148px;padding:0 var(--space-6);border-left:1px solid var(--color-section-ghost)">
+              <div style="width:22px;height:2px;background:var(--color-accent-400);margin-bottom:var(--space-4)"></div>
+              <div style="font-size:15px;font-weight:500;margin-bottom:var(--space-2)">Day phase</div>
+              <div style="font-size:13px;color:var(--color-neutral-300);text-wrap:pretty">Every living player hears every other.</div>
+            </div>
+            <div style="flex:1 1 148px;padding-left:var(--space-6);border-left:1px solid var(--color-section-ghost)">
+              <div style="width:22px;height:2px;background:var(--color-accent-400);margin-bottom:var(--space-4)"></div>
+              <div style="font-size:15px;font-weight:500;margin-bottom:var(--space-2)">Eliminated</div>
+              <div style="font-size:13px;color:var(--color-neutral-300);text-wrap:pretty">Moved to dead chat, kept apart from the live game.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isTable }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Game master console" style="display:flex;gap:var(--space-8);align-items:flex-start;padding:var(--space-8);flex-wrap:wrap">
+
+      <div style="flex:1 1 660px;min-width:600px;display:flex;flex-direction:column;gap:var(--space-6)">
+
+        <sc-if value="{{ winnerShow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:var(--space-6);padding:var(--space-6) var(--space-6);border-radius:var(--radius-md);background:var(--color-accent-900);box-shadow:0 0 0 1px var(--color-accent-700)">
+            <div style="flex:1">
+              <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:var(--space-1)">Win condition met</div>
+              <div style="font-size:20px;font-weight:500;letter-spacing:-0.015em">{{ winnerText }}</div>
+            </div>
+            <button class="btn btn-primary" onClick="{{ goDebrief }}" style="height:38px">Open the debrief</button>
+          </div>
+        </sc-if>
+
+        <div style="border-radius:var(--radius-md);padding:var(--space-6);background:{{ phaseBg }};box-shadow:0 0 0 1px var(--color-divider)">
+          <div style="display:flex;align-items:flex-start;gap:var(--space-8)">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
+                <div style="width:7px;height:7px;border-radius:50%;background:{{ phaseDot }};animation:nf-breathe 3.2s ease-in-out infinite"></div>
+                <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-400)">Round {{ round }} of the night cycle</div>
+              </div>
+              <div style="font-size:32px;font-weight:500;letter-spacing:-0.022em;line-height:1.05">{{ phaseLabel }}</div>
+              <div style="font-size:13px;color:var(--color-neutral-400);margin-top:var(--space-2);max-width:52ch;text-wrap:pretty">{{ phaseSub }}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:stretch;gap:var(--space-3);min-width:230px">
+              <div class="seg" style="width:100%">
+                <sc-for list="{{ modeOpts }}" as="mo" hint-placeholder-count="2">
+                  <label class="seg-opt" style="flex:1;justify-content:center;white-space:nowrap;box-shadow:{{ mo.shadow }};color:{{ mo.fg }}">
+                    <input type="radio" name="nf-mode" checked="{{ mo.on }}" onChange="{{ mo.pick }}">
+                    <span>{{ mo.label }}</span>
+                  </label>
+                </sc-for>
+              </div>
+              <button class="btn btn-primary" onClick="{{ advance }}" disabled="{{ advanceDisabled }}" style="height:52px;font-size:16px">{{ nextLabel }}</button>
+              <sc-if value="{{ isAuto }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:var(--space-3)">
+                  <div style="flex:1;height:3px;border-radius:2px;background:var(--color-neutral-800);overflow:hidden">
+                    <div style="height:100%;width:{{ autoPct }};background:var(--color-accent-500)"></div>
+                  </div>
+                  <span style="font-size:11px;color:var(--color-neutral-500);font-variant-numeric:tabular-nums;white-space:nowrap">{{ autoText }}</span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ isManual }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;justify-content:center;gap:var(--space-2);font-size:11px;color:var(--color-neutral-600)">
+                  <span style="font-family:ui-monospace,Menlo,monospace;border:1px solid var(--color-divider);border-radius:var(--radius-sm);background:var(--color-surface);padding:1px var(--space-2)">&rarr;</span>
+                  <span>also advances the phase</span>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+
+          <sc-if value="{{ showJumps }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:var(--space-6);padding-top:var(--space-6);border-top:1px solid var(--color-divider)">
+              <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:var(--space-3)">Jump straight to</div>
+              <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+                <sc-for list="{{ jumps }}" as="j" hint-placeholder-count="4">
+                  <button onClick="{{ j.go }}" style="cursor:pointer;font:inherit;font-size:13px;padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);white-space:nowrap;background:{{ j.bg }};color:{{ j.fg }};border:1px solid {{ j.bd }};transition:background .18s cubic-bezier(.16,1,.3,1),border-color .18s" style-hover="background:var(--color-accent-900);border-color:var(--color-accent-700)" style-active="background:var(--color-accent-800)">{{ j.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ dawnShow }}" hint-placeholder-val="{{ false }}">
+          <div class="card elev-sm" style="padding:var(--space-6);gap:var(--space-4)">
+            <div style="display:flex;align-items:baseline;gap:var(--space-4);flex-wrap:wrap">
+              <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">{{ dawnHeading }}</h4>
+              <span style="font-size:12px;color:var(--color-neutral-600);margin-right:auto;text-wrap:pretty">{{ dawnHint }}</span>
+              <span class="tag" style="background:var(--color-neutral-900);color:var(--color-neutral-400);font-size:10px;letter-spacing:0.05em;text-transform:uppercase">{{ dawnProgress }}</span>
+            </div>
+
+            <div style="padding:var(--space-8);border-radius:var(--radius-md);background:var(--color-bg);box-shadow:0 0 0 1px var(--color-divider);font-size:19px;line-height:1.55;letter-spacing:-0.008em;text-wrap:pretty;max-width:62ch">
+              <sc-for list="{{ dawnProse }}" as="dp" hint-placeholder-count="6">
+                <span style="color:{{ dp.fg }};background:{{ dp.bg }};box-shadow:{{ dp.ring }};border-radius:var(--radius-sm)">{{ dp.text }} </span>
+              </sc-for>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap">
+              <sc-if value="{{ dawnManual }}" hint-placeholder-val="{{ true }}">
+                <button class="btn btn-primary" onClick="{{ readNext }}" disabled="{{ readDone }}" style="height:40px">{{ readLabel }}</button>
+              </sc-if>
+              <sc-if value="{{ dawnAuto }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:var(--space-3);flex:1;min-width:180px">
+                  <div style="flex:1;height:3px;border-radius:2px;background:var(--color-neutral-800);overflow:hidden">
+                    <div style="height:100%;width:{{ dawnPct }};background:var(--color-accent-500)"></div>
+                  </div>
+                  <span style="font-size:11px;color:var(--color-neutral-500);white-space:nowrap">Reading itself</span>
+                </div>
+              </sc-if>
+              <span style="font-size:11px;color:var(--color-neutral-600);text-wrap:pretty;max-width:44ch">{{ dawnFoot }}</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ verdictShow }}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="padding:var(--space-6);border-radius:var(--radius-md);background:{{ verdictBg }};box-shadow:0 0 0 1px {{ verdictBd }};animation:nf-in .4s cubic-bezier(.16,1,.3,1) both">
+            <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3)">
+              <span style="width:6px;height:6px;border-radius:50%;background:{{ verdictTint }}"></span>
+              <span style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:{{ verdictTint }}">{{ verdictKicker }}</span>
+              <span style="margin-left:auto;font-size:11px;color:var(--color-neutral-600)">{{ verdictWhen }}</span>
+            </div>
+            <div style="font-size:22px;letter-spacing:-0.015em;margin-bottom:var(--space-2);max-width:32ch;text-wrap:pretty">{{ verdictHead }}</div>
+            <div style="font-size:13px;color:var(--color-neutral-400);max-width:46ch;text-wrap:pretty">{{ verdictBody }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isLobby }}" hint-placeholder-val="{{ true }}">
+          <div class="card elev-sm" style="padding:var(--space-6);gap:var(--space-4)">
+            <div style="display:flex;align-items:baseline;gap:var(--space-4);flex-wrap:wrap">
+              <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">Moderator</h4>
+              <span style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">Whoever runs the console sits out. Their seat goes to the person they replace.</span>
+            </div>
+            <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+              <sc-for list="{{ lobbyMods }}" as="lm" hint-placeholder-count="6">
+                <button onClick="{{ lm.pick }}" style="cursor:pointer;font:inherit;display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-4);border-radius:var(--radius-md);background:{{ lm.bg }};color:{{ lm.fg }};border:1px solid {{ lm.bd }};white-space:nowrap;transition:background .16s cubic-bezier(.16,1,.3,1),border-color .16s" style-hover="background:var(--color-accent-900);border-color:var(--color-accent-700)" style-active="background:var(--color-accent-800)">
+                  <span style="width:20px;height:20px;border-radius:50%;background:var(--color-neutral-800);font-size:10px;display:inline-flex;align-items:center;justify-content:center;flex:none">{{ lm.initial }}</span>
+                  <span style="font-size:13px">{{ lm.name }}</span>
+                  <span style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-accent-400)">{{ lm.mark }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div class="card elev-sm" style="padding:var(--space-6);gap:var(--space-4)">
+            <div style="display:flex;align-items:baseline;gap:var(--space-4)">
+              <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">Role counts</h4>
+              <span style="font-size:12px;color:var(--color-neutral-600)">Override before you start. Roles are dealt at random on start.</span>
+            </div>
+            <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+              <sc-for list="{{ roleCfg }}" as="rc" hint-placeholder-count="4">
+                <div style="flex:1 1 130px;padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-neutral-900);box-shadow:var(--shadow-sm)">
+                  <div style="font-size:12px;color:var(--color-neutral-400);margin-bottom:var(--space-3)">{{ rc.label }}</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)">
+                    <span style="font-size:24px;font-variant-numeric:tabular-nums">{{ rc.count }}</span>
+                    <sc-if value="{{ rc.editable }}" hint-placeholder-val="{{ true }}">
+                      <span style="display:flex;gap:var(--space-1)">
+                        <button class="btn btn-secondary btn-icon" onClick="{{ rc.dec }}" style="width:28px;height:28px" aria-label="One fewer">
+                          <svg width="12" height="12" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z"></path></svg>
+                        </button>
+                        <button class="btn btn-secondary btn-icon" onClick="{{ rc.inc }}" style="width:28px;height:28px" aria-label="One more">
+                          <svg width="12" height="12" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+                        </button>
+                      </span>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding-top:var(--space-4);border-top:1px solid var(--color-divider);display:flex;align-items:center;gap:var(--space-6);flex-wrap:wrap">
+              <div style="flex:1 1 240px;min-width:0">
+                <div style="font-size:14px;font-weight:500;margin-bottom:var(--space-1)">Kills per night</div>
+                <div style="font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">{{ killsNote }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--space-4);flex:none">
+                <span style="font-size:24px;font-variant-numeric:tabular-nums;min-width:22px;text-align:right">{{ killsCount }}</span>
+                <span style="display:flex;gap:var(--space-1)">
+                  <button class="btn btn-secondary btn-icon" onClick="{{ killsDown }}" style="width:28px;height:28px" aria-label="One fewer kill per night">
+                    <svg width="12" height="12" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128Z"></path></svg>
+                  </button>
+                  <button class="btn btn-secondary btn-icon" onClick="{{ killsUp }}" style="width:28px;height:28px" aria-label="One more kill per night">
+                    <svg width="12" height="12" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"></path></svg>
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showNightPanel }}" hint-placeholder-val="{{ false }}">
+          <div class="card elev-sm" style="padding:var(--space-6);gap:var(--space-4)">
+            <div style="display:flex;align-items:baseline;gap:var(--space-4)">
+              <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">Night actions</h4>
+              <span style="font-size:12px;color:var(--color-neutral-600)">Only you see this.</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3)">
+              <sc-for list="{{ nightItems }}" as="ni" hint-placeholder-count="3">
+                <div style="padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-neutral-900);box-shadow:0 0 0 1px {{ ni.bd }}">
+                  <div style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:{{ ni.tint }};margin-bottom:var(--space-2)">{{ ni.label }}</div>
+                  <div style="font-size:16px;font-weight:500">{{ ni.value }}</div>
+                  <div style="font-size:12px;color:var(--color-neutral-500);margin-top:var(--space-1);text-wrap:pretty">{{ ni.note }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ showProbe }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-accent-900)">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:var(--space-1)">Read this back privately</div>
+                  <div style="font-size:15px">{{ probeText }}</div>
+                </div>
+                <button class="btn btn-primary" onClick="{{ sendProbe }}" disabled="{{ probeSent }}" style="height:36px">{{ probeBtn }}</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showTally }}" hint-placeholder-val="{{ false }}">
+          <div class="card elev-sm" style="padding:var(--space-6);gap:var(--space-4)">
+            <div style="display:flex;align-items:baseline;gap:var(--space-4)">
+              <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">Vote tally</h4>
+              <span style="font-size:12px;color:var(--color-neutral-600)">{{ voteStatus }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-1)">
+              <sc-for list="{{ tallyRows }}" as="tr" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-3) var(--space-3);border-radius:var(--radius-sm);background:{{ tr.bg }}">
+                  <span style="flex:1;font-size:14px;color:{{ tr.fg }}">{{ tr.name }}</span>
+                  <span style="width:120px;height:4px;border-radius:var(--radius-sm);background:var(--color-divider);overflow:hidden">
+                    <span style="display:block;height:100%;width:{{ tr.pct }};background:{{ tr.bar }}"></span>
+                  </span>
+                  <span style="width:26px;text-align:right;font-size:14px;font-variant-numeric:tabular-nums;color:{{ tr.fg }}">{{ tr.votes }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ tallyEmpty }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:13px;color:var(--color-neutral-600);padding:var(--space-2) var(--space-3)">No votes are in yet.</div>
+            </sc-if>
+            <div style="font-size:11px;color:var(--color-neutral-700);padding:0 var(--space-3)">{{ tallyRest }}</div>
+            <sc-if value="{{ canEliminate }}" hint-placeholder-val="{{ false }}">
+              <button class="btn btn-primary btn-block" onClick="{{ askElim }}" style="height:42px">{{ elimLabel }}</button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <div class="card elev-sm" style="padding:var(--space-6);gap:var(--space-4)">
+          <div style="display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap">
+            <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">Who can hear whom</h4>
+            <span style="font-size:12px;color:var(--color-neutral-600);margin-right:auto;text-wrap:pretty">{{ deadNote }}</span>
+            <div style="display:flex;align-items:center;gap:var(--space-3)">
+              <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-600);white-space:nowrap">Dead channel</span>
+              <div class="seg" style="flex:none">
+                <sc-for list="{{ deadOpts }}" as="dv" hint-placeholder-count="2">
+                  <label class="seg-opt" style="justify-content:center;white-space:nowrap;box-shadow:{{ dv.shadow }};color:{{ dv.fg }}">
+                    <input type="radio" name="nf-dead" checked="{{ dv.on }}" onChange="{{ dv.pick }}">
+                    <span>{{ dv.label }}</span>
+                  </label>
+                </sc-for>
+              </div>
+            </div>
+            <div class="seg">
+              <sc-for list="{{ vizOpts }}" as="v" hint-placeholder-count="3">
+                <label class="seg-opt" style="box-shadow:{{ v.shadow }};color:{{ v.fg }}">
+                  <input type="radio" name="nf-viz" checked="{{ v.on }}" onChange="{{ v.pick }}">
+                  <span>{{ v.label }}</span>
+                </label>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-if value="{{ vizPills }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:var(--space-3)">
+              <sc-for list="{{ audioRows }}" as="ar" hint-placeholder-count="12">
+                <div style="padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--color-neutral-900);box-shadow:0 0 0 1px {{ ar.bd }};opacity:{{ ar.dim }}">
+                  <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-2)">
+                    <span style="width:20px;height:20px;border-radius:50%;background:var(--color-neutral-800);font-size:10px;display:inline-flex;align-items:center;justify-content:center;color:var(--color-neutral-300)">{{ ar.initial }}</span>
+                    <span style="font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ar.name }}</span>
+                    <span style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-600)">{{ ar.role }}</span>
+                  </div>
+                  <span class="tag" style="background:{{ ar.bg }};color:{{ ar.fg }};box-shadow:{{ ar.ring }};font-size:10px;letter-spacing:0.05em;text-transform:uppercase">{{ ar.audio }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ vizChannels }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:var(--space-4);flex-wrap:wrap;align-items:stretch">
+              <sc-for list="{{ channels }}" as="ch" hint-placeholder-count="2">
+                <div style="flex:1 1 200px;padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-neutral-900);box-shadow:0 0 0 1px {{ ch.bd }}">
+                  <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4)">
+                    <span style="width:6px;height:6px;border-radius:50%;background:{{ ch.tint }}"></span>
+                    <span style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:{{ ch.tint }}">{{ ch.label }}</span>
+                    <span style="margin-left:auto;font-size:11px;color:var(--color-neutral-600)">{{ ch.countText }}</span>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+                    <sc-for list="{{ ch.members }}" as="m" hint-placeholder-count="4">
+                      <span style="font-size:12px;padding:var(--space-1) var(--space-3);border-radius:var(--radius-sm);background:{{ m.bg }};color:{{ m.fg }}">{{ m.name }}</span>
+                    </sc-for>
+                  </div>
+                  <div style="font-size:11px;color:var(--color-neutral-600);margin-top:var(--space-4);text-wrap:pretty">{{ ch.note }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ vizMatrix }}" hint-placeholder-val="{{ false }}">
+            <div style="overflow:auto">
+              <div style="display:flex;gap:var(--space-3);align-items:flex-end;margin-bottom:var(--space-2);padding-left:116px">
+                <sc-for list="{{ matrixCols }}" as="mc" hint-placeholder-count="12">
+                  <span style="width:18px;text-align:center;font-size:10px;color:var(--color-neutral-600)">{{ mc.initial }}</span>
+                </sc-for>
+              </div>
+              <sc-for list="{{ matrixRows }}" as="mr" hint-placeholder-count="12">
+                <div style="display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-1)">
+                  <span style="width:86px;font-size:12px;color:{{ mr.fg }};text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ mr.name }}</span>
+                  <span style="width:10px"></span>
+                  <sc-for list="{{ mr.cells }}" as="cl" hint-placeholder-count="12">
+                    <span style="width:18px;height:18px;border-radius:var(--radius-sm);background:{{ cl.bg }};box-shadow:{{ cl.ring }}"></span>
+                  </sc-for>
+                </div>
+              </sc-for>
+              <div style="display:flex;gap:var(--space-6);margin-top:var(--space-4);font-size:11px;color:var(--color-neutral-600);flex-wrap:wrap">
+                <sc-for list="{{ matrixLegend }}" as="lg" hint-placeholder-count="3">
+                  <span style="display:inline-flex;align-items:center;gap:var(--space-2)">
+                    <span style="width:12px;height:12px;border-radius:3px;background:{{ lg.bg }};box-shadow:{{ lg.ring }}"></span>
+                    <span>{{ lg.label }}</span>
+                  </span>
+                </sc-for>
+              </div>
+              <div style="font-size:11px;color:var(--color-neutral-700);margin-top:var(--space-3)">Rows speak. Columns listen.</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div class="card elev-sm" style="padding:var(--space-6);gap:var(--space-4)">
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);flex-wrap:wrap">
+            <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">Room chat</h4>
+            <span style="font-size:12px;color:var(--color-neutral-600);margin-right:auto">Text obeys the mic rule. You read every channel.</span>
+            <span class="tag" style="background:{{ chatNowBg }};color:{{ chatNowFg }};box-shadow:{{ chatNowRing }};font-size:10px;letter-spacing:0.05em;text-transform:uppercase">{{ chatNowLabel }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--space-3);max-height:250px;overflow:auto">
+            <sc-for list="{{ chatRows }}" as="cm" hint-placeholder-count="4">
+              <div style="display:flex;gap:var(--space-3);align-items:flex-start">
+                <span class="tag" style="background:{{ cm.chBg }};color:{{ cm.chFg }};box-shadow:{{ cm.chRing }};font-size:10px;letter-spacing:0.05em;text-transform:uppercase;flex:none">{{ cm.channel }}</span>
+                <div style="min-width:0;flex:1">
+                  <div style="font-size:13px"><span style="color:{{ cm.authorFg }}">{{ cm.author }}</span> <span style="color:var(--color-neutral-400)">{{ cm.text }}</span></div>
+                  <sc-if value="{{ cm.hasReactions }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:var(--space-1);margin-top:var(--space-2);flex-wrap:wrap">
+                      <sc-for list="{{ cm.reactions }}" as="rx" hint-placeholder-count="2">
+                        <span class="tag" style="background:var(--color-neutral-900);color:var(--color-neutral-400);font-size:10px;letter-spacing:0.05em;text-transform:uppercase">{{ rx.text }}</span>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ chatEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:13px;color:var(--color-neutral-600)">Nothing said yet. Chat opens when a channel does.</div>
+          </sc-if>
+          <div style="display:flex;gap:var(--space-2)">
+            <input class="input" value="{{ gmDraft }}" onChange="{{ setGmDraft }}" placeholder="Announce to everyone" style="min-height:38px;flex:1">
+            <button class="btn btn-secondary" onClick="{{ gmSend }}" disabled="{{ gmSendOff }}" style="height:38px">Send</button>
+          </div>
+        </div>
+
+        <div class="card elev-sm" style="padding:var(--space-6) var(--space-1) var(--space-3);gap:var(--space-3)">
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);padding:0 var(--space-4)">
+            <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">Roster</h4>
+            <span style="font-size:12px;color:var(--color-neutral-600)">{{ aliveText }}</span>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>Player</th><th>Role</th><th>Status</th><th>Vote</th><th>Audio</th></tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ roster }}" as="r" hint-placeholder-count="12">
+                <tr onClick="{{ r.show }}" title="{{ r.showHint }}" style="opacity:{{ r.dim }};cursor:pointer;background:{{ r.rowBg }}">
+                  <td style="font-size:14px">{{ r.name }}</td>
+                  <td><span class="tag" style="background:{{ r.roleBg }};color:{{ r.roleFg }}">{{ r.role }}</span></td>
+                  <td style="font-size:13px;color:{{ r.statusFg }}">{{ r.status }}</td>
+                  <td style="font-size:13px;color:var(--color-neutral-500)">{{ r.vote }}</td>
+                  <td><span class="tag" style="background:{{ r.audioBg }};color:{{ r.audioFg }};box-shadow:{{ r.audioRing }};font-size:10px;letter-spacing:0.05em;text-transform:uppercase">{{ r.audio }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="flex:0 0 620px;display:flex;flex-direction:column;gap:var(--space-6);position:sticky;top:80px">
+        <div style="display:flex;align-items:baseline;gap:var(--space-4)">
+          <h4 style="margin:0;font-size:20px;letter-spacing:-0.015em">Player devices</h4>
+          <span style="font-size:12px;color:var(--color-neutral-600)">Four of the {{ seats }} seats, live. Tap them.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,290px);gap:var(--space-6) var(--space-6)">
+          <sc-for list="{{ devices }}" as="ph" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+              <div style="display:flex;align-items:center;gap:var(--space-3);min-height:22px">
+                <span style="font-size:13px;font-weight:500">{{ ph.name }}</span>
+                <span class="tag" style="background:{{ ph.roleBg }};color:{{ ph.roleFg }};font-size:10px">{{ ph.role }}</span>
+              </div>
+              <div style="width:290px;height:630px;overflow:hidden;border-radius:35px;box-shadow:var(--shadow-md)">
+                <div style="width:402px;height:874px;transform:scale(0.7213);transform-origin:0 0">
+                  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="true" hint-size="402px,874px">
+                    <div style="height:100%;display:flex;flex-direction:column;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding:58px 0 var(--space-8)">
+
+                      <div style="padding:0 var(--space-8) var(--space-4);display:flex;align-items:center;gap:var(--space-3)">
+                        <span style="width:26px;height:26px;border-radius:50%;background:var(--color-neutral-800);font-size:12px;display:inline-flex;align-items:center;justify-content:center;color:var(--color-neutral-300)">{{ ph.initial }}</span>
+                        <span style="font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ph.name }}</span>
+                        <div style="display:flex;gap:var(--space-1);padding:var(--space-1);border-radius:var(--radius-sm);border:1px solid var(--color-divider);flex:none">
+                          <button onClick="{{ ph.showRoom }}" style="border:0;cursor:pointer;font:inherit;font-size:12px;padding:var(--space-1) var(--space-3);border-radius:var(--radius-sm);background:{{ ph.roomTabBg }};color:{{ ph.roomTabFg }}">Room</button>
+                          <button onClick="{{ ph.showChat }}" style="border:0;cursor:pointer;font:inherit;font-size:12px;padding:var(--space-1) var(--space-3);border-radius:var(--radius-sm);background:{{ ph.chatTabBg }};color:{{ ph.chatTabFg }}">{{ ph.chatTabLabel }}</button>
+                        </div>
+                      </div>
+
+                      <sc-if value="{{ ph.onRoom }}" hint-placeholder-val="{{ true }}">
+                      <div style="flex:1;overflow:auto;padding:0 var(--space-8)">
+
+                        <sc-if value="{{ ph.isWait }}" hint-placeholder-val="{{ true }}">
+                          <div>
+                            <div style="font-size:26px;font-weight:500;letter-spacing:-0.02em;line-height:1.1;margin-top:calc(var(--space-8) * 1.75)">You are in.</div>
+                            <div style="font-size:14px;color:var(--color-neutral-500);margin-top:var(--space-3);text-wrap:pretty">{{ ph.waitText }}</div>
+                            <div style="margin-top:var(--space-8);display:flex;flex-direction:column;gap:var(--space-2)">
+                              <sc-for list="{{ ph.lobbyNames }}" as="ln" hint-placeholder-count="6">
+                                <div style="font-size:13px;color:var(--color-neutral-400);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface)">{{ ln.name }}</div>
+                              </sc-for>
+                            </div>
+                          </div>
+                        </sc-if>
+
+                        <sc-if value="{{ ph.isReveal }}" hint-placeholder-val="{{ false }}">
+                          <div style="margin-top:var(--space-8);padding:var(--space-8);border-radius:var(--radius-lg);background:{{ ph.cardBg }};box-shadow:0 0 0 1px {{ ph.cardRing }}">
+                            <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:{{ ph.cardTint }};margin-bottom:var(--space-4)">Your card</div>
+                            <div style="font-size:38px;font-weight:500;letter-spacing:-0.025em;line-height:1">{{ ph.role }}</div>
+                            <div style="font-size:14px;color:var(--color-neutral-400);margin-top:var(--space-4);text-wrap:pretty">{{ ph.roleBlurb }}</div>
+                            <sc-if value="{{ ph.hasTeam }}" hint-placeholder-val="{{ false }}">
+                              <div style="margin-top:var(--space-6);padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
+                                <div style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-accent-400);margin-bottom:var(--space-3)">With you</div>
+                                <div style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+                                  <sc-for list="{{ ph.team }}" as="tm" hint-placeholder-count="2">
+                                    <span style="font-size:12px;padding:var(--space-1) var(--space-3);border-radius:var(--radius-sm);background:var(--color-accent-800);color:var(--color-accent-200)">{{ tm.name }}</span>
+                                  </sc-for>
+                                </div>
+                              </div>
+                            </sc-if>
+                          </div>
+                          <div style="font-size:12px;color:var(--color-neutral-700);margin-top:var(--space-6);text-wrap:pretty">Nobody else can see this screen. Say nothing yet.</div>
+                        </sc-if>
+
+                        <sc-if value="{{ ph.isIdle }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center">
+                            <svg width="46" height="46" viewBox="0 0 256 256" fill="currentColor" style="color:var(--color-accent-700)"><path d="M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z"></path></svg>
+                            <div style="font-size:24px;font-weight:500;letter-spacing:-0.02em;margin-top:var(--space-8)">{{ ph.idleTitle }}</div>
+                            <div style="font-size:13px;color:var(--color-neutral-600);margin-top:var(--space-3);max-width:24ch;text-wrap:pretty">{{ ph.idleSub }}</div>
+                            <sc-if value="{{ ph.lulling }}" hint-placeholder-val="{{ false }}">
+                              <div style="display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-6);padding:var(--space-2) var(--space-4);border-radius:999px;background:var(--color-accent-900);box-shadow:0 0 0 1px var(--color-accent-800)">
+                                <span style="width:5px;height:5px;border-radius:50%;background:var(--color-accent-400);animation:nf-breathe 2.6s ease-in-out infinite"></span>
+                                <span style="font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--color-accent-300)">{{ ph.lullText }}</span>
+                              </div>
+                            </sc-if>
+                            <sc-if value="{{ ph.hasVerdict }}" hint-placeholder-val="{{ false }}">
+                              <div style="margin-top:var(--space-8);padding:var(--space-4);border-radius:var(--radius-md);background:{{ ph.verdictBg }};box-shadow:0 0 0 1px {{ ph.verdictBd }};text-align:left;width:100%">
+                                <div style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:{{ ph.verdictTint }};margin-bottom:var(--space-2)">{{ ph.verdictKicker }}</div>
+                                <div style="font-size:14px;text-wrap:pretty">{{ ph.verdictHead }}</div>
+                                <div style="font-size:12px;color:var(--color-neutral-400);margin-top:var(--space-1);text-wrap:pretty">{{ ph.verdictBody }}</div>
+                              </div>
+                            </sc-if>
+                          </div>
+                        </sc-if>
+
+                        <sc-if value="{{ ph.isAct }}" hint-placeholder-val="{{ false }}">
+                          <div>
+                            <div style="font-size:22px;font-weight:500;letter-spacing:-0.02em;line-height:1.15;margin-top:var(--space-2)">{{ ph.actTitle }}</div>
+                            <div style="font-size:13px;color:var(--color-neutral-500);margin-top:var(--space-2);text-wrap:pretty">{{ ph.actSub }}</div>
+                            <div style="margin-top:var(--space-6);display:flex;flex-direction:column;gap:var(--space-2)">
+                              <sc-for list="{{ ph.targets }}" as="tg" hint-placeholder-count="6">
+                                <button onClick="{{ tg.tap }}" style="cursor:pointer;font:inherit;text-align:left;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-4);border-radius:var(--radius-md);background:{{ tg.bg }};color:{{ tg.fg }};border:1px solid {{ tg.bd }};transition:background .16s cubic-bezier(.16,1,.3,1),border-color .16s" style-hover="background:var(--color-accent-900);border-color:var(--color-accent-700)" style-active="background:var(--color-accent-800)">
+                                  <span style="width:22px;height:22px;border-radius:50%;background:var(--color-divider);font-size:10px;display:inline-flex;align-items:center;justify-content:center">{{ tg.initial }}</span>
+                                  <span style="flex:1;font-size:14px">{{ tg.name }}</span>
+                                  <span style="font-size:11px;color:{{ tg.markFg }}">{{ tg.mark }}</span>
+                                </button>
+                              </sc-for>
+                            </div>
+                            <sc-if value="{{ ph.hasResult }}" hint-placeholder-val="{{ false }}">
+                              <div style="margin-top:var(--space-6);padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-accent-900)">
+                                <div style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-accent-300);margin-bottom:var(--space-2)">From the game master</div>
+                                <div style="font-size:15px">{{ ph.resultText }}</div>
+                              </div>
+                            </sc-if>
+                          </div>
+                        </sc-if>
+
+                        <sc-if value="{{ ph.isNarrating }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;flex-direction:column;justify-content:center;height:100%">
+                            <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-6)">
+                              <sc-for list="{{ ph.beatPips }}" as="bp" hint-placeholder-count="6">
+                                <span style="height:2px;flex:1;border-radius:1px;background:{{ bp.bg }}"></span>
+                              </sc-for>
+                            </div>
+                            <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent-400);margin-bottom:var(--space-4)">{{ ph.narrKicker }}</div>
+                            <div style="padding:var(--space-6);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:0 0 0 1px var(--color-neutral-800);font-size:16px;line-height:1.5;letter-spacing:-0.008em;text-wrap:pretty">
+                              <sc-for list="{{ ph.narrProse }}" as="np" hint-placeholder-count="3">
+                                <span style="color:{{ np.fg }}">{{ np.text }} </span>
+                              </sc-for>
+                            </div>
+                            <div style="margin-top:auto;padding-top:var(--space-8);font-size:12px;color:var(--color-neutral-600);text-wrap:pretty">{{ ph.narrFoot }}</div>
+                          </div>
+                        </sc-if>
+
+                        <sc-if value="{{ ph.isTalk }}" hint-placeholder-val="{{ false }}">
+                          <div>
+                            <div style="font-size:26px;font-weight:500;letter-spacing:-0.022em;line-height:1.1;margin-top:var(--space-3)">{{ ph.talkTitle }}</div>
+                            <div style="font-size:14px;color:var(--color-neutral-400);margin-top:var(--space-3);text-wrap:pretty">{{ ph.talkSub }}</div>
+                            <sc-if value="{{ ph.hasVerdict }}" hint-placeholder-val="{{ false }}">
+                              <div style="margin-top:var(--space-6);padding:var(--space-4);border-radius:var(--radius-md);background:{{ ph.verdictBg }};box-shadow:0 0 0 1px {{ ph.verdictBd }}">
+                                <div style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:{{ ph.verdictTint }};margin-bottom:var(--space-2)">{{ ph.verdictKicker }}</div>
+                                <div style="font-size:15px;text-wrap:pretty">{{ ph.verdictHead }}</div>
+                                <div style="font-size:12px;color:var(--color-neutral-400);margin-top:var(--space-1);text-wrap:pretty">{{ ph.verdictBody }}</div>
+                              </div>
+                            </sc-if>
+                            <div style="margin-top:var(--space-8);font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:var(--space-3)">{{ ph.aliveHead }}</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:var(--space-2)">
+                              <sc-for list="{{ ph.alivePills }}" as="ap" hint-placeholder-count="8">
+                                <span style="font-size:12px;padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);background:var(--color-surface);color:{{ ap.fg }}">{{ ap.name }}</span>
+                              </sc-for>
+                            </div>
+                          </div>
+                        </sc-if>
+
+                        <sc-if value="{{ ph.isVote }}" hint-placeholder-val="{{ false }}">
+                          <div>
+                            <div style="font-size:22px;font-weight:500;letter-spacing:-0.02em;margin-top:var(--space-2)">Vote to eliminate</div>
+                            <div style="font-size:13px;color:var(--color-neutral-500);margin-top:var(--space-2)">{{ ph.voteSub }}</div>
+                            <div style="margin-top:var(--space-6);display:flex;flex-direction:column;gap:var(--space-2)">
+                              <sc-for list="{{ ph.ballot }}" as="bl" hint-placeholder-count="6">
+                                <button onClick="{{ bl.tap }}" style="cursor:pointer;font:inherit;text-align:left;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-4);border-radius:var(--radius-md);background:{{ bl.bg }};color:{{ bl.fg }};border:1px solid {{ bl.bd }};transition:background .16s cubic-bezier(.16,1,.3,1),border-color .16s" style-hover="background:var(--color-accent-900);border-color:var(--color-accent-700)" style-active="background:var(--color-accent-800)">
+                                  <span style="flex:1;font-size:14px">{{ bl.name }}</span>
+                                  <span style="font-size:11px;color:{{ bl.markFg }}">{{ bl.mark }}</span>
+                                </button>
+                              </sc-for>
+                            </div>
+                          </div>
+                        </sc-if>
+
+                        <sc-if value="{{ ph.isDead }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;flex-direction:column;height:100%">
+                            <div style="font-size:26px;font-weight:500;letter-spacing:-0.02em;line-height:1.1;margin-top:var(--space-3)">{{ ph.deadTitle }}</div>
+                            <div style="font-size:14px;color:var(--color-neutral-500);margin-top:var(--space-3);text-wrap:pretty">{{ ph.deadSub }}</div>
+
+                            <sc-if value="{{ ph.deadLive }}" hint-placeholder-val="{{ true }}">
+                              <div style="margin-top:var(--space-8);padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-surface);box-shadow:0 0 0 1px var(--color-neutral-600)">
+                                <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-3)">
+                                  <span style="width:5px;height:5px;border-radius:50%;background:var(--color-neutral-300);animation:nf-breathe 2.6s ease-in-out infinite"></span>
+                                  <span style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-neutral-300)">Dead channel</span>
+                                  <span style="margin-left:auto;font-size:11px;color:var(--color-neutral-600)">{{ ph.deadCount }}</span>
+                                </div>
+                                <div style="font-size:13px;color:var(--color-neutral-400);text-wrap:pretty">{{ ph.deadChatText }}</div>
+                                <sc-if value="{{ ph.hasDeadMates }}" hint-placeholder-val="{{ false }}">
+                                  <div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-4)">
+                                    <sc-for list="{{ ph.deadMates }}" as="dm" hint-placeholder-count="3">
+                                      <span style="font-size:12px;padding:var(--space-1) var(--space-3);border-radius:var(--radius-sm);background:var(--color-neutral-900);color:{{ dm.fg }}">{{ dm.name }}</span>
+                                    </sc-for>
+                                  </div>
+                                </sc-if>
+                              </div>
+                            </sc-if>
+                            <sc-if value="{{ ph.deadShut }}" hint-placeholder-val="{{ false }}">
+                              <div style="margin-top:var(--space-8);padding:var(--space-4);border-radius:var(--radius-md);background:var(--color-neutral-900)">
+                                <div style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:var(--space-2)">Dead channel closed</div>
+                                <div style="font-size:13px;color:var(--color-neutral-500);text-wrap:pretty">The game master is keeping the eliminated silent this session.</div>
+                              </div>
+                            </sc-if>
+                          </div>
+                        </sc-if>
+
+                        <sc-if value="{{ ph.isOver }}" hint-placeholder-val="{{ false }}">
+                          <div style="display:flex;flex-direction:column;justify-content:center;height:100%">
+                            <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent-400);margin-bottom:var(--space-3)">Session over</div>
+                            <div style="font-size:30px;font-weight:500;letter-spacing:-0.024em;line-height:1.05">{{ ph.overTitle }}</div>
+                            <div style="font-size:14px;color:var(--color-neutral-400);margin-top:var(--space-4)">{{ ph.overSub }}</div>
+                          </div>
+                        </sc-if>
+                      </div>
+                      </sc-if>
+
+                      <sc-if value="{{ ph.onChat }}" hint-placeholder-val="{{ false }}">
+                        <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:0 var(--space-8)">
+                          <div style="font-size:11px;letter-spacing:0.09em;text-transform:uppercase;color:{{ ph.chatTint }};margin-bottom:var(--space-3)">{{ ph.chatChannel }}</div>
+                          <div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:var(--space-3)">
+                            <sc-for list="{{ ph.chat }}" as="cm" hint-placeholder-count="3">
+                              <div>
+                                <div style="padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:{{ cm.bg }};box-shadow:0 0 0 1px {{ cm.ring }}">
+                                  <div style="font-size:11px;color:{{ cm.authorFg }};margin-bottom:var(--space-1)">{{ cm.author }}</div>
+                                  <div style="font-size:13px;color:var(--color-text);text-wrap:pretty">{{ cm.text }}</div>
+                                </div>
+                                <div style="display:flex;gap:var(--space-1);margin-top:var(--space-1);flex-wrap:wrap">
+                                  <sc-for list="{{ cm.reactions }}" as="rx" hint-placeholder-count="4">
+                                    <button onClick="{{ rx.tap }}" class="tag" style="cursor:pointer;font:inherit;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;background:{{ rx.bg }};color:{{ rx.fg }};border:1px solid {{ rx.bd }};transition:border-color .16s,background .16s" style-hover="border-color:var(--color-accent-700)">{{ rx.text }}</button>
+                                  </sc-for>
+                                </div>
+                              </div>
+                            </sc-for>
+                          </div>
+                          <sc-if value="{{ ph.chatEmpty }}" hint-placeholder-val="{{ true }}">
+                            <div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--color-neutral-600);text-align:center;max-width:26ch;margin:0 auto;text-wrap:pretty">{{ ph.chatEmptyText }}</div>
+                          </sc-if>
+                          <div style="display:flex;gap:var(--space-2);padding-top:var(--space-3)">
+                            <input class="input" value="{{ ph.draft }}" onChange="{{ ph.setDraft }}" placeholder="{{ ph.composerHint }}" disabled="{{ ph.composerOff }}" style="min-height:38px;flex:1;font-size:13px">
+                            <button class="btn btn-secondary" onClick="{{ ph.send }}" disabled="{{ ph.sendOff }}" style="height:38px">Send</button>
+                          </div>
+                        </div>
+                      </sc-if>
+
+                      <div style="padding:var(--space-4) var(--space-8) 0;margin-top:auto">
+                        <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-4);border-radius:var(--radius-md);background:{{ ph.micBg }};box-shadow:0 0 0 1px {{ ph.micRing }}">
+                          <sc-if value="{{ ph.micOn }}" hint-placeholder-val="{{ false }}">
+                            <svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor" style="color:{{ ph.micTint }}"><path d="M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V232a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z"></path></svg>
+                          </sc-if>
+                          <sc-if value="{{ ph.micOff }}" hint-placeholder-val="{{ true }}">
+                            <svg width="17" height="17" viewBox="0 0 256 256" fill="currentColor" style="color:{{ ph.micTint }}"><path d="M213.92,210.62a8,8,0,1,1-11.84,10.76L188.47,206.4A79.72,79.72,0,0,1,136,223.6V232a8,8,0,0,1-16,0v-8.4A80.11,80.11,0,0,1,48,144a8,8,0,0,1,16,0,64,64,0,0,0,113.09,40.86l-11.3-12.43A48,48,0,0,1,80,128V96.2L42.08,53.38A8,8,0,1,1,53.92,42.62ZM96,113.79V128a32,32,0,0,0,49.48,26.83ZM176,128V64A48,48,0,0,0,86.4,40.36a8,8,0,1,0,13.87,8A32,32,0,0,1,160,64v64a8,8,0,0,0,16,0Zm24,8a8,8,0,0,0-8,8,63.87,63.87,0,0,1-2.72,18.4,8,8,0,0,0,5.44,9.92A8,8,0,0,0,197,172a8,8,0,0,0,7.68-5.76A80.15,80.15,0,0,0,208,144,8,8,0,0,0,200,136Z"></path></svg>
+                          </sc-if>
+                          <div style="flex:1;min-width:0">
+                            <div style="font-size:12px;font-weight:500;color:{{ ph.micTint }}">{{ ph.micLabel }}</div>
+                            <div style="font-size:11px;color:var(--color-neutral-500)">{{ ph.hearsLabel }}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </x-import>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ isDebrief }}" hint-placeholder-val="{{ false }}">
+    <section data-screen-label="Debrief" style="max-width:1060px;margin:0 auto;padding:calc(var(--space-8) * 2) var(--space-8) calc(var(--space-8) * 4);animation:nf-in .5s cubic-bezier(.16,1,.3,1) both">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:var(--space-3)">{{ debriefKicker }}</div>
+      <h2 style="font-size:38px;letter-spacing:-0.025em;margin:0 0 var(--space-3)">{{ debriefTitle }}</h2>
+      <p style="font-size:15px;color:var(--color-neutral-400);max-width:52ch;margin:0 0 calc(var(--space-8) * 1.75)">{{ debriefSub }}</p>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:calc(var(--space-8) * 2);align-items:start">
+        <div>
+          <h4 style="margin:0 0 var(--space-4);font-size:20px;letter-spacing:-0.015em">Every card</h4>
+          <table class="table">
+            <thead><tr><th>Player</th><th>Role</th><th>Outcome</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ finalRoster }}" as="fr" hint-placeholder-count="12">
+                <tr>
+                  <td style="font-size:14px">{{ fr.name }}</td>
+                  <td><span class="tag" style="background:{{ fr.roleBg }};color:{{ fr.roleFg }}">{{ fr.role }}</span></td>
+                  <td style="font-size:13px;color:{{ fr.fg }}">{{ fr.outcome }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <h4 style="margin:0 0 var(--space-4);font-size:20px;letter-spacing:-0.015em">How it went</h4>
+          <sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ timeline }}" as="tl" hint-placeholder-count="4">
+                <div style="display:flex;gap:var(--space-4);padding:var(--space-4) 0;border-bottom:1px solid var(--color-divider)">
+                  <span style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--color-neutral-600);width:74px;flex:none;padding-top:var(--space-1)">{{ tl.when }}</span>
+                  <span style="flex:1">
+                    <span style="font-size:14px;display:block">{{ tl.name }}</span>
+                    <span style="font-size:12px;color:var(--color-neutral-500)">{{ tl.detail }}</span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ noHistory }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:var(--space-8);border-radius:var(--radius-md);background:var(--color-surface);font-size:13px;color:var(--color-neutral-500);text-wrap:pretty">Nobody has been eliminated yet. The timeline fills in as the rounds close.</div>
+          </sc-if>
+
+          <div style="margin-top:var(--space-8);padding-top:var(--space-8);border-top:1px solid var(--color-divider)">
+            <h4 style="margin:0 0 var(--space-1);font-size:20px;letter-spacing:-0.015em">Who moderates next</h4>
+            <div style="font-size:12px;color:var(--color-neutral-600);margin-bottom:var(--space-4);max-width:44ch;text-wrap:pretty">{{ handoffNote }}</div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-2);max-height:280px;overflow:auto">
+              <sc-for list="{{ modCandidates }}" as="mc" hint-placeholder-count="5">
+                <button onClick="{{ mc.pick }}" style="cursor:pointer;font:inherit;text-align:left;display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:{{ mc.bg }};color:var(--color-text);border:1px solid {{ mc.bd }};transition:background .16s cubic-bezier(.16,1,.3,1),border-color .16s" style-hover="background:var(--color-accent-900);border-color:var(--color-accent-700)" style-active="background:var(--color-accent-800)">
+                  <span style="width:24px;height:24px;border-radius:50%;background:var(--color-neutral-800);font-size:11px;display:inline-flex;align-items:center;justify-content:center;flex:none">{{ mc.initial }}</span>
+                  <span style="flex:1;font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ mc.name }}</span>
+                  <span style="font-size:11px;color:{{ mc.markFg }};white-space:nowrap">{{ mc.mark }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:var(--space-3);margin-top:var(--space-8);flex-wrap:wrap">
+            <button class="btn btn-primary" onClick="{{ playAgain }}" style="height:40px">{{ playAgainLabel }}</button>
+            <button class="btn btn-secondary" onClick="{{ newSession }}" style="height:40px">New session</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ profileShow }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="z-index:90">
+      <div class="dialog">
+        <div class="dialog-title">Your profile</div>
+        <div class="dialog-body">
+          <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-6)">
+            <span style="width:52px;height:52px;border-radius:50%;background:{{ profileAvatarBg }};color:{{ profileAvatarFg }};display:inline-flex;align-items:center;justify-content:center;font-size:22px;flex:none">{{ accountInitial }}</span>
+            <div style="min-width:0">
+              <div style="font-size:16px;font-weight:500">{{ accountName }}</div>
+              <div style="font-size:12px;color:var(--color-neutral-500)">{{ accountEmail }}</div>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:var(--space-6)">
+            <label>Display name</label>
+            <input class="input" value="{{ accountName }}" onChange="{{ setAccountName }}" style="min-height:40px">
+          </div>
+          <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-neutral-600);margin-bottom:var(--space-3)">Avatar tint</div>
+          <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-6)">
+            <sc-for list="{{ accentOpts }}" as="ac" hint-placeholder-count="3">
+              <button onClick="{{ ac.pick }}" aria-label="{{ ac.label }}" style="width:30px;height:30px;border-radius:var(--radius-sm);cursor:pointer;background:{{ ac.bg }};border:1px solid {{ ac.bd }};transition:border-color .16s" style-hover="border-color:var(--color-accent-400)"></button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:calc(var(--space-8) * 1.5)">
+            <sc-for list="{{ profileStats }}" as="ps" hint-placeholder-count="3">
+              <div>
+                <div style="font-size:22px;font-variant-numeric:tabular-nums">{{ ps.value }}</div>
+                <div style="font-size:11px;color:var(--color-neutral-600)">{{ ps.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" onClick="{{ signOut }}">Sign out</button>
+          <button class="btn btn-primary" onClick="{{ closeProfile }}">Done</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ confirmShow }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="z-index:80">
+      <div class="dialog">
+        <div class="dialog-title">{{ confirmTitle }}</div>
+        <div class="dialog-body" style="text-wrap:pretty">{{ confirmBody }}</div>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" onClick="{{ confirmCancel }}">Back</button>
+          <button class="btn btn-primary" onClick="{{ confirmOk }}">{{ confirmLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;audioState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;pills&quot;,&quot;channels&quot;,&quot;matrix&quot;],&quot;default&quot;:&quot;pills&quot;,&quot;tsType&quot;:&quot;'pills' | 'channels' | 'matrix'&quot;,&quot;section&quot;:&quot;Audio state&quot;},&quot;theatrical&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Copy&quot;},&quot;deadChat&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Rules&quot;},&quot;sessionPrice&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:4500,&quot;min&quot;:1000,&quot;max&quot;:20000,&quot;step&quot;:500,&quot;unit&quot;:&quot;NGN&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Payments&quot;},&quot;lobbySize&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:12,&quot;min&quot;:5,&quot;max&quot;:24,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Rules&quot;}}">
+const NAMES = ['Tunde','Amaka','Chidi','Zainab','Femi','Ngozi','Kelechi','Halima','Segun','Ifeoma','Bayo','Aisha','Uche','Yemi','Dami','Nneka','Rotimi','Sade','Obi','Kudi','Tola','Adaeze','Emeka','Bisi'];
+
+const PHASE_META = {
+  lobby:       { label: 'Lobby',            sub: 'Everyone can talk. Nothing is dealt yet.' },
+  reveal:      { label: 'Role reveal',      sub: 'Cards are on their screens. All audio is dropped so nobody gives it away.' },
+  sleep:       { label: 'Everyone sleep',   sub: 'Every audio subscription is dropped. Silence for the whole table.' },
+  mafia:       { label: 'Mafia wake up',    sub: 'The mafia tracks are subscribed to each other. Everyone else gets the lullaby instead of silence.' },
+  mafia_sleep: { label: 'Mafia sleep',      sub: 'The mafia channel is closed again. Back to silence.' },
+  doctor:      { label: 'Doctor wake up',   sub: 'No audio opens. The doctor answers you by tapping a name.' },
+  detective:   { label: 'Detective wake up',sub: 'No audio opens. Read the result back to them privately.' },
+  dawn:        { label: 'Dawn narration',   sub: 'Nobody knows who was taken until the narration says so.' },
+  day:         { label: 'Day phase',        sub: 'Every living player is subscribed to every other living player.' },
+  vote:        { label: 'Voting',           sub: 'Floor stays open. Taps are tallying below.' },
+  resolve:     { label: 'Resolution',       sub: 'Confirm the elimination to close the round.' }
+};
+
+const NEXT_LABEL = {
+  lobby: 'Deal roles and start',
+  reveal: 'Everyone sleep',
+  sleep: 'Mafia wake up',
+  mafia: 'Mafia sleep',
+  mafia_sleep: 'Doctor wake up',
+  doctor: 'Detective wake up',
+  detective: 'Begin the narration',
+  dawn: 'Open the day',
+  day: 'Call the vote',
+  vote: 'Close voting',
+  resolve: 'Confirm elimination'
+};
+
+const AUTO_SECS = {
+  reveal: 8, sleep: 4, mafia: 14, mafia_sleep: 4, doctor: 10, detective: 10, dawn: 30, day: 20, vote: 12, resolve: 6
+};
+
+const NEXT = { reveal:'sleep', sleep:'mafia', mafia:'mafia_sleep', mafia_sleep:'doctor', doctor:'detective', detective:'dawn', dawn:'day', day:'vote', vote:'resolve' };
+
+const BLURB = {
+  Mafia: 'You take one player each night. Say nothing in daylight that a villager would not say.',
+  Doctor: 'Each night you protect one player. You may protect yourself, but not twice in a row.',
+  Detective: 'Each night you learn one player\u2019s alignment. The game master tells you privately.',
+  Villager: 'No power. Your vote and your read are the whole job.'
+};
+
+const BEAT_MS = 5000;
+const REVEAL_BEAT = 4;
+
+const AUDIO = {
+  silent: { label: 'Silenced',      bg: 'var(--color-neutral-900)', fg: 'var(--color-neutral-500)', ring: '0 0 0 1px var(--color-neutral-800)', bd: 'var(--color-neutral-800)', tint: 'var(--color-neutral-600)', hears: 'No one can hear you' },
+  mafia:  { label: 'Mafia channel', bg: 'var(--color-accent-800)', fg: 'var(--color-accent-200)', ring: '0 0 0 1px var(--color-accent-700)', bd: 'var(--color-accent-700)', tint: 'var(--color-accent-400)', hears: 'Only the mafia can hear you' },
+  open:   { label: 'Open floor',    bg: 'transparent', fg: 'var(--color-accent-400)', ring: 'inset 0 0 0 1px var(--color-accent)', bd: 'var(--color-accent-700)', tint: 'var(--color-accent)', hears: 'Everyone alive can hear you' },
+  dead:   { label: 'Dead channel',  bg: 'transparent', fg: 'var(--color-neutral-200)', ring: 'inset 0 0 0 1px var(--color-neutral-500)', bd: 'var(--color-neutral-600)', tint: 'var(--color-neutral-300)', hears: 'Only the eliminated can hear you' }
+};
+
+const REACTIONS = ['Sus', 'Agree', 'Cleared', 'Doubt'];
+
+const LINES = {
+  day: ['Where was everyone last night?', 'That vote made no sense to me.', 'I will say it plain, I think it is the quiet one.', 'Slow down, we have time on this.', 'Nobody has claimed doctor yet.', 'I was quiet because I had nothing to add.'],
+  mafia: ['Take the loud one first.', 'The doctor is probably covering Amaka.', 'Agree with them in the morning, then split the vote.', 'Not tonight. Wait one round.']
+};
+
+const ACCENTS = [
+  { key: 'accent', label: 'Blurple', bg: 'var(--color-accent-800)', fg: 'var(--color-accent-200)' },
+  { key: 'neutral', label: 'Steel', bg: 'var(--color-neutral-800)', fg: 'var(--color-neutral-100)' },
+  { key: 'deep', label: 'Deep', bg: 'var(--color-accent-900)', fg: 'var(--color-accent-300)' }
+];
+
+class Lullaby {
+  constructor() { this.ctx = null; this.nodes = null; }
+
+  start() {
+    if (this.nodes) return;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!this.ctx) this.ctx = new Ctx();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    const t = this.ctx.currentTime;
+    const out = this.ctx.createGain();
+    out.gain.setValueAtTime(0, t);
+    out.gain.linearRampToValueAtTime(0.06, t + 2.5);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 620;
+    filter.Q.value = 0.6;
+    filter.connect(out);
+    out.connect(this.ctx.destination);
+    // an open fifth, slightly detuned, plus a breathing swell
+    const voices = [110, 164.81, 220, 329.63].map((hz, i) => {
+      const osc = this.ctx.createOscillator();
+      osc.type = i > 1 ? 'sine' : 'triangle';
+      osc.frequency.value = hz;
+      osc.detune.value = (i % 2 ? 6 : -6);
+      const g = this.ctx.createGain();
+      g.gain.value = i > 1 ? 0.16 : 0.34;
+      osc.connect(g); g.connect(filter);
+      osc.start(t);
+      return { osc, g };
+    });
+    const lfo = this.ctx.createOscillator();
+    lfo.frequency.value = 0.08;
+    const lfoGain = this.ctx.createGain();
+    lfoGain.gain.value = 130;
+    lfo.connect(lfoGain); lfoGain.connect(filter.frequency);
+    lfo.start(t);
+    this.nodes = { out, filter, voices, lfo, lfoGain };
+  }
+
+  stop() {
+    if (!this.nodes || !this.ctx) return;
+    const { out, voices, lfo } = this.nodes;
+    const t = this.ctx.currentTime;
+    out.gain.cancelScheduledValues(t);
+    out.gain.setValueAtTime(out.gain.value, t);
+    out.gain.linearRampToValueAtTime(0, t + 1.4);
+    voices.forEach(v => { try { v.osc.stop(t + 1.6); } catch (e) {} });
+    try { lfo.stop(t + 1.6); } catch (e) {}
+    this.nodes = null;
+  }
+}
+
+class Component extends DCLogic {
+  state = {
+    stage: 'account', account: null, authMode: 'signup', authError: null, sessions: 0,
+    form: { name: '', email: '', pass: '' }, profileShow: false,
+    messages: [], msgSeq: 0, drafts: {}, gmDraft: '', tabs: {}, seen: {},
+    paid: false, payPending: false, joining: false, seats: 12, code: '', joinName: 'Amaka',
+    micGranted: false, joined: false,
+    players: [], phase: 'lobby', round: 1, cfg: null, kills: 1,
+    mode: 'manual', moderator: null, nextMod: 'stay', hostSeatId: null, autoLeft: 0,
+    sound: true, beat: 0, pending: null, deadOpen: null,
+    night: { targets: [], protect: null, probe: null, probeSent: false },
+    votes: {}, tally: null, history: [], winner: null, announce: null, verdict: null,
+    viz: null, confirm: null, shownIds: []
+  };
+
+  componentDidMount() {
+    this._live = true;
+    this._onKey = (e) => {
+      if (this.state.stage !== 'table' || this.state.confirm) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); this.advance(); }
+    };
+    window.addEventListener('keydown', this._onKey);
+    const n = this.props.lobbySize;
+    if (n && n !== this.state.seats) this.setState({ seats: n });
+  }
+
+  componentWillUnmount() {
+    this._live = false;
+    window.removeEventListener('keydown', this._onKey);
+    if (this._voteTimer) clearInterval(this._voteTimer);
+    if (this._payTimer) clearTimeout(this._payTimer);
+    if (this._joinTimer) clearTimeout(this._joinTimer);
+    if (this._chatTimer) clearInterval(this._chatTimer);
+    this.stopAuto();
+    if (this._beatTimer) clearInterval(this._beatTimer);
+    if (this._beatOut) clearTimeout(this._beatOut);
+    if (this._pad) this._pad.stop();
+  }
+
+  // ── setup ───────────────────────────────────────────────────
+  killCap(s) {
+    const targetable = s.players.filter(p => p.alive && p.role !== 'Mafia').length;
+    const wanted = Math.max(1, s.kills || 1);
+    return targetable ? Math.min(wanted, targetable) : 0;
+  }
+
+  counts(seats, cfg) {
+    if (cfg) return cfg;
+    return { Mafia: Math.max(1, Math.round(seats * 0.25)), Doctor: 1, Detective: 1 };
+  }
+
+  pay() {
+    if (this.state.payPending) return;
+    this.setState({ payPending: true });
+    this._payTimer = setTimeout(() => {
+      if (!this._live) return;
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      this.setState(s => ({
+        paid: true, payPending: false, code, sessions: s.sessions + 1,
+        players: NAMES.slice(0, s.seats).map((name, i) => ({ id: i, name, role: null, alive: true }))
+      }));
+    }, 900);
+  }
+
+  joinRoom() {
+    if (this.state.joining || this.state.joined) return;
+    this.setState({ joining: true });
+    this._joinTimer = setTimeout(() => {
+      if (!this._live) return;
+      this.setState({ joined: true, joining: false });
+    }, 700);
+  }
+
+  // ── round machinery ─────────────────────────────────────────
+  assignRoles(s) {
+    const c = this.counts(s.seats, s.cfg);
+    const pool = [];
+    for (let i = 0; i < c.Mafia; i++) pool.push('Mafia');
+    for (let i = 0; i < c.Doctor; i++) pool.push('Doctor');
+    for (let i = 0; i < c.Detective; i++) pool.push('Detective');
+    while (pool.length < s.players.length) pool.push('Villager');
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+    }
+    const players = s.players.map((p, i) => ({ ...p, role: pool[i], alive: true }));
+    const first = r => (players.filter(p => p.role === r)[0] || null);
+    const shown = [first('Mafia'), first('Doctor'), first('Detective'), first('Villager')]
+      .filter(Boolean).map(p => p.id);
+    return {
+      players, shownIds: shown, phase: 'reveal', round: 1, history: [], winner: null,
+      announce: null, verdict: null, votes: {}, tally: null, beat: 0, pending: null,
+      night: { targets: [], protect: null, probe: null, probeSent: false }
+    };
+  }
+
+  randomFrom(list) { return list.length ? list[Math.floor(Math.random() * list.length)].id : null; }
+
+  winnerOf(players) {
+    const alive = players.filter(p => p.alive);
+    const m = alive.filter(p => p.role === 'Mafia').length;
+    if (m === 0) return 'town';
+    if (m * 2 >= alive.length) return 'mafia';
+    return null;
+  }
+
+  narrationFor(s, taken, saved) {
+    const list = n => n.length === 1 ? n[0] : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1];
+    const mafiaCount = s.players.filter(p => p.alive && p.role === 'Mafia').length;
+    let reveal;
+    if (!taken.length && saved.length) reveal = 'Everyone woke up. The doctor had reached ' + list(saved.map(v => v.name)) + ' first.';
+    else if (!taken.length) reveal = 'Everyone woke up. Nothing was taken from this town last night.';
+    else if (taken.length === 1) reveal = taken[0].name + ' did not wake up.';
+    else reveal = list(taken.map(v => v.name)) + ' did not wake up.';
+    return [
+      'The town settled. Doors were locked, lamps went out, and the street went quiet.',
+      mafiaCount === 1
+        ? 'Somewhere in the dark, one person was awake, and they had already chosen a name.'
+        : 'Somewhere in the dark, ' + mafiaCount + ' people were awake, and they agreed on a name.',
+      'The doctor worked late, at one bedside, without knowing whose door would be tried.',
+      'Someone watched a window until the light went out, and wrote a name down.',
+      reveal,
+      'Day ' + s.round + '. Whatever you know, you have to say out loud now.'
+    ];
+  }
+
+  beginDawn(s) {
+    const night = this.fillNight(s);
+    const picked = (night.targets || []).map(id => s.players.filter(p => p.id === id)[0]).filter(v => v && v.alive);
+    const saved = picked.filter(v => v.id === night.protect);
+    const taken = picked.filter(v => v.id !== night.protect);
+    const script = this.narrationFor(s, taken, saved);
+    return {
+      phase: 'dawn', beat: 0, night, verdict: null, votes: {}, tally: null,
+      announce: null,
+      pending: { takenIds: taken.map(v => v.id), script, applied: false }
+    };
+  }
+
+  closeDawn(s, phase) {
+    const pend = s.pending;
+    const ids = (pend && !pend.applied) ? pend.takenIds : [];
+    let players = s.players, history = s.history, announce = s.announce;
+    if (ids.length) {
+      players = s.players.map(p => (ids.indexOf(p.id) >= 0 ? { ...p, alive: false } : p));
+      history = s.history.concat(ids.map(id => {
+        const v = s.players.filter(p => p.id === id)[0];
+        return { when: 'Night ' + s.round, name: v.name, role: v.role, detail: 'Taken by the mafia. Card was ' + v.role + '.' };
+      }));
+    }
+    if (pend) announce = pend.script[REVEAL_BEAT];
+    return { phase, players, history, announce, pending: null, beat: 0, winner: this.winnerOf(players) };
+  }
+
+  nextBeat() {
+    this.setState(s => {
+      if (s.phase !== 'dawn' || !s.pending) return null;
+      const last = s.pending.script.length - 1;
+      if (s.beat >= last) return null;
+      const beat = s.beat + 1;
+      if (beat !== REVEAL_BEAT || s.pending.applied) return { beat };
+      const ids = s.pending.takenIds;
+      const players = ids.length
+        ? s.players.map(p => (ids.indexOf(p.id) >= 0 ? { ...p, alive: false } : p))
+        : s.players;
+      const history = ids.length
+        ? s.history.concat(ids.map(id => {
+            const v = s.players.filter(p => p.id === id)[0];
+            return { when: 'Night ' + s.round, name: v.name, role: v.role, detail: 'Taken by the mafia. Card was ' + v.role + '.' };
+          }))
+        : s.history;
+      return {
+        beat, players, history,
+        announce: s.pending.script[REVEAL_BEAT],
+        pending: { ...s.pending, applied: true },
+        winner: this.winnerOf(players)
+      };
+    }, () => this.syncBeats());
+  }
+
+  syncBeats() {
+    const s = this.state;
+    if (s.phase !== 'dawn' || s.mode !== 'auto' || s.winner || !s.pending) {
+      if (this._beatTimer) { clearInterval(this._beatTimer); this._beatTimer = null; }
+      return;
+    }
+    if (s.beat >= s.pending.script.length - 1) {
+      if (this._beatTimer) { clearInterval(this._beatTimer); this._beatTimer = null; }
+      if (!this._beatOut) {
+        this._beatOut = setTimeout(() => {
+          this._beatOut = null;
+          if (this._live && this.state.phase === 'dawn' && this.state.mode === 'auto') this.advance();
+        }, BEAT_MS);
+      }
+      return;
+    }
+    if (this._beatTimer) return;
+    this._beatTimer = setInterval(() => {
+      if (!this._live) { clearInterval(this._beatTimer); this._beatTimer = null; return; }
+      this.nextBeat();
+    }, BEAT_MS);
+  }
+
+  syncPad() {
+    if (!this._pad) this._pad = new Lullaby();
+    const s = this.state;
+    const wanted = s.sound && s.stage === 'table' && !s.winner &&
+      (s.phase === 'mafia' || s.phase === 'dawn');
+    if (wanted) this._pad.start(); else this._pad.stop();
+  }
+
+  applyNight(s, night) {
+    const picked = (night.targets || []).map(id => s.players.filter(p => p.id === id)[0]).filter(v => v && v.alive);
+    const saved = picked.filter(v => v.id === night.protect);
+    const taken = picked.filter(v => v.id !== night.protect);
+    const takenIds = taken.map(v => v.id);
+    let players = s.players, history = s.history;
+    if (takenIds.length) {
+      players = s.players.map(p => (takenIds.indexOf(p.id) >= 0 ? { ...p, alive: false } : p));
+      history = s.history.concat(taken.map(v => ({
+        when: 'Night ' + s.round, name: v.name, role: v.role,
+        detail: 'Taken by the mafia. Card was ' + v.role + '.'
+      })));
+    }
+    const list = names => names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+    let announce;
+    if (!picked.length) announce = 'The night passed with nobody taken.';
+    else if (!taken.length) announce = 'Nobody died. The doctor reached ' + list(saved.map(v => v.name)) + ' first.';
+    else {
+      announce = taken.length === 1
+        ? taken[0].name + ' did not survive the night.'
+        : list(taken.map(v => v.name)) + ' were taken in the night.';
+      if (saved.length) announce += ' The doctor reached ' + list(saved.map(v => v.name)) + ' in time.';
+    }
+    return { phase: 'day', players, history, announce, verdict: null, night, votes: {}, tally: null, winner: this.winnerOf(players) };
+  }
+
+  applyTally(s) {
+    const counts = {};
+    Object.keys(s.votes).forEach(k => { const v = s.votes[k]; counts[v] = (counts[v] || 0) + 1; });
+    const rows = s.players.filter(p => p.alive)
+      .map(p => ({ id: p.id, name: p.name, votes: counts[p.id] || 0 }))
+      .concat([{ id: 'skip', name: 'Skip the vote', votes: counts.skip || 0 }])
+      .sort((a, b) => b.votes - a.votes);
+    if (this._voteTimer) { clearInterval(this._voteTimer); this._voteTimer = null; }
+    return { phase: 'resolve', tally: rows };
+  }
+
+  autoRunning(s) {
+    return s.mode === 'auto' && s.stage === 'table' && s.phase !== 'lobby' && !s.winner;
+  }
+
+  stopAuto() {
+    if (this._autoTick) { clearInterval(this._autoTick); this._autoTick = null; }
+    if (this._autoFire) { clearTimeout(this._autoFire); this._autoFire = null; }
+  }
+
+  restartAuto() {
+    this.stopAuto();
+    const s = this.state;
+    if (!this.autoRunning(s)) {
+      if (s.autoLeft !== 0) this.setState({ autoLeft: 0 });
+      return;
+    }
+    if (s.phase === 'dawn') {
+      this.setState({ autoLeft: 0 });
+      return;
+    }
+    const secs = AUTO_SECS[s.phase] || 8;
+    this.setState({ autoLeft: secs });
+    this._autoTick = setInterval(() => {
+      if (!this._live) return this.stopAuto();
+      this.setState(x => ({ autoLeft: Math.max(0, x.autoLeft - 1) }));
+    }, 1000);
+    this._autoFire = setTimeout(() => {
+      this.stopAuto();
+      if (!this._live || !this.autoRunning(this.state)) return;
+      if (this.state.phase === 'resolve') this.confirmElim();
+      else this.advance();
+    }, secs * 1000);
+  }
+
+  setMode(mode) {
+    this.stopAuto();
+    if (this._beatTimer) { clearInterval(this._beatTimer); this._beatTimer = null; }
+    if (this._beatOut) { clearTimeout(this._beatOut); this._beatOut = null; }
+    this.setState(s => ({ mode, autoLeft: 0, confirm: mode === 'auto' ? null : s.confirm }), () => { this.restartAuto(); this.syncBeats(); });
+  }
+
+  fillNight(s) {
+    const night = { ...s.night };
+    const alive = s.players.filter(p => p.alive);
+    const cap = this.killCap(s);
+    night.targets = (night.targets || []).slice(0, cap);
+    const pool = alive.filter(p => p.role !== 'Mafia' && night.targets.indexOf(p.id) < 0);
+    while (night.targets.length < cap && pool.length) {
+      const i = Math.floor(Math.random() * pool.length);
+      night.targets = night.targets.concat([pool[i].id]);
+      pool.splice(i, 1);
+    }
+    return night;
+  }
+
+  advance() {
+    this.setState(s => {
+      if (s.winner) return null;
+      const ph = s.phase;
+      if (ph === 'lobby') return this.assignRoles(s);
+      if (ph === 'resolve') {
+        if (s.mode === 'auto') return null;
+        return { confirm: 'elim' };
+      }
+      const nxt = NEXT[ph];
+      if (!nxt) return null;
+      const night = { ...s.night };
+      const alive = s.players.filter(p => p.alive);
+      if (ph === 'mafia') {
+        const filled = this.fillNight(s);
+        night.targets = filled.targets;
+      }
+      if (ph === 'doctor' && night.protect === null) night.protect = this.randomFrom(alive);
+      if (ph === 'detective' && night.probe === null) night.probe = this.randomFrom(alive.filter(p => p.role !== 'Detective'));
+      if (nxt === 'dawn') return this.beginDawn(s);
+      if (nxt === 'day') {
+        if (ph === 'dawn') return this.closeDawn(s, 'day');
+        return this.applyNight(s, night);
+      }
+      if (nxt === 'resolve') return this.applyTally(s);
+      return { phase: nxt, night };
+    }, () => {
+      if (this.state.phase === 'vote' && !this._voteTimer) this.startVoting();
+      this.syncChatter();
+      this.restartAuto();
+      this.syncBeats();
+      this.syncPad();
+    });
+  }
+
+  jumpTo(phase) {
+    this.setState(s => {
+      if (s.phase === 'lobby' || s.winner) return null;
+      const dayLike = s.phase === 'day' || s.phase === 'vote' || s.phase === 'resolve';
+      if (dayLike && (phase === 'sleep' || phase === 'mafia')) {
+        return { phase, round: s.round + 1, votes: {}, tally: null, verdict: null, beat: 0, pending: null, night: { targets: [], protect: null, probe: null, probeSent: false } };
+      }
+      if (phase === 'dawn') return this.beginDawn(s);
+      if (s.phase === 'dawn' && (phase === 'day' || phase === 'vote')) {
+        return this.closeDawn(s, phase);
+      }
+      if (!dayLike && s.phase !== 'dawn' && (phase === 'day' || phase === 'vote')) {
+        const resolved = this.applyNight(s, this.fillNight(s));
+        return phase === 'vote' ? { ...resolved, phase: 'vote' } : resolved;
+      }
+      return { phase };
+    }, () => {
+      if (this.state.phase === 'vote' && !this._voteTimer) this.startVoting();
+      if (this.state.phase !== 'vote' && this._voteTimer) { clearInterval(this._voteTimer); this._voteTimer = null; }
+      this.syncChatter();
+      this.restartAuto();
+      this.syncBeats();
+      this.syncPad();
+    });
+  }
+
+  startVoting() {
+    const queue = this.state.players
+      .filter(p => p.alive && this.state.shownIds.indexOf(p.id) < 0)
+      .map(p => p.id);
+    let i = 0;
+    this._voteTimer = setInterval(() => {
+      if (!this._live || this.state.phase !== 'vote' || i >= queue.length) {
+        clearInterval(this._voteTimer); this._voteTimer = null; return;
+      }
+      const voter = queue[i++];
+      this.setState(s => {
+        const self = s.players.filter(p => p.id === voter)[0];
+        const others = s.players.filter(p => p.alive && p.id !== voter);
+        const pool = self.role === 'Mafia' ? others.filter(p => p.role !== 'Mafia') : others;
+        const pick = pool.length ? pool[Math.floor(Math.random() * pool.length)].id : 'skip';
+        const votes = { ...s.votes }; votes[voter] = pick;
+        return { votes };
+      });
+    }, 420);
+  }
+
+  confirmElim() {
+    this._afterElim = true;
+    this.setState(s => {
+      const top = s.tally && s.tally[0];
+      let players = s.players, history = s.history, announce, verdict;
+      if (!top || top.id === 'skip' || top.votes === 0) {
+        announce = 'The town could not agree. Nobody was eliminated.';
+      } else {
+        const v = s.players.filter(p => p.id === top.id)[0];
+        players = s.players.map(p => (p.id === top.id ? { ...p, alive: false } : p));
+        announce = v.name + ' was voted out and was ' + (v.role === 'Mafia' ? 'mafia' : 'town') + '.';
+        history = s.history.concat([{ when: 'Day ' + s.round, name: v.name, role: v.role, detail: 'Voted out ' + top.votes + ' to spare. Card was ' + v.role + '.' }]);
+      }
+      const left = players.filter(p => p.alive && p.role === 'Mafia').length;
+      const remain = left === 0
+        ? 'No mafia left standing.'
+        : left === 1 ? 'One mafia is still in the room.' : left + ' mafia are still in the room.';
+      if (!top || top.id === 'skip' || top.votes === 0) {
+        verdict = { kind: 'none', kicker: 'No verdict', head: 'The town could not agree.', body: 'Nobody was eliminated. ' + remain, when: 'Day ' + s.round };
+      } else {
+        const v = s.players.filter(p => p.id === top.id)[0];
+        verdict = v.role === 'Mafia'
+          ? { kind: 'caught', kicker: 'Mafia down', head: 'You caught one. ' + v.name + ' was mafia.', body: remain, when: 'Day ' + s.round }
+          : { kind: 'missed', kicker: 'Wrong call', head: 'You failed to catch the mafia.', body: v.name + ' was ' + (v.role === 'Villager' ? 'an ordinary villager' : 'the ' + v.role.toLowerCase()) + '. ' + remain, when: 'Day ' + s.round };
+      }
+      const w = this.winnerOf(players);
+      if (w) return { players, history, announce, verdict, winner: w, confirm: null };
+      return {
+        players, history, announce, verdict, winner: null, confirm: null,
+        phase: 'sleep', round: s.round + 1, votes: {}, tally: null,
+        night: { targets: [], protect: null, probe: null, probeSent: false }
+      };
+    }, () => this.restartAuto());
+  }
+
+  // ── player taps ─────────────────────────────────────────────
+  tapTarget(id) {
+    this.setState(s => {
+      const night = { ...s.night };
+      if (s.phase === 'mafia') {
+        const cur = (night.targets || []).slice();
+        const at = cur.indexOf(id);
+        if (at >= 0) cur.splice(at, 1);
+        else if (cur.length < this.killCap(s)) cur.push(id);
+        else { cur.shift(); cur.push(id); }
+        night.targets = cur;
+      }
+      else if (s.phase === 'doctor') night.protect = id;
+      else if (s.phase === 'detective') { night.probe = id; night.probeSent = false; }
+      return { night };
+    });
+  }
+
+  castVote(voter, target) {
+    this.setState(s => { const votes = { ...s.votes }; votes[voter] = target; return { votes }; });
+  }
+
+  deadIsOpen(s) {
+    if (s.deadOpen !== null) return s.deadOpen;
+    return this.props.deadChat !== false;
+  }
+
+  audioKey(p, s) {
+    if (!p.alive) return this.deadIsOpen(s) ? 'dead' : 'silent';
+    const ph = s.phase;
+    if (ph === 'lobby') return 'open';
+    if (ph === 'mafia' && p.role === 'Mafia') return 'mafia';
+    if (ph === 'day' || ph === 'vote' || ph === 'resolve') return 'open';
+    return 'silent';
+  }
+
+  audioFor(p, s) { return AUDIO[this.audioKey(p, s)]; }
+
+  roleTint(role) {
+    if (role === 'Mafia') return { bg: 'var(--color-accent-800)', fg: 'var(--color-accent-200)' };
+    if (role === 'Doctor' || role === 'Detective') return { bg: 'var(--color-neutral-800)', fg: 'var(--color-neutral-100)' };
+    return { bg: 'var(--color-neutral-900)', fg: 'var(--color-neutral-400)' };
+  }
+
+  modName(s) {
+    if (s.moderator) return s.moderator.name;
+    return (s.account && s.account.name) || 'You';
+  }
+
+  swapModerator(s, target) {
+    if (target === 'stay') return null;
+    if (target === 'host') {
+      if (!s.moderator) return null;
+      const players = s.players
+        .filter(p => p.id !== s.hostSeatId)
+        .concat([{ id: s.moderator.id, name: s.moderator.name, role: null, alive: true }]);
+      return { players, moderator: null, hostSeatId: null };
+    }
+    const incoming = s.players.filter(p => p.id === target)[0];
+    if (!incoming) return null;
+    const nextId = s.players.reduce((m, p) => Math.max(m, typeof p.id === 'number' ? p.id : 0), 0) + 1;
+    const outgoing = s.moderator || { id: nextId, name: this.modName(s) };
+    const players = s.players
+      .filter(p => p.id !== incoming.id)
+      .concat([{ id: outgoing.id, name: outgoing.name, role: null, alive: true }]);
+    return {
+      players,
+      moderator: { id: incoming.id, name: incoming.name },
+      hostSeatId: s.moderator ? s.hostSeatId : outgoing.id
+    };
+  }
+
+  modChoices(s) {
+    const list = [{ id: 'stay', name: this.modName(s), on: true }];
+    if (s.moderator) {
+      const host = (s.account && s.account.name) || 'You';
+      list.push({ id: 'host', name: host, on: false });
+    }
+    s.players.forEach(p => list.push({ id: p.id, name: p.name, on: false }));
+    return list;
+  }
+
+  pickModerator(target) {
+    this.setState(s => {
+      if (s.phase !== 'lobby') return null;
+      const swap = this.swapModerator(s, target);
+      if (!swap) return null;
+      const seated = swap.players.map(p => ({ ...p, role: null, alive: true }));
+      return {
+        players: seated, seats: seated.length,
+        moderator: swap.moderator, hostSeatId: swap.hostSeatId,
+        cfg: null, messages: [], msgSeq: 0, drafts: {}, tabs: {}, seen: {},
+        shownIds: seated.slice(0, 4).map(p => p.id)
+      };
+    });
+  }
+
+  handOff() {
+    this.setState(s => {
+      const swap = this.swapModerator(s, s.nextMod);
+      const players = swap ? swap.players : s.players;
+      const moderator = swap ? swap.moderator : s.moderator;
+      const hostSeatId = swap ? swap.hostSeatId : s.hostSeatId;
+      const seated = players.map(p => ({ ...p, role: null, alive: true }));
+      const base = { ...s, players: seated, moderator, seats: seated.length };
+      return Object.assign(
+        { stage: 'table', moderator, hostSeatId, players: seated, seats: seated.length, nextMod: 'stay' },
+        this.assignRoles(base),
+        { phase: 'lobby', cfg: null, messages: [], msgSeq: 0, drafts: {}, tabs: {}, seen: {}, verdict: null }
+      );
+    }, () => { this.restartAuto(); this.syncPad(); });
+  }
+
+  submitAuth() {
+    const f = this.state.form;
+    const signup = this.state.authMode === 'signup';
+    const email = (f.email || '').trim();
+    if (signup && !(f.name || '').trim()) return this.setState({ authError: 'Pick the name the table will see.' });
+    if (email.indexOf('@') < 1 || email.indexOf('.') < 0) return this.setState({ authError: 'That email address does not look right.' });
+    if ((f.pass || '').length < 8) return this.setState({ authError: 'Passwords need at least 8 characters.' });
+    const name = signup ? f.name.trim() : email.split('@')[0];
+    this.setState({
+      account: { name, email, accent: 'accent' },
+      authError: null, stage: 'setup', joinName: name
+    });
+  }
+
+  guest() {
+    this.setState({ account: { name: 'Guest host', email: 'Not signed in', accent: 'neutral' }, authError: null, stage: 'setup' });
+  }
+
+  signOut() {
+    if (this._pad) this._pad.stop();
+    if (this._beatTimer) { clearInterval(this._beatTimer); this._beatTimer = null; }
+    if (this._chatTimer) { clearInterval(this._chatTimer); this._chatTimer = null; }
+    if (this._voteTimer) { clearInterval(this._voteTimer); this._voteTimer = null; }
+    this.setState({
+      stage: 'account', account: null, profileShow: false, authMode: 'signup',
+      form: { name: '', email: '', pass: '' }, authError: null,
+      paid: false, payPending: false, joining: false, joined: false, micGranted: false, code: '',
+      players: [], phase: 'lobby', round: 1, history: [], winner: null, announce: null,
+      votes: {}, tally: null, shownIds: [], cfg: null, kills: 1, verdict: null, mode: 'manual', moderator: null, nextMod: 'stay', hostSeatId: null, autoLeft: 0, deadOpen: null,
+      beat: 0, pending: null,
+      messages: [], msgSeq: 0, drafts: {}, tabs: {}, seen: {},
+      night: { targets: [], protect: null, probe: null, probeSent: false }
+    });
+  }
+
+  canRead(viewer, m) {
+    if (m.channel === 'open') return true;
+    if (m.channel === 'mafia') return viewer.role === 'Mafia';
+    if (m.channel === 'dead') return !viewer.alive && this.deadIsOpen(this.state);
+    return false;
+  }
+
+  post(player, text) {
+    const body = (text || '').trim();
+    if (!body) return;
+    this.setState(s => {
+      const key = this.audioKey(player, s);
+      if (key === 'silent') return null;
+      const msg = { id: 'm' + s.msgSeq, author: player.name, authorId: player.id, channel: key, text: body, reactions: {} };
+      return { messages: s.messages.concat([msg]).slice(-60), msgSeq: s.msgSeq + 1 };
+    });
+  }
+
+  sendFrom(playerId) {
+    const s = this.state;
+    const p = s.players.filter(x => x.id === playerId)[0];
+    if (!p) return;
+    this.post(p, s.drafts[playerId]);
+    this.setState(st => { const d = { ...st.drafts }; d[playerId] = ''; return { drafts: d }; });
+  }
+
+  gmSend() {
+    const body = (this.state.gmDraft || '').trim();
+    if (!body) return;
+    this.setState(s => ({
+      messages: s.messages.concat([{ id: 'm' + s.msgSeq, author: 'Game master', authorId: 'gm', channel: 'open', text: body, reactions: {} }]).slice(-60),
+      msgSeq: s.msgSeq + 1, gmDraft: ''
+    }));
+  }
+
+  toggleReaction(mid, playerId, kind) {
+    this.setState(s => ({
+      messages: s.messages.map(m => {
+        if (m.id !== mid) return m;
+        const r = { ...m.reactions };
+        const list = (r[kind] || []).slice();
+        const i = list.indexOf(playerId);
+        if (i >= 0) list.splice(i, 1); else list.push(playerId);
+        r[kind] = list;
+        return { ...m, reactions: r };
+      })
+    }));
+  }
+
+  syncChatter() {
+    const chatty = st => (st.phase === 'day' || st.phase === 'vote' || st.phase === 'mafia') && !st.winner;
+    if (!chatty(this.state)) {
+      if (this._chatTimer) { clearInterval(this._chatTimer); this._chatTimer = null; }
+      return;
+    }
+    if (this._chatTimer) return;
+    this._chatTimer = setInterval(() => {
+      const st = this.state;
+      if (!this._live || !chatty(st)) { clearInterval(this._chatTimer); this._chatTimer = null; return; }
+      const pool = st.players.filter(p => p.alive && st.shownIds.indexOf(p.id) < 0 && (st.phase !== 'mafia' || p.role === 'Mafia'));
+      if (!pool.length) return;
+      const who = pool[Math.floor(Math.random() * pool.length)];
+      const lines = st.phase === 'mafia' ? LINES.mafia : LINES.day;
+      this.post(who, lines[Math.floor(Math.random() * lines.length)]);
+    }, 2600);
+  }
+
+  // ── view model ──────────────────────────────────────────────
+  renderVals() {
+    const s = this.state;
+    const price = this.props.sessionPrice ?? 4500;
+    const theatrical = this.props.theatrical !== false;
+    const viz = s.viz || this.props.audioState || 'pills';
+    const c = this.counts(s.seats, s.cfg);
+    const alive = s.players.filter(p => p.alive);
+    const dead = s.players.filter(p => !p.alive);
+    const meta = PHASE_META[s.phase] || PHASE_META.lobby;
+    const dealt = s.players.length > 0 && s.players[0].role !== null;
+    const dayish = s.phase === 'day' || s.phase === 'vote' || s.phase === 'resolve' || s.phase === 'lobby';
+    const initial = n => n.slice(0, 1);
+
+    const stages = [
+      { key: 'setup', label: 'Setup' },
+      { key: 'table', label: 'Console' },
+      { key: 'debrief', label: 'Debrief' }
+    ].map(st => ({
+      label: st.label,
+      bg: s.stage === st.key ? 'var(--color-accent-900)' : 'transparent',
+      fg: s.stage === st.key ? 'var(--color-accent-300)' : 'var(--color-neutral-500)',
+      go: () => this.setState({ stage: st.key })
+    }));
+
+    const roleCfg = [
+      { label: 'Mafia', count: c.Mafia, editable: true, key: 'Mafia' },
+      { label: 'Doctor', count: c.Doctor, editable: true, key: 'Doctor' },
+      { label: 'Detective', count: c.Detective, editable: true, key: 'Detective' },
+      { label: 'Villagers', count: Math.max(0, s.seats - c.Mafia - c.Doctor - c.Detective), editable: false, key: 'Villager' }
+    ].map(r => ({
+      ...r,
+      inc: () => this.setState(st => { const n = this.counts(st.seats, st.cfg); const cfg = { ...n }; cfg[r.key] = cfg[r.key] + 1; return { cfg }; }),
+      dec: () => this.setState(st => { const n = this.counts(st.seats, st.cfg); const cfg = { ...n }; cfg[r.key] = Math.max(0, cfg[r.key] - 1); return { cfg }; })
+    }));
+
+    // roster
+    const nameOf = id => { const p = s.players.filter(x => x.id === id)[0]; return p ? p.name : 'No vote'; };
+    const roster = s.players.map(p => {
+      const a = this.audioFor(p, s);
+      const rt = this.roleTint(p.role);
+      const v = s.votes[p.id];
+      return {
+        name: p.name,
+        role: dealt ? p.role : 'Undealt',
+        roleBg: dealt ? rt.bg : 'var(--color-neutral-900)', roleFg: dealt ? rt.fg : 'var(--color-neutral-600)',
+        status: p.alive ? 'Alive' : 'Eliminated',
+        statusFg: p.alive ? 'var(--color-text)' : 'var(--color-neutral-600)',
+        vote: v === undefined ? 'No vote' : (v === 'skip' ? 'Skip' : nameOf(v)),
+        audio: a.label, audioBg: a.bg, audioFg: a.fg, audioRing: a.ring,
+        dim: p.alive ? '1' : '0.5',
+        rowBg: s.shownIds.indexOf(p.id) >= 0 ? 'var(--color-accent-900)' : 'transparent',
+        showHint: s.shownIds.indexOf(p.id) >= 0 ? 'Already on a device' : 'Put ' + p.name + ' on a device',
+        show: () => this.setState(st => {
+          if (st.shownIds.indexOf(p.id) >= 0) return null;
+          return { shownIds: [p.id].concat(st.shownIds.slice(0, 3)) };
+        })
+      };
+    });
+
+    const audioRows = s.players.map(p => {
+      const a = this.audioFor(p, s);
+      return {
+        name: p.name, initial: initial(p.name), role: dealt ? p.role : 'Seat',
+        audio: a.label, bg: a.bg, fg: a.fg, ring: a.ring, bd: a.bd,
+        dim: p.alive ? '1' : '0.55'
+      };
+    });
+
+    // channels
+    const chip = kind => (kind === 'mafia'
+      ? { bg: 'var(--color-accent-800)', fg: 'var(--color-accent-200)' }
+      : kind === 'open' ? { bg: 'var(--color-accent-900)', fg: 'var(--color-accent-300)' } : { bg: 'var(--color-neutral-800)', fg: 'var(--color-neutral-300)' });
+    const mkChannel = (label, kind, members, note) => {
+      const t = AUDIO[kind];
+      return {
+        label, kind, tint: t.tint, bd: t.bd, note,
+        countText: members.length === 1 ? '1 player' : members.length + ' players',
+        members: members.map(p => ({ name: p.name, ...chip(kind) }))
+      };
+    };
+    const channels = [];
+    if (s.phase === 'mafia') {
+      const maf = alive.filter(p => p.role === 'Mafia');
+      channels.push(mkChannel('Mafia channel', 'mafia', maf, 'Subscribed to each other only.'));
+      channels.push(mkChannel('Silenced', 'silent', alive.filter(p => p.role !== 'Mafia'), 'Every incoming track dropped.'));
+    } else if (dayish) {
+      channels.push(mkChannel('Open floor', 'open', alive, 'Every living player hears every other.'));
+    } else {
+      channels.push(mkChannel('Silenced', 'silent', alive, 'No subscriptions anywhere on the table.'));
+    }
+    if (dead.length && this.deadIsOpen(s)) {
+      channels.push(mkChannel('Dead channel', 'dead', dead, 'Their own room. Open mics, kept away from the living.'));
+    }
+
+    // matrix
+    const hears = (speaker, listener) => {
+      if (speaker.id === listener.id) return 'self';
+      if (!speaker.alive || !listener.alive) {
+        if (!speaker.alive && !listener.alive && this.deadIsOpen(s)) return 'dead';
+        return 'off';
+      }
+      if (s.phase === 'mafia') return (speaker.role === 'Mafia' && listener.role === 'Mafia') ? 'mafia' : 'off';
+      if (dayish) return 'open';
+      return 'off';
+    };
+    const cellStyle = {
+      off:   { bg: 'var(--color-neutral-900)', ring: 'none' },
+      self:  { bg: 'transparent', ring: 'inset 0 0 0 1px var(--color-neutral-700)' },
+      mafia: { bg: 'var(--color-accent-600)', ring: 'none' },
+      open:  { bg: 'var(--color-accent-800)', ring: 'inset 0 0 0 1px var(--color-accent-700)' },
+      dead:  { bg: 'transparent', ring: 'inset 0 0 0 1px var(--color-accent-700)' }
+    };
+    const matrixCols = s.players.map(p => ({ initial: initial(p.name) }));
+    const matrixRows = s.players.map(sp => ({
+      name: sp.name,
+      fg: sp.alive ? 'var(--color-neutral-400)' : 'var(--color-neutral-700)',
+      cells: s.players.map(lp => {
+        const k = hears(sp, lp);
+        return { bg: cellStyle[k].bg, ring: cellStyle[k].ring };
+      })
+    }));
+    const matrixLegend = [
+      { label: 'Hears', bg: cellStyle.open.bg, ring: cellStyle.open.ring },
+      { label: 'Private channel', bg: cellStyle.mafia.bg, ring: cellStyle.mafia.ring },
+      { label: 'Dropped', bg: cellStyle.off.bg, ring: cellStyle.off.ring }
+    ];
+
+    const vizOpts = [
+      { key: 'pills', label: 'Per player' },
+      { key: 'channels', label: 'Channels' },
+      { key: 'matrix', label: 'Matrix' }
+    ].map(o => ({
+      label: o.label, on: viz === o.key,
+      shadow: viz === o.key ? 'inset 0 0 0 1px var(--color-accent)' : 'none',
+      fg: viz === o.key ? 'var(--color-accent)' : 'var(--color-text)',
+      pick: () => this.setState({ viz: o.key })
+    }));
+
+    // night panel
+    const mafiaNames = alive.filter(p => p.role === 'Mafia').map(p => p.name).join(', ');
+    const killCap = this.killCap(s);
+    const pickedNames = (s.night.targets || []).map(id => nameOf(id));
+    const probeP = s.night.probe !== null ? s.players.filter(p => p.id === s.night.probe)[0] : null;
+    const nightItems = [
+      { label: killCap === 1 ? 'Mafia target' : 'Mafia targets', value: pickedNames.length ? pickedNames.join(', ') : 'Not chosen', note: (mafiaNames ? 'Awake: ' + mafiaNames : 'No mafia left') + ' \u00b7 ' + pickedNames.length + ' of ' + killCap + ' chosen', tint: 'var(--color-accent-400)', bd: 'var(--color-accent-700)' },
+      { label: 'Doctor protects', value: s.night.protect === null ? 'Not chosen' : nameOf(s.night.protect), note: 'Ask them, then tap for them if they answer by voice.', tint: 'var(--color-neutral-300)', bd: 'var(--color-neutral-800)' },
+      { label: 'Detective checks', value: probeP ? probeP.name : 'Not chosen', note: probeP ? (s.night.probeSent ? 'Result delivered.' : 'Result ready to read back.') : 'Waiting on their pick.', tint: 'var(--color-neutral-300)', bd: 'var(--color-neutral-800)' }
+    ];
+
+    // tally
+    const totalVotes = Object.keys(s.votes).length;
+    const maxVotes = s.tally && s.tally.length ? Math.max(1, s.tally[0].votes) : 1;
+    const tallyRows = (s.tally || alive.map(p => ({ id: p.id, name: p.name, votes: 0 })).concat([{ id: 'skip', name: 'Skip the vote', votes: 0 }])
+      .sort((a, b) => b.votes - a.votes)).map((r, i) => {
+      const live = s.phase === 'vote';
+      const counts = {};
+      Object.keys(s.votes).forEach(k => { const v = s.votes[k]; counts[v] = (counts[v] || 0) + 1; });
+      const votes = live ? (counts[r.id] || 0) : r.votes;
+      const top = !live && i === 0 && votes > 0;
+      const mx = Math.max(1, maxVotes, votes);
+      return {
+        name: r.name, votes, hasVotes: votes > 0,
+        pct: Math.round((votes / mx) * 100) + '%',
+        bar: top ? 'var(--color-accent)' : 'var(--color-accent-700)',
+        bg: top ? 'var(--color-accent-900)' : 'transparent',
+        fg: votes > 0 ? 'var(--color-text)' : 'var(--color-neutral-600)'
+      };
+    });
+    const topRow = s.tally && s.tally[0];
+    const elimLabel = !topRow || topRow.id === 'skip' || topRow.votes === 0
+      ? 'Close the round with no elimination'
+      : 'Eliminate ' + topRow.name;
+
+    // chat, reactions and the account (text follows the same rule as the mics)
+    const noop = () => {};
+    const acct = s.account || { name: 'Guest host', email: 'Not signed in', accent: 'neutral' };
+    const accentDef = ACCENTS.filter(x => x.key === acct.accent)[0] || ACCENTS[0];
+    const gmChannel = AUDIO[s.phase === 'mafia' ? 'mafia' : (dayish ? 'open' : 'silent')];
+    const chatRows = s.messages.slice(-40).map(m => {
+      const t = AUDIO[m.channel];
+      const rx = REACTIONS.map(k => {
+        const n = (m.reactions[k] || []).length;
+        return { text: k + ' ' + n, count: n };
+      }).filter(x => x.count > 0);
+      return {
+        author: m.author, text: m.text, channel: t.label,
+        chBg: t.bg, chFg: t.fg, chRing: t.ring,
+        authorFg: m.authorId === 'gm' ? 'var(--color-accent-300)' : 'var(--color-text)',
+        reactions: rx, hasReactions: rx.length > 0
+      };
+    });
+
+    // phones
+    const shown = s.shownIds.length ? s.shownIds : s.players.slice(0, 4).map(p => p.id);
+    const phones = shown.map(id => {
+      const p = s.players.filter(x => x.id === id)[0];
+      if (!p) return null;
+      const a = this.audioFor(p, s);
+      const chOpen = this.audioKey(p, s) !== 'silent';
+      const tab = s.tabs[p.id] || 'room';
+      const readable = s.messages.filter(m => this.canRead(p, m));
+      const unread = Math.max(0, readable.length - (s.seen[p.id] || 0));
+      const chatFeed = readable.slice(-12).map(m => ({
+        author: m.authorId === 'gm' ? 'Game master' : (m.authorId === p.id ? 'You' : m.author),
+        text: m.text,
+        bg: (m.authorId === 'gm' || m.authorId === p.id) ? 'var(--color-accent-900)' : 'var(--color-surface)',
+        ring: m.authorId === 'gm' ? 'var(--color-accent-700)' : 'var(--color-neutral-800)',
+        authorFg: m.authorId === 'gm' ? 'var(--color-accent-300)' : 'var(--color-neutral-500)',
+        reactions: REACTIONS.map(k => {
+          const list = m.reactions[k] || [];
+          const on = list.indexOf(p.id) >= 0;
+          return {
+            text: list.length ? k + ' ' + list.length : k,
+            bg: on ? 'var(--color-accent-800)' : 'transparent',
+            fg: on ? 'var(--color-accent-200)' : 'var(--color-neutral-500)',
+            bd: on ? 'var(--color-accent-700)' : 'var(--color-neutral-800)',
+            tap: chOpen ? () => this.toggleReaction(m.id, p.id, k) : noop
+          };
+        })
+      }));
+      const rt = this.roleTint(p.role);
+      const isMafia = p.role === 'Mafia';
+      const acting = (s.phase === 'mafia' && isMafia) || (s.phase === 'doctor' && p.role === 'Doctor') || (s.phase === 'detective' && p.role === 'Detective');
+      let screen = 'idle';
+      if (s.phase === 'dawn') screen = (!p.alive && s.beat >= REVEAL_BEAT) ? 'dead' : 'narrate';
+      else if (s.winner) screen = 'over';
+      else if (!p.alive) screen = 'dead';
+      else if (s.phase === 'lobby') screen = 'wait';
+      else if (s.phase === 'reveal') screen = 'reveal';
+      else if (s.phase === 'day' || s.phase === 'resolve') screen = 'talk';
+      else if (s.phase === 'vote') screen = 'vote';
+      else if (acting) screen = 'act';
+
+      let actTitle = '', actSub = '', chosen = null, pool = [];
+      if (s.phase === 'mafia') { actTitle = killCap === 1 ? 'Choose tonight\u2019s target' : 'Choose ' + killCap + ' targets tonight'; actSub = killCap === 1 ? 'Only the mafia can hear you right now.' : 'Tap ' + killCap + ' names. Only the mafia can hear you right now.'; pool = alive.filter(x => x.role !== 'Mafia'); }
+      if (s.phase === 'doctor') { actTitle = 'Choose who you protect'; actSub = 'Your mic stays off. Tap and the game master sees it.'; chosen = s.night.protect; pool = alive; }
+      if (s.phase === 'detective') { actTitle = 'Choose who you investigate'; actSub = 'Your mic stays off. The result comes back privately.'; chosen = s.night.probe; pool = alive.filter(x => x.id !== p.id); }
+
+      const chosenIds = s.phase === 'mafia' ? (s.night.targets || []) : [chosen];
+      const targets = pool.map(t => {
+        const on = chosenIds.indexOf(t.id) >= 0;
+        return {
+          name: t.name, initial: initial(t.name),
+          bg: on ? 'var(--color-accent-900)' : 'var(--color-surface)', fg: 'var(--color-text)', bd: on ? 'var(--color-accent)' : 'var(--color-divider)',
+          mark: on ? 'Chosen' : '', markFg: 'var(--color-accent-400)',
+          tap: () => this.tapTarget(t.id)
+        };
+      });
+
+      const myVote = s.votes[p.id];
+      const ballot = alive.filter(x => x.id !== p.id).map(t => {
+        const on = myVote === t.id;
+        return {
+          name: t.name, bg: on ? 'var(--color-accent-900)' : 'var(--color-surface)', fg: 'var(--color-text)',
+          bd: on ? 'var(--color-accent)' : 'var(--color-divider)',
+          mark: on ? 'Your vote' : '', markFg: 'var(--color-accent-400)',
+          tap: () => this.castVote(p.id, t.id)
+        };
+      }).concat([{
+        name: 'Skip the vote',
+        bg: myVote === 'skip' ? 'var(--color-accent-900)' : 'var(--color-surface)', fg: 'var(--color-neutral-500)',
+        bd: myVote === 'skip' ? 'var(--color-accent)' : 'var(--color-divider)',
+        mark: myVote === 'skip' ? 'Your vote' : '', markFg: 'var(--color-accent-400)',
+        tap: () => this.castVote(p.id, 'skip')
+      }]);
+
+      const idleTitle = theatrical
+        ? (s.phase === 'reveal' ? 'Read your card.' : 'The town sleeps.')
+        : 'Night phase';
+      const lulling = s.sound && (s.phase === 'mafia' || s.phase === 'dawn');
+      const idleSub = s.phase === 'mafia'
+        ? (s.sound ? 'A lullaby is playing. Something is happening that you cannot hear.' : 'Something is happening that you cannot hear.')
+        : 'Your mic is held by the game master.';
+
+      return {
+        name: p.name, initial: initial(p.name),
+        role: dealt ? p.role : 'Seat', roleBg: rt.bg, roleFg: rt.fg,
+        roundText: s.phase === 'lobby' ? 'Lobby' : 'Round ' + s.round,
+        isWait: screen === 'wait', isReveal: screen === 'reveal', isIdle: screen === 'idle',
+        isAct: screen === 'act', isTalk: screen === 'talk', isVote: screen === 'vote',
+        isNarrating: screen === 'narrate',
+        narrKicker: s.beat >= REVEAL_BEAT ? 'The night, told back' : 'Dawn',
+        narrProse: (s.pending ? s.pending.script.slice(0, s.beat + 1) : []).map((text, i) => ({
+          text,
+          fg: i === s.beat ? 'var(--color-text)' : 'var(--color-neutral-500)'
+        })),
+        narrFoot: (s.pending && s.beat >= s.pending.script.length - 1)
+          ? 'The floor opens in a moment.'
+          : 'Listen. Nothing is decided yet.',
+        beatPips: (s.pending ? s.pending.script : [0, 0, 0, 0, 0, 0]).map((_, i) => ({
+          bg: i <= s.beat ? 'var(--color-accent-500)' : 'var(--color-neutral-800)'
+        })),
+        isDead: screen === 'dead', isOver: screen === 'over',
+        waitText: 'Waiting for ' + (s.players[0] ? s.players[0].name : 'the host') + ' to deal the cards. ' + s.players.length + ' of ' + s.seats + ' seats filled.',
+        lobbyNames: s.players.slice(0, 7).map(x => ({ name: x.name })),
+        roleBlurb: BLURB[p.role] || '',
+        cardBg: isMafia ? 'var(--color-accent-900)' : 'var(--color-surface)',
+        cardRing: isMafia ? 'var(--color-accent-700)' : 'var(--color-neutral-800)',
+        cardTint: isMafia ? 'var(--color-accent-400)' : 'var(--color-neutral-500)',
+        hasTeam: isMafia && alive.filter(x => x.role === 'Mafia' && x.id !== p.id).length > 0,
+        team: alive.filter(x => x.role === 'Mafia' && x.id !== p.id).map(x => ({ name: x.name })),
+        idleTitle, idleSub,
+        lulling,
+        lullText: 'Lullaby playing',
+        actTitle, actSub, targets,
+        hasResult: p.role === 'Detective' && s.night.probeSent && probeP,
+        resultText: probeP ? probeP.name + ' is ' + (probeP.role === 'Mafia' ? 'mafia.' : 'not mafia.') : '',
+        talkTitle: theatrical ? 'Day ' + s.round + ' breaks.' : 'Day ' + s.round,
+        talkSub: s.announce || 'The floor is open. Everyone alive can hear you.',
+        hasVerdict: !!s.verdict,
+        verdictKicker: s.verdict ? s.verdict.kicker : '',
+        verdictHead: s.verdict ? s.verdict.head : '',
+        verdictBody: s.verdict ? s.verdict.body : '',
+        verdictTint: s.verdict && s.verdict.kind === 'caught' ? 'var(--color-accent-300)' : 'var(--color-neutral-400)',
+        verdictBg: s.verdict && s.verdict.kind === 'caught' ? 'var(--color-accent-900)' : 'var(--color-surface)',
+        verdictBd: s.verdict && s.verdict.kind === 'caught' ? 'var(--color-accent-700)' : 'var(--color-neutral-800)',
+        aliveHead: 'Still in \u00b7 ' + alive.length,
+        alivePills: alive.map(x => ({ name: x.id === p.id ? x.name + ' (you)' : x.name, fg: x.id === p.id ? 'var(--color-accent-300)' : 'var(--color-neutral-400)' })),
+        voteSub: myVote === undefined ? 'One tap. You can change it until the game master closes voting.' : 'Locked in. Tap again to change.',
+        ballot,
+        deadTitle: theatrical ? 'You are out.' : 'Eliminated',
+        deadSub: 'Your card was ' + p.role + '. The living cannot hear you now, so speak freely in here.',
+        deadLive: this.deadIsOpen(s), deadShut: !this.deadIsOpen(s),
+        deadCount: dead.length === 1 ? 'Just you' : dead.length + ' in here',
+        deadMates: dead.filter(x => x.id !== p.id).map(x => ({ name: x.name, fg: 'var(--color-neutral-300)' })),
+        hasDeadMates: dead.length > 1,
+        deadChatText: dead.length > 1 ? 'You and ' + (dead.length - 1) + ' other eliminated ' + (dead.length - 1 === 1 ? 'player' : 'players') + ' can hear each other.' : 'Nobody else is out yet. It is quiet in here.',
+        overTitle: s.winner === 'mafia' ? 'The mafia took the town.' : 'The town cleared the mafia.',
+        overSub: 'You were ' + p.role + '.',
+        micLabel: a === AUDIO.open ? 'Mic live' : (a === AUDIO.mafia ? 'Mic live, private' : (a === AUDIO.dead ? 'Mic live, dead channel' : 'Muted by the game master')),
+        hearsLabel: a.hears, micTint: a.tint,
+        micBg: a === AUDIO.mafia ? 'var(--color-accent-900)' : 'var(--color-surface)',
+        micRing: a.bd,
+        micOn: a === AUDIO.open || a === AUDIO.mafia || a === AUDIO.dead,
+        micOff: !(a === AUDIO.open || a === AUDIO.mafia || a === AUDIO.dead),
+        onRoom: tab === 'room', onChat: tab === 'chat',
+        showRoom: () => this.setState(st => { const t = { ...st.tabs }; t[p.id] = 'room'; return { tabs: t }; }),
+        showChat: () => this.setState(st => {
+          const t = { ...st.tabs }; t[p.id] = 'chat';
+          const sn = { ...st.seen }; sn[p.id] = st.messages.filter(m => this.canRead(p, m)).length;
+          return { tabs: t, seen: sn };
+        }),
+        roomTabBg: tab === 'room' ? 'var(--color-accent-900)' : 'transparent',
+        roomTabFg: tab === 'room' ? 'var(--color-accent-300)' : 'var(--color-neutral-500)',
+        chatTabBg: tab === 'chat' ? 'var(--color-accent-900)' : 'transparent',
+        chatTabFg: tab === 'chat' ? 'var(--color-accent-300)' : 'var(--color-neutral-500)',
+        chatTabLabel: (unread > 0 && tab !== 'chat') ? 'Chat ' + unread : 'Chat',
+        chatTint: chOpen ? a.tint : 'var(--color-neutral-600)',
+        chatChannel: chOpen ? a.label : 'No channel open',
+        chat: chatFeed,
+        chatEmpty: chatFeed.length === 0,
+        chatEmptyText: chOpen
+          ? 'Nothing said in here yet.'
+          : 'Chat closes with your mic. It opens again when the game master opens a channel.',
+        draft: s.drafts[p.id] || '',
+        setDraft: (e) => { const v = e.target.value; this.setState(st => { const d = { ...st.drafts }; d[p.id] = v; return { drafts: d }; }); },
+        composerHint: chOpen ? 'Message the ' + a.label.toLowerCase() : 'Muted by the game master',
+        composerOff: !chOpen,
+        sendOff: !chOpen || !((s.drafts[p.id] || '').trim()),
+        send: () => this.sendFrom(p.id)
+      };
+    }).filter(Boolean);
+
+    // debrief
+    const finalRoster = s.players.map(p => {
+      const rt = this.roleTint(p.role);
+      return {
+        name: p.name, role: dealt ? p.role : 'Undealt', roleBg: rt.bg, roleFg: rt.fg,
+        outcome: p.alive ? (s.winner ? 'Survived' : 'Still in') : 'Eliminated',
+        fg: p.alive ? 'var(--color-text)' : 'var(--color-neutral-600)'
+      };
+    });
+
+
+    return {
+      // shell
+      stages, code: s.code, hasCode: !!s.code, devices: phones,
+      isAccount: s.stage === 'account', signedIn: !!s.account,
+      isSetup: s.stage === 'setup', isTable: s.stage === 'table', isDebrief: s.stage === 'debrief',
+
+      // account
+      isSignup: s.authMode === 'signup',
+      authOpts: [{ k: 'signup', l: 'Create account' }, { k: 'signin', l: 'Sign in' }].map(o => ({
+        label: o.l, on: s.authMode === o.k,
+        shadow: s.authMode === o.k ? 'inset 0 0 0 1px var(--color-accent)' : 'none',
+        fg: s.authMode === o.k ? 'var(--color-accent)' : 'var(--color-text)',
+        pick: () => this.setState({ authMode: o.k, authError: null })
+      })),
+      authCta: s.authMode === 'signup' ? 'Create account' : 'Sign in',
+      authError: s.authError, hasAuthError: !!s.authError,
+      fName: s.form.name, fEmail: s.form.email, fPass: s.form.pass,
+      setFName: (e) => { const v = e.target.value; this.setState(st => ({ form: { ...st.form, name: v } })); },
+      setFEmail: (e) => { const v = e.target.value; this.setState(st => ({ form: { ...st.form, email: v } })); },
+      setFPass: (e) => { const v = e.target.value; this.setState(st => ({ form: { ...st.form, pass: v } })); },
+      submitAuth: () => this.submitAuth(),
+      guest: () => this.guest(),
+
+      // profile
+      accountName: acct.name, accountEmail: acct.email,
+      accountInitial: (acct.name || '?').slice(0, 1).toUpperCase(),
+      profileAvatarBg: accentDef.bg, profileAvatarFg: accentDef.fg,
+      profileShow: s.profileShow,
+      openProfile: () => this.setState({ profileShow: true }),
+      closeProfile: () => this.setState({ profileShow: false }),
+      setAccountName: (e) => { const v = e.target.value; this.setState(st => ({ account: { ...(st.account || {}), name: v } })); },
+      accentOpts: ACCENTS.map(x => ({
+        label: x.label, bg: x.bg,
+        bd: acct.accent === x.key ? 'var(--color-accent-400)' : 'var(--color-divider)',
+        pick: () => this.setState(st => ({ account: { ...(st.account || {}), accent: x.key } }))
+      })),
+      profileStats: [
+        { value: s.sessions, label: s.sessions === 1 ? 'Session hosted' : 'Sessions hosted' },
+        { value: s.players.length, label: 'Seats filled' },
+        { value: dealt ? s.round : 0, label: 'Rounds run' }
+      ],
+      signOut: () => this.signOut(),
+
+      // chat
+      chatRows, chatEmpty: chatRows.length === 0,
+      chatNowLabel: gmChannel.label, chatNowBg: gmChannel.bg,
+      chatNowFg: gmChannel.fg, chatNowRing: gmChannel.ring,
+      gmDraft: s.gmDraft,
+      setGmDraft: (e) => this.setState({ gmDraft: e.target.value }),
+      gmSend: () => this.gmSend(),
+      gmSendOff: !((s.gmDraft || '').trim()),
+
+      // setup
+      seats: s.seats,
+      seatsText: 'up to ' + s.seats + ' seats',
+      priceText: '\u20a6' + price.toLocaleString('en-NG'),
+      ratioText: c.Mafia + ' mafia, 1 doctor, 1 detective at this size',
+      seatsUp: () => this.setState(st => ({ seats: Math.min(24, st.seats + 1), cfg: null })),
+      seatsDown: () => this.setState(st => ({ seats: Math.max(5, st.seats - 1), cfg: null })),
+      notPaid: !s.paid, paid: s.paid,
+      pay: () => this.pay(),
+      payPending: s.payPending,
+      payLabel: s.payPending ? 'Confirming payment' : 'Pay with Paystack',
+      payHint: s.payPending
+        ? 'Waiting on Paystack. The room code appears here when it clears.'
+        : 'Card, transfer or USSD. The room code unlocks on success.',
+      joinName: s.joinName,
+      setJoinName: (e) => this.setState({ joinName: e.target.value }),
+      micGranted: s.micGranted,
+      micLabel: s.micGranted ? 'Microphone allowed' : 'Allow microphone',
+      grantMic: () => this.setState({ micGranted: true }),
+      joinDisabled: !s.paid || !s.micGranted || s.joined || s.joining,
+      joinLabel: s.joined ? 'You are in the room' : (s.joining ? 'Joining' : 'Join session'),
+      join: () => this.joinRoom(),
+      enterDisabled: !s.joined,
+      enterHint: s.joined ? 'Players can keep arriving while you set the roles.' : 'Join from the phone first to see the console populated.',
+      enterTable: () => this.setState({ stage: 'table' }, () => this.restartAuto()),
+
+      // console
+      phaseLabel: meta.label, phaseSub: meta.sub, round: s.round,
+      phaseBg: dayish && s.phase !== 'lobby' ? 'var(--color-accent-900)' : 'var(--color-surface)',
+      phaseDot: dayish ? 'var(--color-accent-400)' : 'var(--color-neutral-600)',
+      nextLabel: NEXT_LABEL[s.phase] || 'Continue',
+      advance: () => this.advance(),
+      advanceDisabled: !!s.winner,
+      showJumps: s.phase !== 'lobby' && !s.winner,
+      jumps: [
+        { id: 'sleep', label: 'Everyone sleep' },
+        { id: 'mafia', label: 'Mafia wake up' },
+        { id: 'dawn', label: 'Dawn narration' },
+        { id: 'day', label: 'Day phase' },
+        { id: 'vote', label: 'Voting' }
+      ].map(j => ({
+        label: j.label,
+        bg: s.phase === j.id ? 'var(--color-accent-900)' : 'transparent',
+        fg: s.phase === j.id ? 'var(--color-accent-300)' : 'var(--color-neutral-400)',
+        bd: s.phase === j.id ? 'var(--color-accent-700)' : 'var(--color-divider)',
+        go: () => this.jumpTo(j.id)
+      })),
+      isLobby: s.phase === 'lobby', roleCfg,
+      deadNote: this.deadIsOpen(s)
+        ? 'The eliminated get their own room with open mics. The living never hear it.'
+        : 'The eliminated are silenced for the rest of the session.',
+      deadOpts: [{ k: true, l: 'Open' }, { k: false, l: 'Closed' }].map(o => ({
+        label: o.l, on: this.deadIsOpen(s) === o.k,
+        shadow: this.deadIsOpen(s) === o.k ? 'inset 0 0 0 1px var(--color-accent)' : 'none',
+        fg: this.deadIsOpen(s) === o.k ? 'var(--color-accent)' : 'var(--color-text)',
+        pick: () => this.setState({ deadOpen: o.k })
+      })),
+      soundOn: s.sound, soundOff: !s.sound,
+      soundLabel: s.sound ? 'Mute the room' : 'Unmute the room',
+      soundFg: s.sound ? 'var(--color-accent-400)' : 'var(--color-neutral-600)',
+      soundBd: s.sound ? 'var(--color-accent-700)' : 'var(--color-divider)',
+      toggleSound: () => this.setState(st => ({ sound: !st.sound }), () => this.syncPad()),
+      dawnShow: s.phase === 'dawn' && !!s.pending,
+      dawnHeading: s.mode === 'auto' ? 'The night, told back' : 'Read this out',
+      dawnHint: s.mode === 'auto'
+        ? 'Thirty seconds. The table hears it line by line and learns nothing early.'
+        : 'One line at a time, in your own pace. Nobody sees a death until line five.',
+      dawnManual: s.mode !== 'auto', dawnAuto: s.mode === 'auto',
+      dawnProgress: s.pending ? 'Line ' + (s.beat + 1) + ' of ' + s.pending.script.length : '',
+      dawnPct: s.pending ? Math.round(((s.beat + 1) / s.pending.script.length) * 100) + '%' : '0%',
+      dawnFoot: (s.pending && s.beat >= REVEAL_BEAT)
+        ? 'The names are out. Their phones now read Eliminated.'
+        : 'The soft pad is playing on every silenced phone.',
+      readDone: !!(s.pending && s.beat >= s.pending.script.length - 1),
+      readLabel: (s.pending && s.beat >= s.pending.script.length - 1)
+        ? 'Narration finished'
+        : (s.beat + 1 === REVEAL_BEAT ? 'Read the reveal' : 'Read the next line'),
+      readNext: () => this.nextBeat(),
+      dawnProse: (s.pending ? s.pending.script : []).map((text, i) => {
+        const now = i === s.beat, past = i < s.beat;
+        return {
+          text,
+          fg: now ? 'var(--color-text)' : (past ? 'var(--color-neutral-500)' : 'var(--color-neutral-700)'),
+          bg: now ? 'var(--color-accent-900)' : 'transparent',
+          ring: now ? '0 0 0 4px var(--color-accent-900)' : 'none'
+        };
+      }),
+      lobbyMods: this.modChoices(s).map(c => ({
+        name: c.name,
+        initial: c.name.slice(0, 1).toUpperCase(),
+        bg: c.on ? 'var(--color-accent-900)' : 'var(--color-surface)',
+        fg: 'var(--color-text)',
+        bd: c.on ? 'var(--color-accent)' : 'var(--color-divider)',
+        mark: c.on ? 'Running it' : '',
+        pick: () => this.pickModerator(c.id)
+      })),
+      isAuto: s.mode === 'auto', isManual: s.mode !== 'auto',
+      modeOpts: [{ k: 'manual', l: 'Manual' }, { k: 'auto', l: 'Automated' }].map(o => ({
+        label: o.l, on: s.mode === o.k,
+        shadow: s.mode === o.k ? 'inset 0 0 0 1px var(--color-accent)' : 'none',
+        fg: s.mode === o.k ? 'var(--color-accent)' : 'var(--color-text)',
+        pick: () => this.setMode(o.k)
+      })),
+      autoText: s.phase === 'lobby' ? 'Waiting on the deal' : (s.autoLeft > 0 ? s.autoLeft + 's' : 'Advancing'),
+      autoPct: (() => {
+        const total = AUTO_SECS[s.phase] || 8;
+        return Math.max(0, Math.min(100, Math.round((s.autoLeft / total) * 100))) + '%';
+      })(),
+      killsCount: s.kills,
+      killsNote: s.kills === 1
+        ? 'The mafia take one name each night. The doctor can still save it.'
+        : 'The mafia take up to ' + s.kills + ' names each night. The doctor still saves only one.',
+      killsUp: () => this.setState(st => ({ kills: Math.min(4, (st.kills || 1) + 1) })),
+      killsDown: () => this.setState(st => ({ kills: Math.max(1, (st.kills || 1) - 1) })),
+      verdictShow: !!s.verdict,
+      verdictKicker: s.verdict ? s.verdict.kicker : '',
+      verdictHead: s.verdict ? s.verdict.head : '',
+      verdictBody: s.verdict ? s.verdict.body : '',
+      verdictWhen: s.verdict ? s.verdict.when : '',
+      verdictTint: s.verdict && s.verdict.kind === 'caught' ? 'var(--color-accent-300)' : 'var(--color-neutral-400)',
+      verdictBg: s.verdict && s.verdict.kind === 'caught' ? 'var(--color-accent-900)' : 'var(--color-neutral-900)',
+      verdictBd: s.verdict && s.verdict.kind === 'caught' ? 'var(--color-accent-700)' : 'var(--color-neutral-800)',
+      showNightPanel: dealt && !dayish && s.phase !== 'reveal',
+      nightItems,
+      showProbe: s.phase === 'detective' && !!probeP,
+      probeText: probeP ? probeP.name + ' is ' + (probeP.role === 'Mafia' ? 'mafia.' : 'not mafia.') : '',
+      probeSent: s.night.probeSent,
+      probeBtn: s.night.probeSent ? 'Sent' : 'Send to detective',
+      sendProbe: () => this.setState(st => ({ night: { ...st.night, probeSent: true } })),
+      showTally: s.phase === 'vote' || s.phase === 'resolve',
+      voteStatus: s.phase === 'vote'
+        ? totalVotes + ' of ' + alive.length + ' votes in'
+        : 'Voting closed at ' + totalVotes + ' of ' + alive.length + ' votes',
+      tallyRows: tallyRows.filter(r => r.hasVotes),
+      tallyEmpty: tallyRows.filter(r => r.hasVotes).length === 0,
+      tallyRest: (() => {
+        const q = tallyRows.filter(r => !r.hasVotes).length;
+        return q === 0 ? '' : q + (q === 1 ? ' name has' : ' names have') + ' no votes.';
+      })(),
+      canEliminate: s.phase === 'resolve' && !s.winner,
+      elimLabel,
+      askElim: () => this.setState({ confirm: 'elim' }),
+      vizOpts, vizPills: viz === 'pills', vizChannels: viz === 'channels', vizMatrix: viz === 'matrix',
+      audioRows, channels, matrixCols, matrixRows, matrixLegend,
+      roster: roster, aliveText: dealt ? alive.length + ' alive of ' + s.players.length : s.players.length + ' seats filled',
+      winnerShow: !!s.winner,
+      winnerText: s.winner === 'mafia'
+        ? 'Mafia equal the town. Mafia win.'
+        : 'Every mafia is out. The town wins.',
+      goDebrief: () => this.setState({ stage: 'debrief' }),
+
+      // debrief
+      moderatorName: this.modName(s),
+      playAgainLabel: s.nextMod === 'stay' ? 'Same lobby, new game' : 'Hand over and deal',
+      handoffNote: 'Whoever takes the console leaves the table, and the outgoing moderator takes their seat. The table size stays the same.',
+      modCandidates: this.modChoices(s).map(c => {
+        const chosen = s.nextMod === c.id;
+        return {
+          name: c.name,
+          initial: c.name.slice(0, 1).toUpperCase(),
+          bg: chosen ? 'var(--color-accent-900)' : 'var(--color-surface)',
+          bd: chosen ? 'var(--color-accent)' : 'var(--color-divider)',
+          mark: chosen ? (c.id === 'stay' ? 'Staying on' : 'Takes the console') : '',
+          markFg: 'var(--color-accent-400)',
+          pick: () => this.setState({ nextMod: c.id })
+        };
+      }),
+      debriefKicker: s.winner ? 'Session closed' : 'In progress',
+      debriefTitle: s.winner
+        ? (s.winner === 'mafia' ? 'Mafia win' : 'Town wins')
+        : 'Nothing settled yet',
+      debriefSub: s.winner
+        ? 'Every card below, and the order people went out. Start again with the same lobby, or open a fresh session.'
+        : 'The game is still running. Come back here when a side wins, or start over.',
+      finalRoster,
+      timeline: s.history.map(h => ({ when: h.when, name: h.name, detail: h.detail })),
+      hasHistory: s.history.length > 0, noHistory: s.history.length === 0,
+      playAgain: () => this.handOff(),
+      newSession: () => this.setState({
+        stage: 'setup', paid: false, payPending: false, joining: false, code: '', joined: false, micGranted: false,
+        messages: [], msgSeq: 0, drafts: {}, gmDraft: '', tabs: {}, seen: {},
+        players: [], phase: 'lobby', round: 1, history: [], winner: null, announce: null,
+        votes: {}, tally: null, shownIds: [], cfg: null, kills: 1, verdict: null, moderator: null, nextMod: 'stay', hostSeatId: null, autoLeft: 0, deadOpen: null,
+        beat: 0, pending: null,
+        night: { targets: [], protect: null, probe: null, probeSent: false }
+      }),
+
+      // dialog
+      confirmShow: !!s.confirm,
+      confirmTitle: 'Confirm the elimination',
+      confirmBody: elimLabel === 'Close the round with no elimination'
+        ? 'No name has enough votes. The round closes with everyone still in.'
+        : elimLabel + '. Their card gets read out and they move to dead chat. This cannot be undone.',
+      confirmLabel: 'Do it',
+      confirmOk: () => this.confirmElim(),
+      confirmCancel: () => this.setState({ confirm: null })
+    };
+  }
+}
+
+</script>
+</body>
+</html>
