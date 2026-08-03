@@ -1,59 +1,62 @@
+import type { RoomView } from '../room-store/index.js';
+
 export const REALTIME_NAMESPACE = '/nightfall';
 
-// One room holds every connection for this step. Step 3 replaces it with the
-// crew room; the per-recipient emit below is what has to survive that change.
-export const HARNESS_ROOM = 'harness';
+export type RoomErrorCode =
+  | 'UNAUTHENTICATED'
+  | 'ROOM_NOT_FOUND'
+  | 'NOT_A_MEMBER'
+  | 'NOT_ENOUGH_PLAYERS'
+  | 'SESSION_ALREADY_STARTED'
+  | 'NOT_GM'
+  | 'GAME_NOT_STARTED'
+  | 'NOT_A_PLAYER'
+  | 'NOTHING_TO_REVERT'
+  | 'NOT_YOUR_ACTION'
+  | 'WRONG_PHASE'
+  | 'INVALID_TARGET'
+  | 'CONFLICT';
 
-export interface WelcomePayload {
-  connectionId: string;
-  name: string;
-  peerCount: number;
-}
-
-/** Sent to the socket that pinged, and to nobody else. Carries its own id. */
-export interface PongPayload {
-  kind: 'pong';
-  connectionId: string;
-  name: string;
-  serverTime: number;
-}
-
-/**
- * Broadcast to every socket except the one that pinged. Deliberately carries
- * no connection id — the asymmetry with PongPayload is the thing under test.
- */
-export interface PeerPingPayload {
-  kind: 'peer-ping';
-  peerName: string;
-  peerCount: number;
-  serverTime: number;
+export interface RoomErrorPayload {
+  code: RoomErrorCode;
+  message: string;
 }
 
 export interface ServerToClientEvents {
-  welcome: (payload: WelcomePayload) => void;
-  pong: (payload: PongPayload) => void;
-  peerPing: (payload: PeerPingPayload) => void;
+  /** Always the result of projectRoom for this recipient. Never raw state. */
+  roomState: (view: RoomView) => void;
+  roomError: (payload: RoomErrorPayload) => void;
 }
 
 export interface ClientToServerEvents {
-  ping: () => void;
+  startSession: () => void;
+  /** GM-only. The GM never names the target phase; the server owns legal order. */
+  advance: () => void;
+  forceKill: (targetId: string) => void;
+  forceRevive: (targetId: string) => void;
+  revertPhase: () => void;
+  endGame: () => void;
+  /** Authorized server-side by living role; the phase decides who may act. */
+  mafiaVote: (targetId: string) => void;
+  doctorSave: (targetId: string) => void;
+  detectiveCheck: (targetId: string) => void;
+  /** Public and live: the ballot is projected to everyone, never a secret. */
+  castVote: (targetId: string) => void;
+  clearVote: () => void;
 }
 
 export type InterServerEvents = Record<string, never>;
 
 export interface SocketData {
-  connectionId: string;
-  name: string;
+  crewCode: string;
+  playerId: string;
 }
 
-export const MAX_NAME_LENGTH = 40;
-
-export function readName(auth: unknown): string {
-  if (typeof auth === 'object' && auth !== null && 'name' in auth) {
-    const value = (auth as { name: unknown }).name;
-    if (typeof value === 'string' && value.trim() !== '') {
-      return value.trim().slice(0, MAX_NAME_LENGTH);
-    }
+/** The socket handshake carries the player JWT and nothing else. */
+export function readHandshakeToken(auth: unknown): string | null {
+  if (typeof auth === 'object' && auth !== null && 'token' in auth) {
+    const value = (auth as { token: unknown }).token;
+    if (typeof value === 'string' && value !== '') return value;
   }
-  return 'anonymous';
+  return null;
 }
