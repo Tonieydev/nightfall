@@ -12,7 +12,9 @@ export type Phase =
   | 'VOTE'
   | 'GAME_OVER';
 
-export type Cause = 'VOTE' | 'MAFIA';
+// 'GM' is a moderator override, not a game outcome — the durable record has to
+// tell a lynch apart from a correction, or the stats it feeds are wrong.
+export type Cause = 'VOTE' | 'MAFIA' | 'GM';
 
 export interface Player {
   id: string;
