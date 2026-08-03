@@ -1,0 +1,10 @@
+node_modules/
+.next/
+coverage/
+next-env.d.ts
+.oxlintrc.generated.json
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+.env
+.env.local
+.DS_Store

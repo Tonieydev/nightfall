@@ -1,0 +1,45 @@
+{
+  "name": "nightfall",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20.20.0",
+    "pnpm": "10.34.5"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "dev": "tsx watch server.ts --dev",
+    "build": "next build",
+    "start": "tsx server.ts",
+    "lint": "node scripts/build-oxlint-config.mjs && oxlint -c .oxlintrc.generated.json --deny-warnings src server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "next": "^15.5.22",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "tsx": "^4.23.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitest/coverage-v8": "^4.1.10",
+    "oxlint": "^1.77.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  }
+}
