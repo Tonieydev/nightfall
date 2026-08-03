@@ -1,0 +1,127 @@
+/* Nocturne first: styles.css is authoritative and carries its own base layer,
+   so Tailwind's preflight is deliberately not imported — importing theme and
+   utilities only leaves Nocturne as the single reset. */
+@import '../../design/nocturne/styles.css';
+
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* Tailwind ships no palette, spacing scale, radii, shadows or type of its own. */
+@theme {
+  --color-*: initial;
+  --spacing-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --font-*: initial;
+  --text-*: initial;
+}
+
+/* Nocturne's token names sit in the same namespaces Tailwind uses, so feeding
+   them straight into @theme emits a literal `--color-bg: var(--color-bg)`.
+   This alias breaks that self-reference. Tailwind still re-declares the token
+   names inside @layer theme, but unlayered declarations beat layered ones, so
+   Nocturne's :root remains the winning value. Nothing is defined twice: every
+   value below resolves back to design/nocturne/styles.css. */
+:root {
+  --nf-bg: var(--color-bg);
+  --nf-surface: var(--color-surface);
+  --nf-text: var(--color-text);
+  --nf-accent: var(--color-accent);
+  --nf-accent-2: var(--color-accent-2);
+  --nf-divider: var(--color-divider);
+
+  --nf-neutral-100: var(--color-neutral-100);
+  --nf-neutral-200: var(--color-neutral-200);
+  --nf-neutral-300: var(--color-neutral-300);
+  --nf-neutral-400: var(--color-neutral-400);
+  --nf-neutral-500: var(--color-neutral-500);
+  --nf-neutral-600: var(--color-neutral-600);
+  --nf-neutral-700: var(--color-neutral-700);
+  --nf-neutral-800: var(--color-neutral-800);
+  --nf-neutral-900: var(--color-neutral-900);
+
+  --nf-accent-100: var(--color-accent-100);
+  --nf-accent-200: var(--color-accent-200);
+  --nf-accent-300: var(--color-accent-300);
+  --nf-accent-400: var(--color-accent-400);
+  --nf-accent-500: var(--color-accent-500);
+  --nf-accent-600: var(--color-accent-600);
+  --nf-accent-700: var(--color-accent-700);
+  --nf-accent-800: var(--color-accent-800);
+  --nf-accent-900: var(--color-accent-900);
+
+  --nf-section: var(--color-section);
+  --nf-section-glow: var(--color-section-glow);
+  --nf-section-ghost: var(--color-section-ghost);
+
+  --nf-space-1: var(--space-1);
+  --nf-space-2: var(--space-2);
+  --nf-space-3: var(--space-3);
+  --nf-space-4: var(--space-4);
+  --nf-space-6: var(--space-6);
+  --nf-space-8: var(--space-8);
+
+  --nf-radius-sm: var(--radius-sm);
+  --nf-radius-md: var(--radius-md);
+  --nf-radius-lg: var(--radius-lg);
+
+  --nf-shadow-sm: var(--shadow-sm);
+  --nf-shadow-md: var(--shadow-md);
+  --nf-shadow-lg: var(--shadow-lg);
+
+  --nf-font-heading: var(--font-heading);
+  --nf-font-body: var(--font-body);
+}
+
+/* Every Tailwind utility resolves to a Nocturne token through the alias above. */
+@theme inline {
+  --color-bg: var(--nf-bg);
+  --color-surface: var(--nf-surface);
+  --color-text: var(--nf-text);
+  --color-accent: var(--nf-accent);
+  --color-accent-2: var(--nf-accent-2);
+  --color-divider: var(--nf-divider);
+
+  --color-neutral-100: var(--nf-neutral-100);
+  --color-neutral-200: var(--nf-neutral-200);
+  --color-neutral-300: var(--nf-neutral-300);
+  --color-neutral-400: var(--nf-neutral-400);
+  --color-neutral-500: var(--nf-neutral-500);
+  --color-neutral-600: var(--nf-neutral-600);
+  --color-neutral-700: var(--nf-neutral-700);
+  --color-neutral-800: var(--nf-neutral-800);
+  --color-neutral-900: var(--nf-neutral-900);
+
+  --color-accent-100: var(--nf-accent-100);
+  --color-accent-200: var(--nf-accent-200);
+  --color-accent-300: var(--nf-accent-300);
+  --color-accent-400: var(--nf-accent-400);
+  --color-accent-500: var(--nf-accent-500);
+  --color-accent-600: var(--nf-accent-600);
+  --color-accent-700: var(--nf-accent-700);
+  --color-accent-800: var(--nf-accent-800);
+  --color-accent-900: var(--nf-accent-900);
+
+  --color-section: var(--nf-section);
+  --color-section-glow: var(--nf-section-glow);
+  --color-section-ghost: var(--nf-section-ghost);
+
+  --spacing-1: var(--nf-space-1);
+  --spacing-2: var(--nf-space-2);
+  --spacing-3: var(--nf-space-3);
+  --spacing-4: var(--nf-space-4);
+  --spacing-6: var(--nf-space-6);
+  --spacing-8: var(--nf-space-8);
+
+  --radius-sm: var(--nf-radius-sm);
+  --radius-md: var(--nf-radius-md);
+  --radius-lg: var(--nf-radius-lg);
+
+  --shadow-sm: var(--nf-shadow-sm);
+  --shadow-md: var(--nf-shadow-md);
+  --shadow-lg: var(--nf-shadow-lg);
+
+  --font-heading: var(--nf-font-heading);
+  --font-body: var(--nf-font-body);
+}
