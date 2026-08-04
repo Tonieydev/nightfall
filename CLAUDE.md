@@ -6,7 +6,7 @@ Everyone joins one persistent voice room for the whole session. The GM's phase c
 
 **Full spec: `docs/nightfall-design-spec.md`.** Read it before any architectural decision. This file is the standing rules; the spec is the reasoning.
 
-**Current step: 4 — LiveKit integration and the audio graph.** Steps are defined in the spec, section 8. Do not build ahead of the current step.
+**Step 6 (durable record) is done. Current step: 7.** Steps are defined in the spec, section 8. Do not build ahead of the current step.
 
 ---
 
@@ -111,3 +111,11 @@ These are not preferences. Breaking one is a defect.
 - Single backend instance. Correct at this scale; it is the first thing that must break to scale horizontally.
 - Dev and prod share a Neon database. Be deliberate with migrations.
 - iOS Safari requires a user gesture both to capture the mic and to play remote audio. Missing the second means players join and hear silence.
+- **The tsx server and Next's webpack bundle have SEPARATE module registries.** One process, two copies of every module. This has bitten three times; each consequence below is one of them:
+  - **Module singletons don't cross.** Hold them on `globalThis` — see the room-store singleton.
+  - **Class identity doesn't cross.** Never `instanceof` on a domain error: the thrown class and the caught class are different objects, so the check silently returns false. Discriminate on a validated `code` string (`src/room-store/errors.ts`). A filesystem guard test enforces this.
+  - **The `Error` global DOES cross** — it is a realm global, so `instanceof Error` is fine.
+
+  Any new domain error extends `DomainError` and gets a code. Any cross-boundary discrimination is by validated string, never class identity.
+- **Neon tests never run on the default `pnpm test`.** Importing `@prisma/client` loads `.env` as a side effect, so `DATABASE_URL` is never absent — a gate on its presence silently will not fire. Postgres tests are gated on `NIGHTFALL_TEST_NEON=1`, set only by `pnpm test:neon`. Default `pnpm test` must show them skipped. Never let a Postgres test reach the shared prod database.
+- **Schema gap: `Crew.id` may diverge from `Crew.code`.** `Crew.id` defaults to `uuid()` and nothing ties it to the code. The write path no longer invents a key — it uses `connect: { code }` — so it cannot create a divergence, but the schema still permits one. The real fix is making `code` the primary key: a migration on the shared database with live foreign keys, deferred to step 8 and done deliberately. The code is safe; the schema is merely permissive.
