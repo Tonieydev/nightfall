@@ -6,6 +6,7 @@ import {
 } from '../game-core/index.js';
 import { chatFor, systemRecord, type ChatMessage, type SystemEvent } from './chat.js';
 import { MIN_LOBBY_TO_START } from './keys.js';
+import { narrationFor, type NarrationCard } from '../narration/script.js';
 import type { RoomDocument } from './types.js';
 
 export interface MemberView {
@@ -53,6 +54,12 @@ export interface RoomView {
   chat: ChatMessage[];
   /** The pinned strip. Facts only, and the same for everyone. */
   record: SystemEvent[];
+  /**
+   * The GM's teleprompter for the phase they are in — null for every other
+   * viewer, at every phase. A player who could read the narration would read
+   * ahead instead of listening to their friend, and the drama is the friend.
+   */
+  narration: NarrationCard | null;
 }
 
 function projectAudio(game: GameState, viewerId: string): AudioView {
@@ -91,6 +98,10 @@ export function projectRoom(doc: RoomDocument, viewerId: string): RoomView {
           },
     chat: chatFor(doc, viewerId),
     record: systemRecord(doc),
+    // Projected here rather than merged in by the console, so there is one
+    // place that decides who may see it — the same place that decides roles.
+    narration:
+      doc.game !== null && doc.gmPlayerId === viewerId ? narrationFor(doc.game.phase) : null,
     game: doc.game === null ? null : gameView(doc.game, viewerId),
     audio: doc.game === null ? null : projectAudio(doc.game, viewerId),
   };

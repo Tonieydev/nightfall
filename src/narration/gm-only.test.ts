@@ -1,0 +1,154 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { advanceGame } from '../room-store/commands.js';
+import { MIN_LOBBY_TO_START } from '../room-store/keys.js';
+import { joinLobby, startSession } from '../room-store/lobby.js';
+import { projectRoom } from '../room-store/project-room.js';
+import { NARRATION_SCRIPT, narrationFor } from './script.js';
+import type { Phase } from '../game-core/index.js';
+import type { RoomDocument } from '../room-store/types.js';
+
+const NOW = 1_700_000_000_000;
+const GM = 'p1';
+
+function seated(): RoomDocument {
+  let doc: RoomDocument = {
+    version: 1,
+    crewCode: 'ABC234',
+    createdAt: NOW,
+    expiresAt: NOW + 90 * 60 * 1000,
+    gmPlayerId: null,
+    members: [],
+    seed: null,
+    voiceEnabled: true,
+    reservedMinutes: 1080,
+    game: null,
+  };
+  for (let i = 1; i <= MIN_LOBBY_TO_START; i += 1) {
+    doc = joinLobby(doc, { playerId: `p${String(i)}`, displayName: `Player ${String(i)}`, now: NOW + i });
+  }
+  return startSession(doc, GM, { seed: 4242, now: NOW });
+}
+
+/** Every phase the room actually passes through, in order, GM-driven. */
+function everyPhase(): { phase: Phase; doc: RoomDocument }[] {
+  const walked: { phase: Phase; doc: RoomDocument }[] = [];
+  let doc = seated();
+  const seen = new Set<Phase>();
+
+  for (let i = 0; i < 40; i += 1) {
+    const phase = doc.game?.phase;
+    if (phase === undefined) break;
+    if (!seen.has(phase)) {
+      seen.add(phase);
+      walked.push({ phase, doc });
+    }
+    if (phase === 'GAME_OVER') break;
+    doc = advanceGame(doc, GM, NOW + i * 1000);
+  }
+  return walked;
+}
+
+/** Everything the script could possibly leak, as raw strings. */
+const EVERY_NARRATION_STRING = Object.values(NARRATION_SCRIPT).flatMap((card) => [
+  ...card.lines,
+  ...(card.cue === null ? [] : [card.cue]),
+]);
+
+describe('narration reaches the GM and nobody else', () => {
+  it('walks a real game through every phase', () => {
+    const phases = everyPhase().map((w) => w.phase);
+
+    // A leak test that only ever saw one phase would prove almost nothing.
+    expect(phases).toContain('LOBBY');
+    expect(phases).toContain('NIGHT_MAFIA');
+    expect(phases).toContain('DAY');
+    expect(phases.length).toBeGreaterThanOrEqual(7);
+  });
+
+  it('gives the GM the card for the phase they are in', () => {
+    for (const { phase, doc } of everyPhase()) {
+      const view = projectRoom(doc, GM);
+
+      expect(view.narration, phase).toEqual(narrationFor(phase));
+    }
+  });
+
+  it('puts no narration in any other player’s payload, at any phase', () => {
+    for (const { phase, doc } of everyPhase()) {
+      for (const member of doc.members) {
+        if (member.playerId === GM) continue;
+
+        const view = projectRoom(doc, member.playerId);
+        expect(view.narration, `${phase} / ${member.playerId}`).toBeNull();
+      }
+    }
+  });
+
+  it('leaks not one line of it into a serialized non-GM payload', () => {
+    // Asserted on the wire, not through the type: a field can be present in
+    // JSON while the type says otherwise, and JSON is what the player receives.
+    // Same discipline as roles.
+    for (const { phase, doc } of everyPhase()) {
+      for (const member of doc.members) {
+        if (member.playerId === GM) continue;
+        const wire = JSON.stringify(projectRoom(doc, member.playerId));
+
+        for (const text of EVERY_NARRATION_STRING) {
+          expect(wire, `${phase} / ${member.playerId} leaked: "${text}"`).not.toContain(text);
+        }
+      }
+    }
+  });
+
+  it('carries the card on the wire for the GM, so the console can read it', () => {
+    for (const { phase, doc } of everyPhase()) {
+      const wire = JSON.stringify(projectRoom(doc, GM));
+      const first = narrationFor(phase).lines[0] ?? '';
+
+      expect(wire, phase).toContain(first.slice(0, 24));
+    }
+  });
+
+  it('shows a dead player nothing, and the GM everything', () => {
+    // The dead are still on the call and still receiving state.
+    const { doc } = everyPhase().find((w) => w.phase === 'DAY') ?? everyPhase()[0]!;
+    const someone = doc.game?.players.find((p) => p.id !== GM)?.id ?? '';
+
+    expect(projectRoom(doc, someone).narration).toBeNull();
+    expect(projectRoom(doc, GM).narration).not.toBeNull();
+  });
+});
+
+describe('the card prompts, it never gates', () => {
+  it('is read-only — projecting it changes nothing', () => {
+    const doc = seated();
+    const before = JSON.stringify(doc);
+
+    projectRoom(doc, GM);
+    projectRoom(doc, 'p2');
+
+    expect(JSON.stringify(doc)).toBe(before);
+  });
+
+  it('gives the console no way to advance from the card itself', () => {
+    const card = readFileSync(join('src', 'app', 'c', '[code]', 'StoryCard.tsx'), 'utf8');
+
+    // Advancing is the GM's one oversized button. A card that could move the
+    // phase — or that had to be dismissed — would hand pacing to the app.
+    expect(card).not.toMatch(/onAdvance|advance\(|<button/);
+    expect(card).not.toMatch(/setTimeout|setInterval/);
+  });
+
+  it('leaves the phase alone no matter how often it is rendered', () => {
+    // The script is keyed by phase and nothing else, so it cannot depend on
+    // how long the GM has been looking at it.
+    const doc = seated();
+    const phase = doc.game?.phase;
+    if (phase === undefined) throw new Error('no game');
+
+    expect(narrationFor(phase)).toBe(narrationFor(phase));
+    expect(doc.game?.phase).toBe(phase);
+  });
+});

@@ -3,6 +3,7 @@
 import { ArrowRightIcon, CircleIcon, SkullIcon } from '@phosphor-icons/react';
 import { Countdown } from './Countdown';
 import { PHASE_LABEL, ROLE_LABEL } from './phase-labels';
+import { StoryCard } from './StoryCard';
 import type { RoomView } from '@/room-store';
 
 export interface GmActions {
@@ -39,6 +40,13 @@ export function GmConsole({ view, actions }: { view: RoomView; actions: GmAction
           {livingCount} of {players.length} players alive · you narrate, you hold no role
         </span>
       </p>
+
+      {/* Keyed on the phase so the card re-enters with the ground shift instead
+          of swapping its words under the GM mid-sentence. Null for anyone who
+          is not the GM — the projection decides that, not this component. */}
+      {view.narration === null ? null : (
+        <StoryCard key={game.phase} card={view.narration} phase={game.phase} />
+      )}
 
       {over ? (
         <div className="nf-result" role="alertdialog" aria-live="assertive">
