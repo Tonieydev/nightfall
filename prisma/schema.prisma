@@ -1,0 +1,136 @@
+// Nightfall's durable record. Written once, at game end, in one transaction —
+// never in the hot path. Live state lives in Redis; this is the copy that
+// outlives the room.
+//
+// The three enums below mirror game-core's Role, Team and Cause. They are not
+// derived from it — game-core is pure TypeScript and knows nothing about a
+// database — so the mapping is asserted by a test rather than trusted.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Runtime goes through Neon's pooler; migrations must not, so they take the
+  // direct endpoint. Dev and prod share this database — be deliberate here.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  VILLAGER
+  MAFIA
+  DOCTOR
+  DETECTIVE
+}
+
+enum Team {
+  TOWN
+  MAFIA
+}
+
+enum Cause {
+  VOTE
+  MAFIA
+  GM
+}
+
+enum CrewRole {
+  HOST
+  MEMBER
+}
+
+model Crew {
+  /// The crew code IS the crew's identity: permanent, unique, and the thing
+  /// pinned in the group chat. A separate uuid id only ever created the chance
+  /// for the two to disagree, which they did.
+  code         String   @id
+  name         String
+  hostPlayerId String
+  createdAt    DateTime @default(now())
+  lastPlayedAt DateTime?
+
+  memberships CrewMembership[]
+  sessions    Session[]
+}
+
+model Player {
+  id        String   @id
+  /// Nullable until claimed; unique when set, and always lowercased. Never
+  /// displayed to another player and never present in projected state.
+  email          String?   @unique
+  emailClaimedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  /// Set when this row lost a merge: the human already had an identity, and
+  /// this one was a second device that had not claimed yet. A soft delete, so
+  /// the merge stays auditable and a mistaken one can be unwound.
+  mergedIntoId String?
+  mergedInto   Player?  @relation("PlayerMerge", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  mergedFrom   Player[] @relation("PlayerMerge")
+  /// Set together with mergedIntoId, or on its own when a player deletes their
+  /// record. A row here never disappears — its history belongs to the crew.
+  deletedAt    DateTime?
+
+  memberships    CrewMembership[]
+  sessionPlayers SessionPlayer[]
+
+  @@index([mergedIntoId])
+}
+
+model CrewMembership {
+  id          String   @id @default(uuid())
+  crewId      String
+  playerId    String
+  /// Binds to the membership, not the player: one human, one name per crew.
+  displayName String
+  role        CrewRole @default(MEMBER)
+  joinedAt    DateTime @default(now())
+
+  crew   Crew   @relation(fields: [crewId], references: [code], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([crewId, playerId])
+}
+
+model Session {
+  /// Deterministic — roomCode plus the room's creation instant — so a retried
+  /// or double-fired write upserts the same row instead of inserting a second.
+  id         String   @id
+  crewId     String
+  roomCode   String
+  /// The GM narrates and holds no role, so they are recorded here and never
+  /// appear in sessionPlayers.
+  gmPlayerId String
+  /// Replays the role assignment for dispute resolution.
+  seed       BigInt
+  startedAt  DateTime
+  endedAt    DateTime
+  seatCount  Int
+  winner     Team?
+  config     Json
+
+  crew    Crew            @relation(fields: [crewId], references: [code], onDelete: Cascade)
+  players SessionPlayer[]
+
+  @@unique([roomCode, startedAt])
+  @@index([crewId])
+}
+
+model SessionPlayer {
+  id                String  @id @default(uuid())
+  sessionId         String
+  playerId          String
+  role              Role
+  survived          Boolean
+  eliminatedAtPhase Int?
+  eliminatedBy      Cause?
+  wasWinner         Boolean
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  player  Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, playerId])
+  @@index([playerId])
+}
