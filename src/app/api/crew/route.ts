@@ -1,4 +1,4 @@
-import { CrewCodeExhaustedError, getRoomStore } from '@/room-store';
+import { domainErrorCode, getRoomStore } from '@/room-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,8 @@ export async function POST(request: Request): Promise<Response> {
     const crew = await getRoomStore().crew.create(readName(body));
     return Response.json({ code: crew.code, name: crew.name }, { status: 201 });
   } catch (error) {
-    if (error instanceof CrewCodeExhaustedError) {
+    // By code, not by class: see the note in src/room-store/errors.ts.
+    if (domainErrorCode(error) === 'CREW_CODE_EXHAUSTED') {
       return Response.json({ error: 'could not allocate a crew code' }, { status: 503 });
     }
     throw error;
