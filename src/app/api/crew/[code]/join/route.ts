@@ -8,6 +8,7 @@ import {
   SessionAlreadyStartedError,
   getRoomStore,
   isCrewCode,
+  parseDisplayName,
   joinLobby,
   normaliseCrewCode,
 } from '@/room-store';
@@ -19,16 +20,17 @@ interface JoinBody {
   playerId: string | null;
 }
 
-function readBody(body: unknown): JoinBody | null {
+function readBody(body: unknown, crewCode: string): JoinBody | null {
   if (typeof body !== 'object' || body === null) return null;
 
-  const name = 'displayName' in body ? (body as { displayName: unknown }).displayName : undefined;
-  if (typeof name !== 'string' || name.trim() === '') return null;
+  const raw = 'displayName' in body ? (body as { displayName: unknown }).displayName : undefined;
+  const displayName = parseDisplayName(raw, crewCode);
+  if (displayName === null) return null;
 
   const id = 'playerId' in body ? (body as { playerId: unknown }).playerId : undefined;
 
   return {
-    displayName: name.trim().slice(0, 24),
+    displayName,
     playerId: typeof id === 'string' && id !== '' ? id : null,
   };
 }
@@ -42,9 +44,12 @@ export async function POST(
     return Response.json({ error: 'that is not a crew code' }, { status: 400 });
   }
 
-  const parsed = readBody(await request.json().catch(() => null));
+  const parsed = readBody(await request.json().catch(() => null), code);
   if (parsed === null) {
-    return Response.json({ error: 'a display name is required' }, { status: 400 });
+    return Response.json(
+      { error: 'pick a name for yourself — the crew code is not a name' },
+      { status: 400 },
+    );
   }
 
   const store = getRoomStore();

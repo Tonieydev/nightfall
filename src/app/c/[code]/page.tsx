@@ -124,7 +124,9 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
                 className="input"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                autoComplete="nickname"
+                // The join field sits one tap from a pinned crew code; autofill
+                // dropping that in is the one way a roster fills with codes.
+                autoComplete="off"
                 maxLength={24}
                 enterKeyHint="go"
               />

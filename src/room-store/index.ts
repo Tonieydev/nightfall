@@ -38,6 +38,7 @@ export { DEFAULT_GAME_CONFIG } from './lobby.js';
 export { CrewCodeExhaustedError } from './crew.js';
 export { RoomNotFoundError, VersionConflictError } from './store.js';
 export { isCrewCode, normaliseCrewCode } from './crew-code.js';
+export { MAX_DISPLAY_NAME, parseDisplayName } from './display-name.js';
 export { projectRoom } from './project-room.js';
 export { MAX_SEATS, MIN_LOBBY_TO_START, MIN_PLAYERS_TO_START, ROOM_TTL_SECONDS } from './keys.js';
 export type { MemberView, RoomView, SelfView } from './project-room.js';
