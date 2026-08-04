@@ -1,3 +1,6 @@
+import { MAX_CONCURRENT_ROOMS_DEFAULT } from './room-store/keys.js';
+import { MINUTE_BUDGET_DEFAULT } from './room-store/minutes.js';
+
 function required(name: string): string {
   const value = process.env[name];
   if (value === undefined || value === '') {
@@ -17,6 +20,10 @@ function intOr(name: string, fallback: number): number {
 }
 
 export interface ServerConfig {
+  minuteBudget: number;
+  livekitApiKey: string;
+  livekitApiSecret: string;
+  livekitUrl: string;
   /** True when state lives in process memory instead of Upstash. Dev only. */
   memoryRedis: boolean;
   upstashUrl: string;
@@ -42,7 +49,11 @@ export function loadServerConfig(): ServerConfig {
       upstashUrl: '',
       upstashToken: '',
       jwtSecret: process.env['JWT_SECRET'] ?? DEV_JWT_SECRET,
-      maxConcurrentRooms: intOr('MAX_CONCURRENT_ROOMS', 25),
+      livekitApiKey: process.env['LIVEKIT_API_KEY'] ?? '',
+      livekitApiSecret: process.env['LIVEKIT_API_SECRET'] ?? '',
+      livekitUrl: process.env['LIVEKIT_URL'] ?? '',
+      maxConcurrentRooms: intOr('MAX_CONCURRENT_ROOMS', MAX_CONCURRENT_ROOMS_DEFAULT),
+      minuteBudget: intOr('LIVEKIT_MINUTE_BUDGET', MINUTE_BUDGET_DEFAULT),
       killSwitch: process.env['ROOMS_KILL_SWITCH'] === 'true',
     };
   }
@@ -52,7 +63,11 @@ export function loadServerConfig(): ServerConfig {
     upstashUrl: required('UPSTASH_REDIS_REST_URL'),
     upstashToken: required('UPSTASH_REDIS_REST_TOKEN'),
     jwtSecret: required('JWT_SECRET'),
-    maxConcurrentRooms: intOr('MAX_CONCURRENT_ROOMS', 25),
+    livekitApiKey: required('LIVEKIT_API_KEY'),
+    livekitApiSecret: required('LIVEKIT_API_SECRET'),
+    livekitUrl: required('LIVEKIT_URL'),
+    maxConcurrentRooms: intOr('MAX_CONCURRENT_ROOMS', MAX_CONCURRENT_ROOMS_DEFAULT),
+    minuteBudget: intOr('LIVEKIT_MINUTE_BUDGET', MINUTE_BUDGET_DEFAULT),
     // Flip this to stop new rooms without a redeploy. Absent means open.
     killSwitch: process.env['ROOMS_KILL_SWITCH'] === 'true',
   };

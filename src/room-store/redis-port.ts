@@ -21,6 +21,11 @@ export interface RedisPort {
   del(key: string): Promise<void>;
   incr(key: string): Promise<number>;
   decr(key: string): Promise<number>;
+  /**
+   * Atomic add-and-return. `delta` may be negative. `ttlSeconds` refreshes the
+   * key's expiry so a month counter evicts itself once nothing writes to it.
+   */
+  incrBy(key: string, delta: number, ttlSeconds?: number): Promise<number>;
   /** Remaining TTL in seconds; -1 when the key has none, -2 when it is gone. */
   ttl(key: string): Promise<number>;
 }

@@ -86,6 +86,16 @@ export class MemoryRedis implements RedisPort {
     return Promise.resolve(next);
   }
 
+  incrBy(key: string, delta: number, ttlSeconds?: number): Promise<number> {
+    const entry = this.#live(key);
+    const next = Number(entry?.value ?? '0') + delta;
+    this.#entries.set(key, {
+      value: String(next),
+      expiresAt: ttlSeconds === undefined ? (entry?.expiresAt ?? null) : this.#expiryFor(ttlSeconds),
+    });
+    return Promise.resolve(next);
+  }
+
   ttl(key: string): Promise<number> {
     const entry = this.#live(key);
     if (entry === null) return Promise.resolve(-2);

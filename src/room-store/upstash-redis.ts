@@ -60,6 +60,14 @@ export function createUpstashRedis(url: string, token: string): RedisPort {
       return redis.decr(key);
     },
 
+    async incrBy(key, delta, ttlSeconds) {
+      const next = await redis.incrby(key, delta);
+      // Refreshed after the add rather than set on create: INCRBY cannot carry
+      // an expiry, and a month counter only needs to outlive its own month.
+      if (ttlSeconds !== undefined) await redis.expire(key, ttlSeconds);
+      return next;
+    },
+
     ttl(key) {
       return redis.ttl(key);
     },
