@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { CircleIcon, CrownSimpleIcon, PlayIcon, UsersThreeIcon } from '@phosphor-icons/react';
 import { GmConsole } from './GmConsole';
+import { litFor } from './phase-labels';
 import { PlayerScreen } from './PlayerScreen';
 import {
   REALTIME_NAMESPACE,
@@ -49,10 +50,10 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
 
   if (view === null) {
     return (
-      <div className="card">
-        <p className="card-kicker">{crewCode}</p>
-        <h4 className="card-title">Joining…</h4>
-        {error !== null ? <p className="card-meta">{error.message}</p> : null}
+      <div className="nf-card">
+        <p className="nf-kicker">{crewCode}</p>
+        <h4>Joining…</h4>
+        {error !== null ? <p className="nf-muted">{error.message}</p> : null}
       </div>
     );
   }
@@ -61,7 +62,9 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
 
   // Once the game exists the lobby is done: the GM narrates, everyone else plays.
   if (view.game !== null) {
+    const lit = litFor(view.game.phase);
     return view.you?.isGm === true ? (
+      <div className="nf-stage" data-lit={lit}>
       <GmConsole
         view={view}
         actions={{
@@ -72,7 +75,9 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
           onEndGame: () => emit?.emit('endGame'),
         }}
       />
+      </div>
     ) : (
+      <div className="nf-stage" data-lit={lit}>
       <PlayerScreen
         view={view}
         actions={{
@@ -85,33 +90,32 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
           onClearVote: () => emit?.emit('clearVote'),
         }}
       />
+      </div>
     );
   }
 
   const seated = view.members.length;
 
   return (
-    <div className="card">
-      <p className="card-kicker">Crew {view.crewCode}</p>
-      <h4 className="card-title">Lobby</h4>
+    <div className="nf-card">
+      <p className="nf-kicker">Crew code — paste this into the group</p>
+      <p className="nf-code">{view.crewCode}</p>
 
-      <p className="card-meta">
+      <p className="nf-muted">
         <UsersThreeIcon size={14} /> {seated} here
         {view.gmPlayerId === null ? ' · nobody is moderating yet' : null}
         {live ? null : ' · reconnecting'}
       </p>
 
-      <ul className="my-4 flex list-none flex-col gap-2 p-0">
+      <ul className="nf-roster">
         {view.members.map((member) => (
-          <li key={member.playerId} className="flex items-center gap-2">
+          <li key={member.playerId} className="nf-row" data-dead={String(!member.connected)}>
             <CircleIcon
               size={10}
               weight={member.connected ? 'fill' : 'regular'}
               aria-label={member.connected ? 'connected' : 'away'}
             />
-            <span className={member.connected ? undefined : 'text-muted'}>
-              {member.displayName}
-            </span>
+            <span className="nf-name">{member.displayName}</span>
             {member.playerId === view.you?.playerId ? (
               <span className="tag tag-neutral">you</span>
             ) : null}
@@ -127,7 +131,7 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
       {view.gmPlayerId === null ? (
         <button
           type="button"
-          className="btn btn-primary btn-block"
+          className="nf-advance btn btn-primary"
           disabled={!view.canStart}
           onClick={() => socketRef.current?.emit('startSession')}
         >
@@ -135,14 +139,14 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
           {view.canStart ? 'Start — you moderate' : `Waiting for ${6 - seated} more`}
         </button>
       ) : (
-        <p className="card-meta">
+        <p className="nf-muted">
           {view.you?.isGm === true
             ? 'You are moderating this session.'
             : 'The session has started.'}
         </p>
       )}
 
-      {error !== null ? <p className="card-meta">{error.message}</p> : null}
+      {error !== null ? <p className="nf-muted">{error.message}</p> : null}
     </div>
   );
 }

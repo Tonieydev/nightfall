@@ -125,3 +125,226 @@
   --font-heading: var(--nf-font-heading);
   --font-body: var(--nf-font-body);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Nightfall — the surfaces, dressed. Every value below resolves to a Nocturne
+   token; nothing here invents a colour, a radius or a shadow. Kept in CSS
+   rather than className soup so the components stay free of style literals.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* — the lit room —
+   Spec §6: players feel the phase rather than reading it. Night drops toward
+   the ground under one light source; day lifts and opens out. The shift is
+   400ms, matched to the audio fade that arrives with voice. */
+.nf-stage {
+  min-height: 100dvh;
+  padding: var(--space-6);
+  background: var(--color-bg);
+  transition: background 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nf-stage::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+  transition: opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  background: radial-gradient(
+    72% 130% at 80% 0%,
+    var(--color-section-glow),
+    transparent 66%
+  );
+}
+
+/* Night: the light source tightens and cools toward the ground. */
+.nf-stage[data-lit='night']::before {
+  background: radial-gradient(
+    52% 42% at 16% 4%,
+    var(--color-accent-900),
+    transparent 72%
+  );
+}
+
+/* Dawn: the quiet between. Barely lit, nothing asked of anyone. */
+.nf-stage[data-lit='dawn']::before {
+  background: radial-gradient(
+    64% 60% at 50% 0%,
+    var(--color-section-ghost),
+    transparent 70%
+  );
+  opacity: 0.5;
+}
+
+.nf-stage > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* — surfaces —
+   Elevation is an edge plus ambient darkness, never stacked shadows. */
+.nf-card {
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  margin: 0 auto;
+  max-width: 34rem;
+}
+
+.nf-kicker {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent-400);
+  margin: 0 0 var(--space-2);
+}
+
+.nf-muted {
+  color: var(--color-neutral-500);
+}
+
+/* — the crew code —
+   It gets pasted into a WhatsApp group, so it is the one thing on the lobby
+   worth setting large and spaced enough to read aloud without mistakes. */
+.nf-code {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 34px;
+  letter-spacing: 0.18em;
+  color: var(--color-text);
+  margin: 0 0 var(--space-4);
+}
+
+/* — roster —
+   Death is carried by weight and the neutral ramp. No red anywhere. */
+.nf-roster {
+  list-style: none;
+  margin: var(--space-6) 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.nf-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+}
+
+.nf-row[data-dead='true'] {
+  color: var(--color-neutral-600);
+}
+
+.nf-row[data-dead='true'] .nf-name {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-neutral-700);
+}
+
+.nf-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Votes land as weight accumulating on the accused, not a counter ticking. */
+.nf-row[data-accused='true'] {
+  border-color: var(--color-divider);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.nf-weight {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--color-accent-300);
+  flex: none;
+}
+
+/* — action tiles —
+   Present only when this player must act, and thumb-reachable when they are. */
+.nf-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.nf-tile {
+  width: 100%;
+  justify-content: flex-start;
+  padding: var(--space-4) var(--space-6);
+  min-height: 3rem;
+}
+
+/* — the mic row —
+   Held open, deliberately empty. Voice is the next step; reserving the space
+   now means the layout will not jump under players when it lands. */
+.nf-mic-slot {
+  display: block;
+  min-height: var(--space-8);
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--color-divider);
+}
+
+/* — role reveal —
+   The one theatrical moment in the product. It settles and then stays quiet. */
+.nf-reveal {
+  animation: nf-settle 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes nf-settle {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* — GM console — */
+.nf-advance {
+  width: 100%;
+  min-height: 4rem;
+  margin: var(--space-6) 0;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+}
+
+.nf-overrides {
+  margin-top: var(--space-6);
+  border-top: 1px solid var(--color-divider);
+  padding-top: var(--space-4);
+}
+
+.nf-overrides summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.nf-result {
+  border-radius: var(--radius-lg);
+  background: var(--color-section);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-8);
+  margin: var(--space-6) 0;
+}
+
+/* Motion competes with a live conversation and loses. */
+@media (prefers-reduced-motion: reduce) {
+  .nf-stage,
+  .nf-stage::before,
+  .nf-reveal {
+    transition: none !important;
+    animation: none !important;
+  }
+}

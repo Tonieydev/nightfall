@@ -31,18 +31,15 @@ export function PlayerScreen({ view, actions }: { view: RoomView; actions: Playe
     Object.values(game.dayVotes).filter((target) => target === id).length;
 
   return (
-    <div className="card">
-      <p className="card-kicker">{PHASE_LABEL[game.phase]}</p>
-      <h4 className="card-title">
+    <div className="nf-card">
+      <p className="nf-kicker">{PHASE_LABEL[game.phase]}</p>
+      <h4 className={game.phase === 'ROLE_REVEAL' ? 'nf-reveal' : undefined}>
         {me === null ? 'Watching' : ROLE_LABEL[me.role ?? 'VILLAGER']}
       </h4>
 
-      <p className="card-meta">
+      <p className="nf-muted">
         {game.phaseEndsAt === null ? null : <Countdown endsAt={game.phaseEndsAt} />}
         {alive ? null : <span className="tag tag-neutral">eliminated</span>}
-        {/* Voice arrives in the LiveKit step; the row is held so the layout
-            does not shift under players when the mic indicator lands. */}
-        <span aria-hidden="true" />
       </p>
 
       {game.detectiveResult === null ? null : (
@@ -57,16 +54,21 @@ export function PlayerScreen({ view, actions }: { view: RoomView; actions: Playe
         <h5>{game.winner === 'MAFIA' ? 'Mafia win' : 'Town wins'}</h5>
       )}
 
-      <ul className="my-4 flex list-none flex-col gap-2 p-0">
+      <ul className="nf-roster">
         {game.players.map((player) => (
-          <li key={player.id} className="flex items-center gap-2">
+          <li
+            key={player.id}
+            className="nf-row"
+            data-dead={String(!player.alive)}
+            data-accused={String(votesFor(player.id) > 0)}
+          >
             {player.alive ? <CircleIcon size={10} weight="fill" /> : <SkullIcon size={12} />}
-            <span className={player.alive ? undefined : 'text-muted'}>{player.name}</span>
+            <span className="nf-name">{player.name}</span>
             {player.role === null ? null : (
               <span className="tag tag-neutral">{ROLE_LABEL[player.role]}</span>
             )}
             {votesFor(player.id) === 0 ? null : (
-              <span className="tag tag-accent">{votesFor(player.id)}</span>
+              <span className="nf-weight">{'•'.repeat(votesFor(player.id))}</span>
             )}
           </li>
         ))}
@@ -74,13 +76,13 @@ export function PlayerScreen({ view, actions }: { view: RoomView; actions: Playe
 
       {prompt === null ? null : (
         <>
-          <p className="card-kicker">{prompt}</p>
-          <div className="flex flex-col gap-2">
+          <p className="nf-kicker">{prompt}</p>
+          <div className="nf-tiles">
             {targets.map((target) => (
               <button
                 key={target.id}
                 type="button"
-                className={myVote === target.id ? 'btn btn-primary btn-block' : 'btn btn-secondary btn-block'}
+                className={`nf-tile btn ${myVote === target.id ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => {
                   if (isNight) actions.onNightTarget(target.id);
                   else actions.onVote(target.id);
@@ -90,13 +92,16 @@ export function PlayerScreen({ view, actions }: { view: RoomView; actions: Playe
               </button>
             ))}
             {game.phase === 'VOTE' && myVote !== null ? (
-              <button type="button" className="btn btn-ghost btn-block" onClick={actions.onClearVote}>
+              <button type="button" className="nf-tile btn btn-ghost" onClick={actions.onClearVote}>
                 Pull my vote
               </button>
             ) : null}
           </div>
         </>
       )}
+      {/* Voice is the next step. The row is held open and deliberately empty so
+          the layout will not jump under players when the indicator lands. */}
+      <span className="nf-mic-slot" aria-hidden="true" />
     </div>
   );
 }

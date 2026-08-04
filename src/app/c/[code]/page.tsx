@@ -70,28 +70,28 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
     }
   }
 
-  if (!ready) return <main className="p-6" />;
+  if (!ready) return <main className="nf-stage" data-lit="day" />;
 
   if (token !== null) {
     return (
-      <main className="p-6">
+      <main className="nf-stage" data-lit="day">
         <Lobby token={token} crewCode={crewCode} />
       </main>
     );
   }
 
   return (
-    <main className="p-6">
-      <div className="card">
-        <p className="card-kicker">Crew {crewCode}</p>
-        <h4 className="card-title">Join the game</h4>
+    <main className="nf-stage" data-lit="day">
+      <div className="nf-card">
+        <p className="nf-kicker">Crew {crewCode}</p>
+        <h4>Join the game</h4>
 
         {known !== null ? (
           <>
-            <p className="card-body">This device has played here before.</p>
+            <p className="nf-muted">This device has played here before.</p>
             <button
               type="button"
-              className="btn btn-primary btn-block"
+              className="nf-advance btn btn-primary"
               disabled={busy}
               onClick={() => void join(known.displayName, known.playerId)}
             >
@@ -142,7 +142,7 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
           </form>
         )}
 
-        {error !== null ? <p className="card-meta">{error}</p> : null}
+        {error !== null ? <p className="nf-muted">{error}</p> : null}
       </div>
     </main>
   );

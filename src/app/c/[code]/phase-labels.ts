@@ -19,6 +19,15 @@ export const ROLE_LABEL: Record<Role, string> = {
   DETECTIVE: 'Detective',
 };
 
+/**
+ * How the room is lit for a phase. Purely presentational — the ground shift is
+ * how a player feels the phase without reading the label.
+ */
+export function litFor(phase: Phase): 'day' | 'night' | 'dawn' {
+  if (phase === 'DAWN') return 'dawn';
+  return phase.startsWith('NIGHT_') ? 'night' : 'day';
+}
+
 /** What this player is being asked to do right now, or null if it is not their turn. */
 export function actionFor(phase: Phase, role: Role | null, alive: boolean): string | null {
   if (!alive) return null;

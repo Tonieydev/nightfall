@@ -29,11 +29,11 @@ export default function HomePage() {
   }
 
   return (
-    <main className="p-6">
-      <div className="card">
-        <p className="card-kicker">Nightfall</p>
-        <h4 className="card-title">Start a crew</h4>
-        <p className="card-body">
+    <main className="nf-stage" data-lit="day">
+      <div className="nf-card">
+        <p className="nf-kicker">Nightfall</p>
+        <h4>Start a crew</h4>
+        <p className="nf-muted">
           A crew link is permanent. Pin it once in your group and it works every Saturday.
         </p>
 
@@ -43,13 +43,13 @@ export default function HomePage() {
             {busy ? 'Creating…' : 'Create a crew'}
           </button>
         ) : (
-          <p className="card-meta">
+          <p className="nf-muted">
             Your crew code is <strong>{code}</strong> —{' '}
             <a href={`/c/${code}`}>open the join page</a>
           </p>
         )}
 
-        {error !== null ? <p className="card-meta">{error}</p> : null}
+        {error !== null ? <p className="nf-muted">{error}</p> : null}
       </div>
     </main>
   );
