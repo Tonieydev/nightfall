@@ -10,7 +10,8 @@
   "packageManager": "pnpm@10.34.5",
   "scripts": {
     "dev": "tsx watch server.ts --dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "tsx server.ts",
     "lint": "node scripts/build-oxlint-config.mjs && oxlint -c .oxlintrc.generated.json --deny-warnings src server.ts",
     "typecheck": "tsc --noEmit",
