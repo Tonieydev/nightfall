@@ -13,6 +13,7 @@ const { attachRealtime } = await import('./src/realtime/server.js');
 const { loadServerConfig } = await import('./src/config.js');
 const { getRoomStore } = await import('./src/room-store/index.js');
 const { applyGraphToRoom, destroyRoom } = await import('./src/voice/index.js');
+const { recordFinishedGame } = await import('./src/durable/index.js');
 
 const port = Number(process.env.PORT ?? 3000);
 // Deliberately NOT process.env.HOSTNAME: container runtimes set that to the
@@ -40,6 +41,9 @@ attachRealtime(httpServer, {
     applyGraph: (roomCode, graph, voiceEnabled) => applyGraphToRoom(roomCode, graph, voiceEnabled),
     destroyRoom: (roomCode, voiceEnabled) => destroyRoom(roomCode, voiceEnabled),
   },
+  // Written once at game end, and swallowing its own failures: Postgres is the
+  // durable copy, never the render source.
+  durable: { recordFinishedGame: (doc, endedAt) => recordFinishedGame(doc, endedAt) },
 });
 
 httpServer.listen(port, hostname, () => {

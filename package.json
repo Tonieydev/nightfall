@@ -14,10 +14,12 @@
     "start": "tsx server.ts",
     "lint": "node scripts/build-oxlint-config.mjs && oxlint -c .oxlintrc.generated.json --deny-warnings src server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:neon": "node scripts/test-neon.mjs src/durable"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
+    "@prisma/client": "^6.19.3",
     "@upstash/redis": "^1.38.1",
     "jose": "^6.2.8",
     "livekit-client": "^2.21.0",
@@ -36,6 +38,7 @@
     "@types/react-dom": "^19.2.4",
     "@vitest/coverage-v8": "^4.1.10",
     "oxlint": "^1.77.0",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
