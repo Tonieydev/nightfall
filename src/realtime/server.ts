@@ -1,6 +1,7 @@
 import type { Server as HttpServer } from 'node:http';
 import { Server, type Namespace } from 'socket.io';
 import { PhaseTimers } from './phase-timers.js';
+import { syncRoomVoice, type VoiceSync } from './sync-voice.js';
 import { verifyPlayerToken } from '../auth/tokens.js';
 import {
   GameNotStartedError,
@@ -57,6 +58,8 @@ type RoomNamespace = Namespace<
 export interface RealtimeDeps {
   store: RoomStoreFacade;
   jwtSecret: string;
+  /** Omitted in tests that do not exercise audio. */
+  voice?: VoiceSync;
 }
 
 function errorCodeFor(error: unknown): RoomErrorCode {
@@ -78,11 +81,12 @@ function errorCodeFor(error: unknown): RoomErrorCode {
  * path here that emits a document to more than one recipient: the projection
  * runs inside the loop, per socket, before the emit.
  */
-async function broadcastRoom(
+export async function broadcastRoom(
   namespace: RoomNamespace,
   store: RoomStoreFacade,
   crewCode: string,
   timers?: PhaseTimers,
+  voice?: VoiceSync,
 ): Promise<void> {
   // A reconciling read: if the phase expired, it is already resolved by here.
   const doc = await store.room.read(crewCode);
@@ -95,7 +99,7 @@ async function broadcastRoom(
     if (endsAt === null) timers.clear(crewCode);
     else {
       timers.schedule(crewCode, endsAt, Date.now(), () => {
-        void broadcastRoom(namespace, store, crewCode, timers);
+        void broadcastRoom(namespace, store, crewCode, timers, voice);
       });
     }
   }
@@ -103,6 +107,10 @@ async function broadcastRoom(
   for (const socket of await namespace.in(crewCode).fetchSockets()) {
     socket.emit('roomState', projectRoom(doc, socket.data.playerId));
   }
+
+  // Audio last: the graph is applied after players have already seen the phase
+  // change, so voice follows the 400ms visual transition instead of leading it.
+  await syncRoomVoice(doc, voice);
 }
 
 export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): RealtimeServer {
@@ -144,7 +152,7 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
         return;
       }
       await socket.join(crewCode);
-      await broadcastRoom(namespace, deps.store, crewCode, timers);
+      await broadcastRoom(namespace, deps.store, crewCode, timers, deps.voice);
     })();
 
     socket.on('startSession', () => {
@@ -152,7 +160,7 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
         // SETNX decides the race; the loser stays a player rather than erroring.
         const won = await deps.store.session.claim(crewCode, playerId);
         if (!won) {
-          await broadcastRoom(namespace, deps.store, crewCode, timers);
+          await broadcastRoom(namespace, deps.store, crewCode, timers, deps.voice);
           return;
         }
 
@@ -169,7 +177,7 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
           fail(errorCodeFor(error), error instanceof Error ? error.message : 'could not start');
           return;
         }
-        await broadcastRoom(namespace, deps.store, crewCode, timers);
+        await broadcastRoom(namespace, deps.store, crewCode, timers, deps.voice);
       })();
     });
 
@@ -184,7 +192,7 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
           fail(errorCodeFor(error), error instanceof Error ? error.message : 'command failed');
           return;
         }
-        await broadcastRoom(namespace, deps.store, crewCode, timers);
+        await broadcastRoom(namespace, deps.store, crewCode, timers, deps.voice);
       })();
     };
 
@@ -228,7 +236,7 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
         } catch {
           return;
         }
-        await broadcastRoom(namespace, deps.store, crewCode, timers);
+        await broadcastRoom(namespace, deps.store, crewCode, timers, deps.voice);
       })();
     });
   });

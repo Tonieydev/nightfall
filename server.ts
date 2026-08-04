@@ -12,6 +12,7 @@ const { default: next } = await import('next');
 const { attachRealtime } = await import('./src/realtime/server.js');
 const { loadServerConfig } = await import('./src/config.js');
 const { getRoomStore } = await import('./src/room-store/index.js');
+const { applyGraphToRoom, destroyRoom } = await import('./src/voice/index.js');
 
 const port = Number(process.env.PORT ?? 3000);
 // Railway routes to the container's external interface, not to loopback.
@@ -28,7 +29,15 @@ const httpServer = createServer((req, res) => {
 
 // Read at boot so a missing secret fails the process rather than the first join.
 const config = loadServerConfig();
-attachRealtime(httpServer, { store: getRoomStore(), jwtSecret: config.jwtSecret });
+attachRealtime(httpServer, {
+  store: getRoomStore(),
+  jwtSecret: config.jwtSecret,
+  // voice/ translates the graph game-core computed; it decides nothing.
+  voice: {
+    applyGraph: (roomCode, graph, voiceEnabled) => applyGraphToRoom(roomCode, graph, voiceEnabled),
+    destroyRoom: (roomCode, voiceEnabled) => destroyRoom(roomCode, voiceEnabled),
+  },
+});
 
 httpServer.listen(port, hostname, () => {
   const backing = config.memoryRedis ? 'memory (dev)' : 'upstash';

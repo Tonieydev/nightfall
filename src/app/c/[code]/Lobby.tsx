@@ -5,6 +5,7 @@ import { io, type Socket } from 'socket.io-client';
 import { CircleIcon, CrownSimpleIcon, PlayIcon, UsersThreeIcon } from '@phosphor-icons/react';
 import { GmConsole } from './GmConsole';
 import { litFor } from './phase-labels';
+import { useVoice } from './useVoice';
 import { PlayerScreen } from './PlayerScreen';
 import {
   REALTIME_NAMESPACE,
@@ -21,6 +22,7 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
   const [error, setError] = useState<RoomErrorPayload | null>(null);
   const [live, setLive] = useState(false);
   const socketRef = useRef<LobbySocket | null>(null);
+  const voice = useVoice(crewCode, token);
 
   useEffect(() => {
     const socket: LobbySocket = io(REALTIME_NAMESPACE, { auth: { token } });
@@ -88,7 +90,9 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
           },
           onVote: (id) => emit?.emit('castVote', id),
           onClearVote: () => emit?.emit('clearVote'),
+          onEnableVoice: () => void voice.connect(),
         }}
+        voiceStatus={voice.status}
       />
       </div>
     );

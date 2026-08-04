@@ -2,6 +2,8 @@
 
 import { CircleIcon, DetectiveIcon, SkullIcon } from '@phosphor-icons/react';
 import { Countdown } from './Countdown';
+import { MicRow } from './MicRow';
+import type { VoiceStatus } from './useVoice';
 import { PHASE_LABEL, ROLE_LABEL, actionFor } from './phase-labels';
 import type { RoomView } from '@/room-store';
 
@@ -9,13 +11,22 @@ export interface PlayerActions {
   onNightTarget: (targetId: string) => void;
   onVote: (targetId: string) => void;
   onClearVote: () => void;
+  onEnableVoice: () => void;
 }
 
 /**
  * Glanceable, not engaging. Persistent: role, phase, who is alive. Interactive
  * only when this player must act — the tiles are absent otherwise, not disabled.
  */
-export function PlayerScreen({ view, actions }: { view: RoomView; actions: PlayerActions }) {
+export function PlayerScreen({
+  view,
+  actions,
+  voiceStatus,
+}: {
+  view: RoomView;
+  actions: PlayerActions;
+  voiceStatus: VoiceStatus;
+}) {
   const game = view.game;
   if (game === null || view.you === null) return null;
 
@@ -99,9 +110,7 @@ export function PlayerScreen({ view, actions }: { view: RoomView; actions: Playe
           </div>
         </>
       )}
-      {/* Voice is the next step. The row is held open and deliberately empty so
-          the layout will not jump under players when the indicator lands. */}
-      <span className="nf-mic-slot" aria-hidden="true" />
+      <MicRow view={view} status={voiceStatus} onEnable={actions.onEnableVoice} />
     </div>
   );
 }
