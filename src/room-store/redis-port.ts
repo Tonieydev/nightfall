@@ -28,4 +28,24 @@ export interface RedisPort {
   incrBy(key: string, delta: number, ttlSeconds?: number): Promise<number>;
   /** Remaining TTL in seconds; -1 when the key has none, -2 when it is gone. */
   ttl(key: string): Promise<number>;
+
+  /**
+   * A set whose members carry their own expiry. These three exist as port
+   * operations rather than raw sorted-set primitives for the same reason
+   * `setIfVersion` does: admitting under a limit has to be atomic, and the
+   * expiry rule has to be identical in every one of them.
+   *
+   * A member is live only while `nowMs` is before its expiry. Nothing has to
+   * remove it for it to stop counting, which is what makes the count impossible
+   * to drift from the thing it counts.
+   */
+  liveSetAdmit(
+    key: string,
+    member: string,
+    expiresAtMs: number,
+    limit: number,
+    nowMs: number,
+  ): Promise<boolean>;
+  liveSetRemove(key: string, member: string): Promise<void>;
+  liveSetCount(key: string, nowMs: number): Promise<number>;
 }

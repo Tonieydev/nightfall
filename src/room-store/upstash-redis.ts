@@ -16,6 +16,24 @@ redis.call('SET', KEYS[1], ARGV[1], 'EX', tonumber(ARGV[3]))
 return 1
 `;
 
+/**
+ * Prune, count, admit — in one round trip, so two callers racing for the last
+ * slot cannot both see room for themselves.
+ *
+ * The count is ZCOUNT over the live range rather than ZCARD, so an entry that
+ * nobody pruned still does not count. The ZREMRANGEBYSCORE above it is only
+ * housekeeping; correctness does not depend on it having run.
+ */
+const ADMIT_TO_LIVE_SET = `
+local now = tonumber(ARGV[4])
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', now)
+local held = redis.call('ZSCORE', KEYS[1], ARGV[1])
+if held and tonumber(held) > now then return 1 end
+if redis.call('ZCOUNT', KEYS[1], '(' .. now, '+inf') >= tonumber(ARGV[3]) then return 0 end
+redis.call('ZADD', KEYS[1], tonumber(ARGV[2]), ARGV[1])
+return 1
+`;
+
 export function createUpstashRedis(url: string, token: string): RedisPort {
   // Values are written as JSON strings and parsed by room-store; letting the
   // client parse them too would hand back objects where strings are expected.
@@ -70,6 +88,25 @@ export function createUpstashRedis(url: string, token: string): RedisPort {
 
     ttl(key) {
       return redis.ttl(key);
+    },
+
+    async liveSetAdmit(key, member, expiresAtMs, limit, nowMs) {
+      const result = await redis.eval(
+        ADMIT_TO_LIVE_SET,
+        [key],
+        [member, String(expiresAtMs), String(limit), String(nowMs)],
+      );
+      return Number(result) === 1;
+    },
+
+    async liveSetRemove(key, member) {
+      await redis.zrem(key, member);
+    },
+
+    async liveSetCount(key, nowMs) {
+      // Exclusive of now, so a member whose expiry has arrived is already gone
+      // from the count whether or not anything removed it.
+      return await redis.zcount(key, `(${String(nowMs)}`, '+inf');
     },
   };
 }

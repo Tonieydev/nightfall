@@ -17,7 +17,7 @@ describe('room store facade', () => {
 
     await store.room.open('ABC234');
 
-    expect(await roomsInUse(redis)).toBe(1);
+    expect(await roomsInUse(redis, NOW)).toBe(1);
   });
 
   it('reopening an existing room does not consume a second slot', async () => {
@@ -27,7 +27,7 @@ describe('room store facade', () => {
     const second = await store.room.open('ABC234');
 
     expect(second).toEqual(first);
-    expect(await roomsInUse(redis)).toBe(1);
+    expect(await roomsInUse(redis, NOW)).toBe(1);
   });
 
   it('refuses a new room once the ceiling is reached', async () => {
@@ -52,11 +52,11 @@ describe('room store facade', () => {
 
     await store.room.close('ABC234');
 
-    expect(await roomsInUse(redis)).toBe(0);
+    expect(await roomsInUse(redis, NOW)).toBe(0);
     expect(await store.room.read('ABC234')).toBeNull();
     // Closing twice must not mint capacity that was never held.
     await store.room.close('ABC234');
-    expect(await roomsInUse(redis)).toBe(0);
+    expect(await roomsInUse(redis, NOW)).toBe(0);
   });
 
   it('lets only the first caller claim the session', async () => {

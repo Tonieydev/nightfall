@@ -5,6 +5,9 @@ interface Entry {
   expiresAt: number | null;
 }
 
+/** Member -> the instant it stops counting. Mirrors a sorted set scored by expiry. */
+type LiveSet = Map<string, number>;
+
 /**
  * In-memory RedisPort for tests. Expiry is driven by an injected clock so TTL
  * behaviour can be asserted without waiting, and every operation is written to
@@ -12,6 +15,7 @@ interface Entry {
  */
 export class MemoryRedis implements RedisPort {
   readonly #entries = new Map<string, Entry>();
+  readonly #liveSets = new Map<string, LiveSet>();
   readonly #now: () => number;
 
   constructor(now: () => number = Date.now) {
@@ -101,5 +105,51 @@ export class MemoryRedis implements RedisPort {
     if (entry === null) return Promise.resolve(-2);
     if (entry.expiresAt === null) return Promise.resolve(-1);
     return Promise.resolve(Math.ceil((entry.expiresAt - this.#now()) / 1000));
+  }
+
+  #liveSet(key: string): LiveSet {
+    let set = this.#liveSets.get(key);
+    if (set === undefined) {
+      set = new Map();
+      this.#liveSets.set(key, set);
+    }
+    return set;
+  }
+
+  /** Expiry is a comparison, never a deletion — same rule the Lua script uses. */
+  #countLive(set: LiveSet, nowMs: number): number {
+    let live = 0;
+    for (const expiresAt of set.values()) if (expiresAt > nowMs) live += 1;
+    return live;
+  }
+
+  liveSetAdmit(
+    key: string,
+    member: string,
+    expiresAtMs: number,
+    limit: number,
+    nowMs: number,
+  ): Promise<boolean> {
+    const set = this.#liveSet(key);
+
+    // Dropping the dead first is housekeeping, not correctness: the count below
+    // already ignores them. It stops the key growing without bound.
+    for (const [existing, expiresAt] of set) if (expiresAt <= nowMs) set.delete(existing);
+
+    const held = set.get(member);
+    if (held !== undefined && held > nowMs) return Promise.resolve(true);
+    if (this.#countLive(set, nowMs) >= limit) return Promise.resolve(false);
+
+    set.set(member, expiresAtMs);
+    return Promise.resolve(true);
+  }
+
+  liveSetRemove(key: string, member: string): Promise<void> {
+    this.#liveSet(key).delete(member);
+    return Promise.resolve();
+  }
+
+  liveSetCount(key: string, nowMs: number): Promise<number> {
+    return Promise.resolve(this.#countLive(this.#liveSet(key), nowMs));
   }
 }

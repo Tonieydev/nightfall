@@ -17,4 +17,10 @@ export const MIN_LOBBY_TO_START = MIN_PLAYERS_TO_START + 1;
 export const roomKey = (crewCode: string): string => `room:${crewCode}`;
 export const crewKey = (crewCode: string): string => `crew:${crewCode}`;
 export const sessionKey = (crewCode: string): string => `crew:${crewCode}:session`;
-export const ROOM_COUNT_KEY = 'rooms:concurrent';
+/**
+ * An index of live rooms, each stamped with its own expiry — not a counter.
+ * A counter has to be told when a room ends, and nothing tells it about the
+ * rooms that end by TTL, which is most of them. Deliberately a new key: the old
+ * `rooms:concurrent` holds a drifted value and must not be read again.
+ */
+export const LIVE_ROOMS_KEY = 'rooms:live';
