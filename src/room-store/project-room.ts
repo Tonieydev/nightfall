@@ -4,6 +4,7 @@ import {
   type GameState,
   type ViewState,
 } from '../game-core/index.js';
+import { chatFor, systemRecord, type ChatMessage, type SystemEvent } from './chat.js';
 import { MIN_LOBBY_TO_START } from './keys.js';
 import type { RoomDocument } from './types.js';
 
@@ -45,6 +46,13 @@ export interface RoomView {
    *  per-recipient projection, so role secrecy has exactly one implementation. */
   game: ViewState | null;
   audio: AudioView | null;
+  /**
+   * Only the messages this viewer is allowed to have received, routed by the
+   * audio graph before the emit. Never the whole log for the client to filter.
+   */
+  chat: ChatMessage[];
+  /** The pinned strip. Facts only, and the same for everyone. */
+  record: SystemEvent[];
 }
 
 function projectAudio(game: GameState, viewerId: string): AudioView {
@@ -81,6 +89,8 @@ export function projectRoom(doc: RoomDocument, viewerId: string): RoomView {
             displayName: self.displayName,
             isGm: doc.gmPlayerId === self.playerId,
           },
+    chat: chatFor(doc, viewerId),
+    record: systemRecord(doc),
     game: doc.game === null ? null : gameView(doc.game, viewerId),
     audio: doc.game === null ? null : projectAudio(doc.game, viewerId),
   };

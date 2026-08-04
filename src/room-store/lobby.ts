@@ -2,15 +2,20 @@ import { assignRoles, type GameConfig, type Player } from '../game-core/index.js
 import { MAX_SEATS, MIN_LOBBY_TO_START, MIN_PLAYERS_TO_START } from './keys.js';
 import { mulberry32 } from './prng.js';
 import type { RoomDocument } from './types.js';
+import { DomainError } from './errors.js';
 
-export class RoomFullError extends Error {
+export class RoomFullError extends DomainError {
+  readonly code = 'ROOM_FULL' as const;
+
   constructor() {
     super(`room is full at ${MAX_SEATS} seats`);
     this.name = 'RoomFullError';
   }
 }
 
-export class NotEnoughPlayersError extends Error {
+export class NotEnoughPlayersError extends DomainError {
+  readonly code = 'NOT_ENOUGH_PLAYERS' as const;
+
   constructor(present: number) {
     super(
       `need ${MIN_LOBBY_TO_START} in the lobby to start ` +
@@ -20,14 +25,18 @@ export class NotEnoughPlayersError extends Error {
   }
 }
 
-export class SessionAlreadyStartedError extends Error {
+export class SessionAlreadyStartedError extends DomainError {
+  readonly code = 'SESSION_ALREADY_STARTED' as const;
+
   constructor() {
     super('this crew already has a session running');
     this.name = 'SessionAlreadyStartedError';
   }
 }
 
-export class NotAMemberError extends Error {
+export class NotAMemberError extends DomainError {
+  readonly code = 'NOT_A_MEMBER' as const;
+
   constructor(playerId: string) {
     super(`${playerId} is not in this lobby`);
     this.name = 'NotAMemberError';
@@ -50,7 +59,7 @@ export function joinLobby(doc: RoomDocument, join: JoinRequest): RoomDocument {
       ...doc,
       members: doc.members.map((m) =>
         m.playerId === join.playerId
-          ? { ...m, displayName: join.displayName, connected: true }
+          ? { ...m, displayName: join.displayName, connected: true, connectedAt: join.now }
           : m,
       ),
     };
@@ -68,6 +77,7 @@ export function joinLobby(doc: RoomDocument, join: JoinRequest): RoomDocument {
         displayName: join.displayName,
         connected: true,
         joinedAt: join.now,
+        connectedAt: join.now,
       },
     ],
   };
@@ -77,10 +87,17 @@ export function setConnected(
   doc: RoomDocument,
   playerId: string,
   connected: boolean,
+  now: number,
 ): RoomDocument {
+  const isGm = doc.gmPlayerId === playerId;
+
   return {
     ...doc,
-    members: doc.members.map((m) => (m.playerId === playerId ? { ...m, connected } : m)),
+    // Only the GM's absence starts a clock. Everyone else's seat is simply held.
+    gmDisconnectedAt: isGm ? (connected ? null : now) : (doc.gmDisconnectedAt ?? null),
+    members: doc.members.map((m) =>
+      m.playerId === playerId ? { ...m, connected, connectedAt: connected ? now : null } : m,
+    ),
   };
 }
 

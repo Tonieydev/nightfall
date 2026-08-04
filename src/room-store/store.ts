@@ -1,15 +1,20 @@
 import { ROOM_TTL_SECONDS, roomKey } from './keys.js';
 import type { RedisPort } from './redis-port.js';
 import type { RoomDocument } from './types.js';
+import { DomainError } from './errors.js';
 
-export class VersionConflictError extends Error {
+export class VersionConflictError extends DomainError {
+  readonly code = 'VERSION_CONFLICT' as const;
+
   constructor(crewCode: string) {
     super(`room ${crewCode} changed under us too many times`);
     this.name = 'VersionConflictError';
   }
 }
 
-export class RoomNotFoundError extends Error {
+export class RoomNotFoundError extends DomainError {
+  readonly code = 'ROOM_NOT_FOUND' as const;
+
   constructor(crewCode: string) {
     super(`no room for crew ${crewCode}`);
     this.name = 'RoomNotFoundError';

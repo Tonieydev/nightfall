@@ -1,12 +1,13 @@
 import { loadServerConfig } from '../config.js';
 import { acquireRoomSlot, releaseRoomSlot, type CapacityPolicy } from './capacity.js';
 import { reconcilePhase } from './commands.js';
+import { reclaimGm } from './handoff.js';
 import { createCrew, readCrew, type CrewRecord } from './crew.js';
+import { domainErrorCode } from './errors.js';
 import { MemoryRedis } from './memory-redis.js';
 import {
   ALARM_FRACTION,
   MINUTE_BUDGET_DEFAULT,
-  MinuteBudgetExceededError,
   maxSpendFor,
   reconcileMinutes,
   reserveMinutes,
@@ -22,6 +23,13 @@ import type { RoomDocument } from './types.js';
 export { RoomFullError, NotEnoughPlayersError, SessionAlreadyStartedError, NotAMemberError, joinLobby, setConnected, startSession } from './lobby.js';
 export { RoomCeilingReachedError, KillSwitchError } from './capacity.js';
 export {
+  DOMAIN_ERROR_CODES,
+  DomainError,
+  domainErrorCode,
+  errorMessage,
+  type DomainErrorCode,
+} from './errors.js';
+export {
   ALARM_FRACTION,
   MINUTE_BUDGET_DEFAULT,
   MinuteBudgetExceededError,
@@ -31,6 +39,16 @@ export {
   reconcileMinutes,
   reserveMinutes,
 } from './minutes.js';
+export {
+  ChatNotAllowedError,
+  MAX_CHAT_CHARS,
+  chatFor,
+  chatRecipients,
+  postChat,
+  systemRecord,
+} from './chat.js';
+export type { ChatMessage, SystemEvent } from './chat.js';
+export { GM_GRACE_MS, handOffGm, isGmAbandoned, reclaimGm, successorToGm } from './handoff.js';
 export { mulberry32, newSeed } from './prng.js';
 export {
   GameNotStartedError,
@@ -109,11 +127,19 @@ export function createRoomStoreFacade(
       // what makes a mid-phase redeploy or a dropped timer self-healing.
       async read(crewCode) {
         const doc = await store.read(crewCode);
-        if (doc === null || reconcilePhase(doc, now()) === null) return doc;
+        if (doc === null) return doc;
+
+        // Both are reconciliation on read, for the same reason: a timer is a
+        // fast path, and the room must heal itself after a redeploy or a
+        // dropped callback. A GM whose phone died is reclaimed here even if
+        // nobody is left to trigger it.
+        const settle = (fresh: RoomDocument): RoomDocument | null =>
+          reconcilePhase(fresh, now()) ?? reclaimGm(fresh, now());
+        if (settle(doc) === null) return doc;
 
         // Re-check inside the CAS: a racing reader may have already resolved it,
         // and returning null there aborts the write instead of resolving twice.
-        return await store.mutate(crewCode, (fresh) => reconcilePhase(fresh, now()));
+        return await store.mutate(crewCode, settle);
       },
       async open(crewCode) {
         const existing = await store.read(crewCode);
@@ -127,7 +153,9 @@ export function createRoomStoreFacade(
         try {
           await reserveMinutes(redis, now(), roomReservation, minutes);
         } catch (error) {
-          if (!(error instanceof MinuteBudgetExceededError)) throw error;
+          // Same registry today, but the discriminator is the same everywhere:
+          // there is one way to recognise a domain error in this codebase.
+          if (domainErrorCode(error) !== 'MINUTE_BUDGET_EXCEEDED') throw error;
           voice = { enabled: false, reservedMinutes: 0 };
         }
 
@@ -138,7 +166,7 @@ export function createRoomStoreFacade(
         };
 
         try {
-          await acquireRoomSlot(redis, policy);
+          await acquireRoomSlot(redis, policy, crewCode, now());
         } catch (error) {
           await releaseReservation();
           throw error;
@@ -147,7 +175,7 @@ export function createRoomStoreFacade(
         try {
           return await store.create(crewCode, voice);
         } catch (error) {
-          await releaseRoomSlot(redis);
+          await releaseRoomSlot(redis, crewCode);
           await releaseReservation();
           throw error;
         }
@@ -161,7 +189,7 @@ export function createRoomStoreFacade(
         await releaseSession(redis, crewCode);
 
         if (existing !== null) {
-          await releaseRoomSlot(redis);
+          await releaseRoomSlot(redis, crewCode);
           // Hand back the difference between the worst case held and what the
           // room actually cost, so a pessimistic reservation cannot starve a
           // month that had capacity all along.
@@ -191,7 +219,25 @@ export function createRoomStoreFacade(
 // Upstash, fatal for the in-memory dev store, which would then be two stores.
 const globalRef = globalThis as typeof globalThis & {
   __nightfallRoomStore?: RoomStoreFacade;
+  __nightfallRedis?: RedisPort;
 };
+
+/**
+ * The process's Redis client. Shared rather than rebuilt per caller so the OTP
+ * store and the room store are the same store — which matters in dev, where
+ * `memoryRedis` means a second client would be a second, empty database.
+ */
+export function getRedis(): RedisPort {
+  const existing = globalRef.__nightfallRedis;
+  if (existing !== undefined) return existing;
+
+  const config = loadServerConfig();
+  const redis = config.memoryRedis
+    ? new MemoryRedis()
+    : createUpstashRedis(config.upstashUrl, config.upstashToken);
+  globalRef.__nightfallRedis = redis;
+  return redis;
+}
 
 /** The process-wide store. This is the only place the Redis client is built. */
 export function getRoomStore(): RoomStoreFacade {
@@ -199,12 +245,9 @@ export function getRoomStore(): RoomStoreFacade {
   if (existing !== undefined) return existing;
 
   const config = loadServerConfig();
-  const redis = config.memoryRedis
-    ? new MemoryRedis()
-    : createUpstashRedis(config.upstashUrl, config.upstashToken);
 
   const store = createRoomStoreFacade(
-    redis,
+    getRedis(),
     { maxConcurrentRooms: config.maxConcurrentRooms, killSwitch: config.killSwitch },
     Date.now,
     Math.random,

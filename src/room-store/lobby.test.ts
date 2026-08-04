@@ -34,7 +34,7 @@ describe('lobby', () => {
     const doc = joinLobby(room(), { playerId: 'p1', displayName: 'Toniey', now: NOW });
 
     expect(doc.members).toEqual([
-      { playerId: 'p1', displayName: 'Toniey', connected: true, joinedAt: NOW },
+      { playerId: 'p1', displayName: 'Toniey', connected: true, joinedAt: NOW, connectedAt: NOW },
     ]);
   });
 
@@ -49,7 +49,7 @@ describe('lobby', () => {
 
   it('lets a returning player rejoin without taking a second seat', () => {
     const doc = withMembers(3);
-    const dropped = setConnected(doc, 'p2', false);
+    const dropped = setConnected(doc, 'p2', false, NOW);
 
     const back = joinLobby(dropped, { playerId: 'p2', displayName: 'Player 2', now: NOW + 500 });
 
@@ -61,7 +61,7 @@ describe('lobby', () => {
   });
 
   it('marks a member disconnected without removing them', () => {
-    const doc = setConnected(withMembers(3), 'p2', false);
+    const doc = setConnected(withMembers(3), 'p2', false, NOW);
 
     expect(doc.members).toHaveLength(3);
     expect(doc.members.find((m) => m.playerId === 'p2')?.connected).toBe(false);
@@ -110,7 +110,7 @@ describe('lobby', () => {
 
   it('still lets an existing member reconnect after the session has started', () => {
     const started = startSession(withMembers(MIN_LOBBY_TO_START), 'p1', { seed: 1, now: NOW });
-    const dropped = setConnected(started, 'p4', false);
+    const dropped = setConnected(started, 'p4', false, NOW);
 
     const back = joinLobby(dropped, { playerId: 'p4', displayName: 'Player 4', now: NOW });
 
@@ -186,7 +186,7 @@ describe('lobby', () => {
     const before = structuredClone(doc);
 
     joinLobby(doc, { playerId: 'p9', displayName: 'Nine', now: NOW });
-    setConnected(doc, 'p1', false);
+    setConnected(doc, 'p1', false, NOW);
 
     expect(doc).toEqual(before);
   });

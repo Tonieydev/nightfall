@@ -58,7 +58,7 @@ describe('room store', () => {
           ...doc,
           members: [
             ...doc.members,
-            { playerId: 'racer', displayName: 'Racer', connected: true, joinedAt: NOW },
+            { playerId: 'racer', displayName: 'Racer', connected: true, joinedAt: NOW, connectedAt: NOW },
           ],
         }));
       }

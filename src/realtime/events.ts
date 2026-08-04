@@ -15,6 +15,8 @@ export type RoomErrorCode =
   | 'NOT_YOUR_ACTION'
   | 'WRONG_PHASE'
   | 'INVALID_TARGET'
+  | 'CHAT_NOT_ALLOWED'
+  | 'CHAT_RATE_LIMITED'
   | 'CONFLICT';
 
 export interface RoomErrorPayload {
@@ -43,6 +45,10 @@ export interface ClientToServerEvents {
   /** Public and live: the ballot is projected to everyone, never a secret. */
   castVote: (targetId: string) => void;
   clearVote: () => void;
+  /** Routed by computeAudioGraph server-side; the sender names no audience. */
+  sendChat: (text: string) => void;
+  /** GM-only. The console moves; no game logic travels with it. */
+  handOffGm: (targetId: string) => void;
 }
 
 export type InterServerEvents = Record<string, never>;

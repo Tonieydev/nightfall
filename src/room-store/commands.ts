@@ -6,29 +6,38 @@ import {
   type GameState,
 } from '../game-core/index.js';
 import type { RoomDocument } from './types.js';
+import { DomainError } from './errors.js';
 
-export class NotGmError extends Error {
+export class NotGmError extends DomainError {
+  readonly code = 'NOT_GM' as const;
+
   constructor(actorId: string) {
     super(`${actorId} is not the GM of this session`);
     this.name = 'NotGmError';
   }
 }
 
-export class GameNotStartedError extends Error {
+export class GameNotStartedError extends DomainError {
+  readonly code = 'GAME_NOT_STARTED' as const;
+
   constructor() {
     super('this room has no game yet');
     this.name = 'GameNotStartedError';
   }
 }
 
-export class NotAPlayerError extends Error {
+export class NotAPlayerError extends DomainError {
+  readonly code = 'NOT_A_PLAYER' as const;
+
   constructor(targetId: string) {
     super(`${targetId} is not a player in this game`);
     this.name = 'NotAPlayerError';
   }
 }
 
-export class NothingToRevertError extends Error {
+export class NothingToRevertError extends DomainError {
+  readonly code = 'NOTHING_TO_REVERT' as const;
+
   constructor() {
     super('nothing to revert — the game has not advanced yet');
     this.name = 'NothingToRevertError';
@@ -39,7 +48,7 @@ export class NothingToRevertError extends Error {
  * Authorization lives here rather than in the socket handler so it cannot be
  * bypassed by a second call site, and so it is testable without a socket.
  */
-function requireGm(doc: RoomDocument, actorId: string): GameState {
+export function requireGm(doc: RoomDocument, actorId: string): GameState {
   if (doc.gmPlayerId === null || actorId !== doc.gmPlayerId) throw new NotGmError(actorId);
   if (doc.game === null) throw new GameNotStartedError();
   return doc.game;

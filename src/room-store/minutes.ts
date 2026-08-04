@@ -1,4 +1,5 @@
 import type { RedisPort } from './redis-port.js';
+import { DomainError } from './errors.js';
 
 /** 10% headroom under LiveKit's 5,000-minute free tier. */
 export const MINUTE_BUDGET_DEFAULT = 4500;
@@ -7,7 +8,9 @@ export const ALARM_FRACTION = 0.7;
 /** Long enough to outlive its own month, short enough that old months evict. */
 const COUNTER_TTL_SECONDS = 40 * 24 * 60 * 60;
 
-export class MinuteBudgetExceededError extends Error {
+export class MinuteBudgetExceededError extends DomainError {
+  readonly code = 'MINUTE_BUDGET_EXCEEDED' as const;
+
   constructor(reserved: number, requested: number, budget: number) {
     super(
       `voice is at capacity this month: ${reserved} of ${budget} participant-minutes ` +

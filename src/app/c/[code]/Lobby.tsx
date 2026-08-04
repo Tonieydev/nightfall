@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { CircleIcon, CrownSimpleIcon, PlayIcon, UsersThreeIcon } from '@phosphor-icons/react';
+import { Debrief } from './Debrief';
 import { GmConsole } from './GmConsole';
 import { litFor } from './phase-labels';
 import { useVoice } from './useVoice';
@@ -17,7 +18,15 @@ import type { RoomView } from '@/room-store';
 
 type LobbySocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-export function Lobby({ token, crewCode }: { token: string; crewCode: string }) {
+export function Lobby({
+  token,
+  crewCode,
+  claimAvailable,
+}: {
+  token: string;
+  crewCode: string;
+  claimAvailable: boolean;
+}) {
   const [view, setView] = useState<RoomView | null>(null);
   const [error, setError] = useState<RoomErrorPayload | null>(null);
   const [live, setLive] = useState(false);
@@ -65,6 +74,17 @@ export function Lobby({ token, crewCode }: { token: string; crewCode: string }) 
   // Once the game exists the lobby is done: the GM narrates, everyone else plays.
   if (view.game !== null) {
     const lit = litFor(view.game.phase);
+
+    // The debrief is the same screen for everyone, GM included: every card is
+    // already revealed, so there is nothing left to project differently.
+    if (view.game.phase === 'GAME_OVER') {
+      return (
+        <div className="nf-stage" data-lit={lit}>
+          <Debrief view={view} claimAvailable={claimAvailable} />
+        </div>
+      );
+    }
+
     return view.you?.isGm === true ? (
       <div className="nf-stage" data-lit={lit}>
       <GmConsole

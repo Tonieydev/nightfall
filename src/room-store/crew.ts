@@ -1,6 +1,7 @@
 import { generateCrewCode } from './crew-code.js';
 import { crewKey } from './keys.js';
 import type { RedisPort } from './redis-port.js';
+import { DomainError } from './errors.js';
 
 export interface CrewRecord {
   code: string;
@@ -8,7 +9,9 @@ export interface CrewRecord {
   createdAt: number;
 }
 
-export class CrewCodeExhaustedError extends Error {
+export class CrewCodeExhaustedError extends DomainError {
+  readonly code = 'CREW_CODE_EXHAUSTED' as const;
+
   constructor(attempts: number) {
     super(`could not find an unused crew code in ${attempts} attempts`);
     this.name = 'CrewCodeExhaustedError';

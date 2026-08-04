@@ -1,22 +1,29 @@
 import type { GameState, Phase, Role } from '../game-core/index.js';
 import { GameNotStartedError } from './commands.js';
 import type { RoomDocument } from './types.js';
+import { DomainError } from './errors.js';
 
-export class NotYourActionError extends Error {
+export class NotYourActionError extends DomainError {
+  readonly code = 'NOT_YOUR_ACTION' as const;
+
   constructor(actorId: string, role: Role) {
     super(`${actorId} is not the living ${role}`);
     this.name = 'NotYourActionError';
   }
 }
 
-export class WrongPhaseError extends Error {
+export class WrongPhaseError extends DomainError {
+  readonly code = 'WRONG_PHASE' as const;
+
   constructor(phase: Phase, expected: Phase) {
     super(`that action belongs to ${expected}, not ${phase}`);
     this.name = 'WrongPhaseError';
   }
 }
 
-export class InvalidTargetError extends Error {
+export class InvalidTargetError extends DomainError {
+  readonly code = 'INVALID_TARGET' as const;
+
   constructor(targetId: string) {
     super(`${targetId} is not a living player`);
     this.name = 'InvalidTargetError';
