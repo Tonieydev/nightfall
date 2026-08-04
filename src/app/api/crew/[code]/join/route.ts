@@ -1,11 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { issuePlayerToken } from '@/auth/tokens';
+import { issueIdentityToken, issuePlayerToken, verifyIdentityToken } from '@/auth/tokens';
 import { loadServerConfig } from '@/config';
 import {
-  KillSwitchError,
-  RoomCeilingReachedError,
-  RoomFullError,
-  SessionAlreadyStartedError,
+  domainErrorCode,
+  errorMessage,
   getRoomStore,
   isCrewCode,
   parseDisplayName,
@@ -17,7 +15,12 @@ export const dynamic = 'force-dynamic';
 
 interface JoinBody {
   displayName: string;
-  playerId: string | null;
+  /**
+   * Proof of a previous identity, or null for a newcomer. Deliberately not a
+   * playerId: projected state broadcasts every member's id to the whole crew,
+   * so accepting one here would let any teammate join as anyone else.
+   */
+  identityToken: string | null;
 }
 
 function readBody(body: unknown, crewCode: string): JoinBody | null {
@@ -27,11 +30,12 @@ function readBody(body: unknown, crewCode: string): JoinBody | null {
   const displayName = parseDisplayName(raw, crewCode);
   if (displayName === null) return null;
 
-  const id = 'playerId' in body ? (body as { playerId: unknown }).playerId : undefined;
+  const token =
+    'identityToken' in body ? (body as { identityToken: unknown }).identityToken : undefined;
 
   return {
     displayName,
-    playerId: typeof id === 'string' && id !== '' ? id : null,
+    identityToken: typeof token === 'string' && token !== '' ? token : null,
   };
 }
 
@@ -58,8 +62,20 @@ export async function POST(
   }
 
   // A returning player keeps the id their device already holds, which is what
-  // makes a refresh land back in the same seat.
-  const playerId = parsed.playerId ?? randomUUID();
+  // makes a refresh land back in the same seat — but only against a signature.
+  // A token that fails is refused rather than quietly replaced by a new id:
+  // silently minting one would turn a forgery attempt into an ordinary join.
+  const { jwtSecret } = loadServerConfig();
+  let playerId: string;
+  if (parsed.identityToken === null) {
+    playerId = randomUUID();
+  } else {
+    try {
+      ({ playerId } = await verifyIdentityToken(parsed.identityToken, jwtSecret));
+    } catch {
+      return Response.json({ error: 'that identity could not be verified' }, { status: 401 });
+    }
+  }
 
   try {
     await store.room.open(code);
@@ -67,19 +83,39 @@ export async function POST(
       joinLobby(doc, { playerId, displayName: parsed.displayName, now: Date.now() }),
     );
   } catch (error) {
-    if (error instanceof RoomFullError) {
-      return Response.json({ error: error.message }, { status: 409 });
+    // Discriminating on the code, never on instanceof: this handler is webpack's
+    // copy of the module and the error came from the server's copy, so the two
+    // classes are different objects and instanceof is always false here.
+    switch (domainErrorCode(error)) {
+      case 'ROOM_FULL':
+      case 'SESSION_ALREADY_STARTED':
+        return Response.json({ error: errorMessage(error, 'that room is not open') }, { status: 409 });
+      case 'ROOM_CEILING':
+      case 'KILL_SWITCH':
+        return Response.json(
+          { error: errorMessage(error, 'Nightfall is at capacity') },
+          { status: 503 },
+        );
+      default:
+        // Anything unrecognised is a real fault and must stay a 500.
+        throw error;
     }
-    if (error instanceof SessionAlreadyStartedError) {
-      return Response.json({ error: error.message }, { status: 409 });
-    }
-    if (error instanceof RoomCeilingReachedError || error instanceof KillSwitchError) {
-      return Response.json({ error: error.message }, { status: 503 });
-    }
-    throw error;
   }
 
-  const token = await issuePlayerToken({ crewCode: code, playerId }, loadServerConfig().jwtSecret);
+  const token = await issuePlayerToken({ crewCode: code, playerId }, jwtSecret);
+  // Re-issued on every join so the device's proof of identity never goes stale
+  // on a crew that plays irregularly.
+  const identityToken = await issueIdentityToken({ playerId }, jwtSecret);
 
-  return Response.json({ token, playerId, displayName: parsed.displayName, crewCode: code });
+  return Response.json({
+    token,
+    identityToken,
+    playerId,
+    displayName: parsed.displayName,
+    crewCode: code,
+    // Whether the debrief may offer to save a record. Reported here so the offer
+    // costs no extra round trip, and so the join path itself stays unaware of
+    // anything to do with claiming.
+    claimAvailable: loadServerConfig().claim.enabled,
+  });
 }

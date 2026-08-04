@@ -40,6 +40,33 @@ export function clearIdentity(crewCode: string): void {
   }
 }
 
+/**
+ * Device-wide, not per crew: this proves who the human is, and one human is the
+ * same person in every crew they play in. The per-crew entry above only carries
+ * the name, which genuinely does differ from crew to crew.
+ *
+ * This is what a returning device presents instead of a playerId — an id is
+ * broadcast to the whole crew in projected state and so proves nothing.
+ */
+const IDENTITY_TOKEN = 'nightfall:identity-token';
+
+export function readIdentityToken(): string | null {
+  try {
+    return window.localStorage.getItem(IDENTITY_TOKEN);
+  } catch {
+    return null;
+  }
+}
+
+export function writeIdentityToken(token: string): void {
+  try {
+    window.localStorage.setItem(IDENTITY_TOKEN, token);
+  } catch {
+    // See writeIdentity — a browser that refuses storage still gets to play,
+    // it just arrives as someone new next time.
+  }
+}
+
 const SESSION_TOKEN = 'nightfall:token';
 
 export function readToken(crewCode: string): string | null {
@@ -53,6 +80,27 @@ export function readToken(crewCode: string): string | null {
 export function writeToken(crewCode: string, token: string): void {
   try {
     window.sessionStorage.setItem(`${SESSION_TOKEN}:${crewCode}`, token);
+  } catch {
+    // See writeIdentity.
+  }
+}
+
+// Stored beside the token because it arrives with it: a refresh mid-game
+// restores the token without re-joining, and the debrief still has to know
+// whether it may offer to save a record.
+const CLAIM_AVAILABLE = 'nightfall:claim-available';
+
+export function readClaimAvailable(): boolean {
+  try {
+    return window.sessionStorage.getItem(CLAIM_AVAILABLE) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function writeClaimAvailable(available: boolean): void {
+  try {
+    window.sessionStorage.setItem(CLAIM_AVAILABLE, String(available));
   } catch {
     // See writeIdentity.
   }

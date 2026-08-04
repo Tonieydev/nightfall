@@ -19,7 +19,20 @@ function intOr(name: string, fallback: number): number {
   return parsed;
 }
 
+/**
+ * Resend is optional at boot, unlike LiveKit and Upstash, and deliberately so.
+ * The claim is an optional record-keeping feature that must never gate joining
+ * or playing — so a missing key turns the offer off, exactly as a spent voice
+ * budget turns a room voiceless, rather than refusing to start the server.
+ */
+export interface ClaimConfig {
+  enabled: boolean;
+  resendApiKey: string;
+  resendFrom: string;
+}
+
 export interface ServerConfig {
+  claim: ClaimConfig;
   minuteBudget: number;
   livekitApiKey: string;
   livekitApiSecret: string;
@@ -35,6 +48,17 @@ export interface ServerConfig {
 
 const DEV_JWT_SECRET = 'nightfall-development-secret-not-for-production-use';
 
+/**
+ * A key alone is not enough: Resend refuses a send from an unverified domain,
+ * so a half-configured claim would offer the player a code that never arrives.
+ * Both or neither.
+ */
+function loadClaim(): ClaimConfig {
+  const resendApiKey = process.env['RESEND_API_KEY'] ?? '';
+  const resendFrom = process.env['RESEND_FROM'] ?? '';
+  return { enabled: resendApiKey !== '' && resendFrom !== '', resendApiKey, resendFrom };
+}
+
 export function loadServerConfig(): ServerConfig {
   // Lets the app run end to end without an Upstash account. Opt-in, and refused
   // outright in production so a missing env var can never silently degrade to a
@@ -45,6 +69,7 @@ export function loadServerConfig(): ServerConfig {
       throw new Error('NIGHTFALL_DEV_MEMORY_REDIS cannot be used in production');
     }
     return {
+      claim: loadClaim(),
       memoryRedis: true,
       upstashUrl: '',
       upstashToken: '',
@@ -59,6 +84,7 @@ export function loadServerConfig(): ServerConfig {
   }
 
   return {
+    claim: loadClaim(),
     memoryRedis: false,
     upstashUrl: required('UPSTASH_REDIS_REST_URL'),
     upstashToken: required('UPSTASH_REDIS_REST_TOKEN'),
