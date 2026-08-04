@@ -12,6 +12,8 @@ function lobby(overrides: Partial<RoomDocument> = {}): RoomDocument {
     expiresAt: NOW + 90 * 60 * 1000,
     gmPlayerId: null,
     seed: null,
+    voiceEnabled: true,
+    reservedMinutes: 0,
     members: [
       { playerId: 'p1', displayName: 'Toniey', connected: true, joinedAt: NOW },
       { playerId: 'p2', displayName: 'Musa', connected: true, joinedAt: NOW + 1 },

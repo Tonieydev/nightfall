@@ -3,6 +3,16 @@ import { acquireRoomSlot, releaseRoomSlot, type CapacityPolicy } from './capacit
 import { reconcilePhase } from './commands.js';
 import { createCrew, readCrew, type CrewRecord } from './crew.js';
 import { MemoryRedis } from './memory-redis.js';
+import {
+  ALARM_FRACTION,
+  MINUTE_BUDGET_DEFAULT,
+  MinuteBudgetExceededError,
+  maxSpendFor,
+  reconcileMinutes,
+  reserveMinutes,
+  type MinutePolicy,
+} from './minutes.js';
+import { MAX_SEATS, ROOM_TTL_SECONDS } from './keys.js';
 import { claimSession, releaseSession } from './session.js';
 import { createRoomStore, type RoomStore } from './store.js';
 import { createUpstashRedis } from './upstash-redis.js';
@@ -11,6 +21,16 @@ import type { RoomDocument } from './types.js';
 
 export { RoomFullError, NotEnoughPlayersError, SessionAlreadyStartedError, NotAMemberError, joinLobby, setConnected, startSession } from './lobby.js';
 export { RoomCeilingReachedError, KillSwitchError } from './capacity.js';
+export {
+  ALARM_FRACTION,
+  MINUTE_BUDGET_DEFAULT,
+  MinuteBudgetExceededError,
+  maxSpendFor,
+  minutesReserved,
+  monthKey,
+  reconcileMinutes,
+  reserveMinutes,
+} from './minutes.js';
 export { mulberry32, newSeed } from './prng.js';
 export {
   GameNotStartedError,
@@ -53,7 +73,12 @@ export interface RoomStoreFacade {
   room: RoomStore & {
     /** Creates the room behind the concurrency ceiling and the kill switch. */
     open(crewCode: string): Promise<RoomDocument>;
-    close(crewCode: string): Promise<void>;
+    /**
+     * `actualMinutes` comes from LiveKit's per-participant durations once voice
+     * is wired. Until then the elapsed-time estimate below stands in, which is
+     * a real measurement of seats x minutes rather than a placeholder.
+     */
+    close(crewCode: string, actualMinutes?: number): Promise<void>;
   };
   session: {
     claim(crewCode: string, gmPlayerId: string): Promise<boolean>;
@@ -66,7 +91,11 @@ export function createRoomStoreFacade(
   policy: CapacityPolicy,
   now: () => number = Date.now,
   rng: () => number = Math.random,
+  minutes: MinutePolicy = { budget: MINUTE_BUDGET_DEFAULT, onAlarm: logMinuteAlarm },
+  onRoomClosed?: (crewCode: string) => Promise<void>,
 ): RoomStoreFacade {
+  // Worst case for one room: every seat, the whole lifetime.
+  const roomReservation = maxSpendFor(MAX_SEATS, ROOM_TTL_SECONDS / 60);
   const store = createRoomStore({ redis, now });
 
   return {
@@ -90,20 +119,63 @@ export function createRoomStoreFacade(
         const existing = await store.read(crewCode);
         if (existing !== null) return existing;
 
-        await acquireRoomSlot(redis, policy);
+        // Minutes are reserved before the room exists, so a month that cannot
+        // fund a full room never admits one and then cuts it off mid-game.
+        // A month that cannot fund it degrades to a voiceless room instead of
+        // refusing: the pinned crew link has to keep working.
+        let voice = { enabled: true, reservedMinutes: roomReservation };
         try {
-          return await store.create(crewCode);
+          await reserveMinutes(redis, now(), roomReservation, minutes);
+        } catch (error) {
+          if (!(error instanceof MinuteBudgetExceededError)) throw error;
+          voice = { enabled: false, reservedMinutes: 0 };
+        }
+
+        const releaseReservation = async (): Promise<void> => {
+          if (voice.reservedMinutes > 0) {
+            await reconcileMinutes(redis, now(), voice.reservedMinutes, 0);
+          }
+        };
+
+        try {
+          await acquireRoomSlot(redis, policy);
+        } catch (error) {
+          await releaseReservation();
+          throw error;
+        }
+
+        try {
+          return await store.create(crewCode, voice);
         } catch (error) {
           await releaseRoomSlot(redis);
+          await releaseReservation();
           throw error;
         }
       },
-      async close(crewCode) {
+      async close(crewCode, actualMinutes) {
         const existing = await store.read(crewCode);
+        // Participant-minutes accrue while the LiveKit room exists, so the kill
+        // has to reach it — a room left behind bleeds budget until it idles out.
+        if (existing?.voiceEnabled === true) await onRoomClosed?.(crewCode);
         await store.destroy(crewCode);
         await releaseSession(redis, crewCode);
-        // Only give the slot back if this call is what removed the room.
-        if (existing !== null) await releaseRoomSlot(redis);
+
+        if (existing !== null) {
+          await releaseRoomSlot(redis);
+          // Hand back the difference between the worst case held and what the
+          // room actually cost, so a pessimistic reservation cannot starve a
+          // month that had capacity all along.
+          // A voiceless room held nothing and published nothing, so there is
+          // nothing to hand back.
+          if (existing.reservedMinutes > 0) {
+            await reconcileMinutes(
+              redis,
+              now(),
+              existing.reservedMinutes,
+              actualMinutes ?? estimateSpend(existing, now()),
+            );
+          }
+        }
       },
     },
     session: {
@@ -131,10 +203,31 @@ export function getRoomStore(): RoomStoreFacade {
     ? new MemoryRedis()
     : createUpstashRedis(config.upstashUrl, config.upstashToken);
 
-  const store = createRoomStoreFacade(redis, {
-    maxConcurrentRooms: config.maxConcurrentRooms,
-    killSwitch: config.killSwitch,
-  });
+  const store = createRoomStoreFacade(
+    redis,
+    { maxConcurrentRooms: config.maxConcurrentRooms, killSwitch: config.killSwitch },
+    Date.now,
+    Math.random,
+    { budget: config.minuteBudget, onAlarm: logMinuteAlarm },
+  );
   globalRef.__nightfallRoomStore = store;
   return store;
+}
+
+/**
+ * Seats present multiplied by minutes the room was open. Replaced by LiveKit's
+ * own per-participant connected durations when voice lands; until then it is
+ * the honest measure available, and it only ever releases reservation.
+ */
+function estimateSpend(doc: RoomDocument, closedAt: number): number {
+  const elapsedMinutes = Math.max(0, Math.ceil((closedAt - doc.createdAt) / 60_000));
+  return elapsedMinutes * doc.members.length;
+}
+
+function logMinuteAlarm(reserved: number, budget: number): void {
+  console.warn(
+    `[nightfall] participant-minute alarm: ${String(reserved)} of ${String(budget)} reserved ` +
+      `this month (threshold ${String(Math.round(ALARM_FRACTION * budget))}). ` +
+      `Voice capacity is running out.`,
+  );
 }

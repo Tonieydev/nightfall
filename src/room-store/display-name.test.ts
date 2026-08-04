@@ -14,6 +14,8 @@ const room = (): RoomDocument => ({
   gmPlayerId: null,
   members: [],
   seed: null,
+  voiceEnabled: true,
+  reservedMinutes: 0,
   game: null,
 });
 

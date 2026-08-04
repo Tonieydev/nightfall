@@ -20,6 +20,8 @@ function started(seed = 4242): RoomDocument {
     gmPlayerId: null,
     members: [],
     seed: null,
+    voiceEnabled: true,
+    reservedMinutes: 0,
     game: null,
   };
   for (let i = 1; i <= MIN_LOBBY_TO_START; i += 1) {

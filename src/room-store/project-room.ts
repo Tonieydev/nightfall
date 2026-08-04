@@ -38,6 +38,8 @@ export interface RoomView {
   gmPlayerId: string | null;
   members: MemberView[];
   canStart: boolean;
+  /** False when this month's voice budget is spent; the game plays on, silently. */
+  voiceEnabled: boolean;
   you: SelfView | null;
   /** Null for the whole lobby; once a game exists this is game-core's own
    *  per-recipient projection, so role secrecy has exactly one implementation. */
@@ -70,6 +72,7 @@ export function projectRoom(doc: RoomDocument, viewerId: string): RoomView {
       connected: m.connected,
     })),
     canStart: doc.gmPlayerId === null && doc.members.length >= MIN_LOBBY_TO_START,
+    voiceEnabled: doc.voiceEnabled,
     you:
       self === null
         ? null

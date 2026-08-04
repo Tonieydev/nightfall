@@ -14,6 +14,8 @@ function room(overrides: Partial<RoomDocument> = {}): RoomDocument {
     gmPlayerId: null,
     members: [],
     seed: null,
+    voiceEnabled: true,
+    reservedMinutes: 0,
     game: null,
     ...overrides,
   };

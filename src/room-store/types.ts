@@ -22,6 +22,14 @@ export interface RoomDocument {
   members: LobbyMember[];
   /** Persisted so a finished game can be replayed for dispute resolution. */
   seed: number | null;
+  /**
+   * False when the month's participant-minute budget could not fund this room.
+   * The game is fully playable without voice — every decision is a tap — so a
+   * spent budget degrades the night rather than closing the pinned crew link.
+   */
+  voiceEnabled: boolean;
+  /** Minutes held for this room, and the figure close() hands back. Zero when voiceless. */
+  reservedMinutes: number;
   game: GameState | null;
   /** One level of undo for the GM's REVERT_PHASE. Snapshot, never recomputed. */
   previousGame?: GameState | null;

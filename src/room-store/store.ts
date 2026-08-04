@@ -23,7 +23,7 @@ export interface RoomStoreOptions {
 }
 
 export interface RoomStore {
-  create(crewCode: string): Promise<RoomDocument>;
+  create(crewCode: string, voice?: { enabled: boolean; reservedMinutes: number }): Promise<RoomDocument>;
   read(crewCode: string): Promise<RoomDocument | null>;
   /** `apply` may return null to abort without writing — used when a racing
    *  caller has already done the work this one was about to do. */
@@ -45,7 +45,7 @@ export function createRoomStore({ redis, now, maxRetries = 5 }: RoomStoreOptions
   }
 
   return {
-    async create(crewCode) {
+    async create(crewCode, voice = { enabled: true, reservedMinutes: 0 }) {
       const createdAt = now();
       const doc: RoomDocument = {
         version: 1,
@@ -55,6 +55,8 @@ export function createRoomStore({ redis, now, maxRetries = 5 }: RoomStoreOptions
         gmPlayerId: null,
         members: [],
         seed: null,
+        voiceEnabled: voice.enabled,
+        reservedMinutes: voice.reservedMinutes,
         game: null,
       };
 
