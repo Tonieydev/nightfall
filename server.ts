@@ -15,8 +15,11 @@ const { getRoomStore } = await import('./src/room-store/index.js');
 const { applyGraphToRoom, destroyRoom } = await import('./src/voice/index.js');
 
 const port = Number(process.env.PORT ?? 3000);
-// Railway routes to the container's external interface, not to loopback.
-const hostname = process.env.HOSTNAME ?? '0.0.0.0';
+// Deliberately NOT process.env.HOSTNAME: container runtimes set that to the
+// container id, so reading it binds the server to one internal interface —
+// leaving loopback unbound and the platform's healthcheck unable to reach us.
+// Bind every interface unless something explicitly narrows it.
+const hostname = process.env.NIGHTFALL_HOST ?? '0.0.0.0';
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
