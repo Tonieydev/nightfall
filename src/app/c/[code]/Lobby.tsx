@@ -161,11 +161,28 @@ export function Lobby({
       <p className="nf-kicker">Crew code, paste this into the group</p>
       <p className="nf-code">{view.crewCode}</p>
 
+      {/* First, not last. This is a voice product and the control that opens
+          voice was the final element on the card, under a list of six names and
+          below the fold on a phone. Six people sat in a room with exactly one
+          of them on the call, which is not a bug in the audio at all. */}
+      <MicRow
+        view={view}
+        status={voice.status}
+        reason={voice.reason}
+        audioBlocked={voice.audioBlocked}
+        onEnable={openVoice}
+        onEnableAudio={() => void voice.enableAudio()}
+      />
+
       <p className="nf-muted">
         <UsersThreeIcon size={14} /> {seated} here
         {view.gmPlayerId === null ? ' · nobody is moderating yet' : null}
         {live ? null : ' · reconnecting'}
       </p>
+
+      {voice.status === 'idle' || voice.status === 'failed' ? (
+        <p className="nf-muted">Your microphone is off, so nobody can hear you yet.</p>
+      ) : null}
 
       <ul className="nf-roster">
         {view.members.map((member) => (
@@ -192,14 +209,6 @@ export function Lobby({
           the player screen, which does not exist until the game is under way,
           so the permission prompt arrived mid narration if it arrived at all.
           iOS wants this gesture early, and so does everybody else. */}
-      <MicRow
-        view={view}
-        status={voice.status}
-        reason={voice.reason}
-        audioBlocked={voice.audioBlocked}
-        onEnable={openVoice}
-        onEnableAudio={() => void voice.enableAudio()}
-      />
 
       {view.gmPlayerId === null ? (
         !view.canStart ? (

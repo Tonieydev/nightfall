@@ -69,6 +69,16 @@ export function PlayerScreen({
         {now.line}
       </p>
 
+      {/* Above the roster, for the same reason it is above it in the lobby. */}
+      <MicRow
+        view={view}
+        status={voiceStatus}
+        reason={voiceReason}
+        audioBlocked={audioBlocked}
+        onEnable={actions.onEnableVoice}
+        onEnableAudio={actions.onEnableAudio}
+      />
+
       <p className="nf-muted">
         {game.phaseEndsAt === null ? null : <Countdown endsAt={game.phaseEndsAt} />}
       </p>
@@ -134,14 +144,6 @@ export function PlayerScreen({
           </div>
         </>
       )}
-      <MicRow
-        view={view}
-        status={voiceStatus}
-        reason={voiceReason}
-        audioBlocked={audioBlocked}
-        onEnable={actions.onEnableVoice}
-        onEnableAudio={actions.onEnableAudio}
-      />
     </div>
   );
 }
