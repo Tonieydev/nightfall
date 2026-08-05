@@ -2,7 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UsersThreeIcon } from '@phosphor-icons/react';
+import { ArrowRightIcon, UsersThreeIcon } from '@phosphor-icons/react';
+// The leaf module, not the '@/room-store' barrel — the barrel re-exports
+// server-only code that reaches node:crypto and cannot be bundled for a client.
+import { isCrewCode, normaliseCrewCode } from '@/room-store/crew-code';
 
 /**
  * The four states of one room. This is the thing no competitor has and the
@@ -24,6 +27,7 @@ export default function HomePage() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [code, setCode] = useState('');
 
   async function createCrew(): Promise<void> {
     setBusy(true);
@@ -41,15 +45,17 @@ export default function HomePage() {
         return;
       }
 
-      const code = (body as { code?: unknown }).code;
-      if (typeof code !== 'string') {
+      // Named apart from the `code` the join field holds: two different codes
+      // in one component is exactly how the wrong one gets routed to.
+      const created = (body as { code?: unknown }).code;
+      if (typeof created !== 'string') {
         setError('the server sent something unexpected');
         return;
       }
 
       // Straight into the lobby. The crew link they land on is the permanent
       // one they pin — there is no step between creating and having it.
-      router.push(`/c/${code}`);
+      router.push(`/c/${created}`);
     } catch {
       setError('could not reach the server');
     } finally {
@@ -80,8 +86,43 @@ export default function HomePage() {
             {busy ? 'Creating…' : 'Create a crew'}
           </button>
           <p className="nf-fineprint">
-            Free, no account, nothing to download. Already have a link from your group? Just tap it.
+            Free, no account, nothing to download. Already have the link from your group? Just
+            tap it.
           </p>
+
+          {/* The pinned link is the front door. This is for the code somebody
+              read out on the call — without it the only way in is guessing
+              that /c/CODE is a URL, which nobody does. Deliberately secondary:
+              it must not compete with Create for the eye. */}
+          <div className="nf-join">
+            <label className="nf-join-label" htmlFor="crew-code">
+              Been given a code?
+            </label>
+            <div className="nf-join-row">
+              <input
+                id="crew-code"
+                className="input nf-join-input"
+                value={code}
+                onChange={(event) => setCode(normaliseCrewCode(event.target.value).slice(0, 6))}
+                placeholder="LAGOS7"
+                inputMode="text"
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={6}
+                aria-label="Crew code"
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={!isCrewCode(code)}
+                onClick={() => router.push(`/c/${code}`)}
+              >
+                <ArrowRightIcon size={16} />
+                Join
+              </button>
+            </div>
+          </div>
         </div>
 
         {error === null ? null : <p className="nf-fineprint">{error}</p>}

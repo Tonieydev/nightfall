@@ -17,10 +17,12 @@ const SHIPPED = stripComments(PAGE);
 const SHIPPED_CSS = stripComments(CSS);
 
 describe('the landing page has exactly one job', () => {
-  it('offers one action, and it creates a crew', () => {
-    const buttons = SHIPPED.match(/<button/g) ?? [];
+  it('offers exactly one primary action, and it creates a crew', () => {
+    // Counted by weight, not by tag. Joining with a code you were told aloud
+    // is a real need — it just must never compete with Create for the eye.
+    const primary = SHIPPED.match(/btn-primary/g) ?? [];
 
-    expect(buttons).toHaveLength(1);
+    expect(primary).toHaveLength(1);
     expect(SHIPPED).toContain('Create a crew');
   });
 
@@ -32,14 +34,28 @@ describe('the landing page has exactly one job', () => {
   });
 
   it('captures nothing — there are no accounts to capture for', () => {
-    // A waitlist or an email field here would be building a funnel for a
-    // product that has no accounts. The claim is offered after a game, on the
-    // debrief, and nowhere else.
-    expect(SHIPPED).not.toMatch(/<input/);
-    expect(SHIPPED).not.toMatch(/<form/);
+    // This forbids a FUNNEL, not every input. The first version banned inputs
+    // outright and would have blocked joining by code, which is not capture at
+    // all — nothing here is stored, and a crew code is not personal data.
+    expect(SHIPPED).not.toMatch(/type="email"/);
+    expect(SHIPPED).not.toMatch(/type="password"/);
+    expect(SHIPPED).not.toMatch(/autoComplete="email"/);
     expect(SHIPPED.toLowerCase()).not.toContain('waitlist');
     expect(SHIPPED.toLowerCase()).not.toContain('sign up');
     expect(SHIPPED.toLowerCase()).not.toContain('password');
+    expect(SHIPPED.toLowerCase()).not.toContain('your email');
+  });
+
+  it('lets somebody who was told a code get in', () => {
+    // The pinned link is the front door, but codes get read aloud on calls and
+    // typed into chats. Without this the only way in is guessing that /c/CODE
+    // is a URL, which nobody does.
+    // Only a real control satisfies this: somewhere to type the code, and
+    // something to press that is NOT the primary action.
+    expect(SHIPPED).toMatch(/<input/);
+    expect(SHIPPED).toMatch(/Join/);
+    expect(SHIPPED).toMatch(/btn-secondary|btn-ghost/);
+    expect(SHIPPED).toMatch(/router\.push\(`\/c\/\$\{[a-zA-Z]+\}`\)/);
   });
 
   it('promises nothing the product refuses to do', () => {

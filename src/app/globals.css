@@ -339,6 +339,320 @@
   margin: var(--space-6) 0;
 }
 
+/* — the GM console —
+   Two columns on a desk, one on a phone. The spine on the left is what gets
+   read mid-sentence; the roster and the overrides sit out of the way. */
+.nf-console {
+  display: grid;
+  gap: var(--space-6);
+  align-items: start;
+  max-width: 78rem;
+  margin: 0 auto;
+}
+
+.nf-console-main,
+.nf-console-side {
+  display: grid;
+  gap: var(--space-6);
+  align-content: start;
+  min-width: 0;
+}
+
+@media (min-width: 60rem) {
+  .nf-console {
+    grid-template-columns: minmax(0, 1.9fr) minmax(18rem, 1fr);
+    gap: var(--space-8);
+  }
+}
+
+/* The phase card. The largest thing on the screen on purpose: it is read at a
+   glance by someone who is talking, not studying. */
+.nf-phase {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-8);
+  border-radius: var(--radius-md);
+  background: var(--color-section);
+  box-shadow: 0 0 0 1px var(--color-divider);
+  transition: background 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Night drops toward the ground, exactly as the player stage does. */
+.nf-phase[data-lit='night'] {
+  background: var(--color-neutral-900);
+}
+
+@media (min-width: 48rem) {
+  .nf-phase {
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, auto);
+    align-items: start;
+  }
+}
+
+.nf-phase-round {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-2);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-400);
+}
+
+/* A slow breath, not a blink. It says the room is live without asking for
+   attention — and it stops entirely for anyone who asked for less motion. */
+.nf-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--color-accent-400);
+  animation: nf-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes nf-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.nf-phase-label {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2rem);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.022em;
+}
+
+.nf-phase-sub {
+  margin: var(--space-2) 0 0;
+  max-width: 52ch;
+  color: var(--color-neutral-400);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.nf-phase-control {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.nf-phase-advance {
+  min-height: 3.25rem;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.nf-phase-clock {
+  margin: 0;
+  color: var(--color-neutral-500);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* The soft one reads quieter than the authoritative one beside it. */
+.nf-phase-clock[data-soft='true'] {
+  color: var(--color-neutral-600);
+}
+
+/* — panels — */
+.nf-panel {
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.nf-panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.nf-panel-head h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+.nf-panel-note {
+  color: var(--color-neutral-600);
+  font-size: 0.75rem;
+  text-wrap: pretty;
+}
+
+/* — who can hear whom —
+   The product's actual differentiator, and the one thing the GM otherwise has
+   to take on faith. */
+.nf-audio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: var(--space-3);
+}
+
+.nf-audio-cell {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-900);
+  box-shadow: 0 0 0 1px var(--color-divider);
+}
+
+.nf-audio-cell[data-dead='true'] {
+  opacity: 0.55;
+}
+
+.nf-audio-who {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  min-width: 0;
+}
+
+.nf-initial {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-neutral-800);
+  color: var(--color-neutral-300);
+  font-size: 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nf-audio-role {
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  white-space: nowrap;
+}
+
+/* Carried by the accent's own ramp and by weight — never a second colour, and
+   never red, whatever the state. */
+.nf-audio-cell .tag[data-hearing='both'] {
+  background: var(--color-accent-900);
+  color: var(--color-accent-300);
+}
+
+.nf-audio-cell .tag[data-hearing='speaking'] {
+  background: var(--color-accent-900);
+  color: var(--color-accent-400);
+}
+
+.nf-audio-cell .tag[data-hearing='listening'] {
+  background: var(--color-neutral-800);
+  color: var(--color-neutral-300);
+}
+
+.nf-audio-cell .tag[data-hearing='silent'] {
+  background: transparent;
+  color: var(--color-neutral-600);
+  box-shadow: inset 0 0 0 1px var(--color-divider);
+}
+
+/* — night actions, tally, verdict, winner —
+   All GM-side. Carried by the accent ramp and by weight; death never gets a
+   colour of its own. */
+.nf-night-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.nf-night-cell {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-900);
+  box-shadow: 0 0 0 1px var(--color-divider);
+}
+
+.nf-night-value {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.nf-night-note {
+  margin: var(--space-1) 0 0;
+  color: var(--color-neutral-500);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* Votes read as weight accumulating rather than a number ticking up. */
+.nf-weight {
+  flex: none;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-accent-500);
+  width: calc(var(--space-4) * 1);
+  transition: width 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nf-weight[data-count='2'] { width: calc(var(--space-4) * 2); }
+.nf-weight[data-count='3'] { width: calc(var(--space-4) * 3); }
+.nf-weight[data-count='4'] { width: calc(var(--space-4) * 4); }
+.nf-weight[data-count='5'] { width: calc(var(--space-4) * 5); }
+
+.nf-verdict {
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--color-section);
+  box-shadow: inset 2px 0 0 var(--color-accent-400), var(--shadow-sm);
+  animation: nf-story-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.nf-verdict-head {
+  margin: 0 0 var(--space-2);
+  max-width: 32ch;
+  font-size: 1.375rem;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  text-wrap: pretty;
+}
+
+.nf-verdict-body {
+  margin: 0;
+  max-width: 46ch;
+  color: var(--color-neutral-400);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.nf-winner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-900);
+  box-shadow: 0 0 0 1px var(--color-accent-700);
+}
+
+.nf-winner-text {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
 /* — pre-game setup —
    Chosen once, before anything is at stake, so it can afford to be a plain
    list of decisions rather than anything clever. */
@@ -432,6 +746,19 @@
     opacity: 1;
     transform: none;
   }
+}
+
+.nf-story-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.nf-story-toggle {
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--color-neutral-500);
 }
 
 .nf-story-line {
@@ -533,6 +860,37 @@
 .nf-cta .btn {
   min-height: 3rem;
   width: 100%;
+}
+
+.nf-join {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-divider);
+  width: 100%;
+}
+
+.nf-join-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--color-neutral-500);
+  font-size: 0.8125rem;
+}
+
+.nf-join-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+/* Spaced like a code that gets read aloud, and wide enough for six glyphs
+   without letting it grow into a second primary action. */
+.nf-join-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 11rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-variant-numeric: tabular-nums;
 }
 
 .nf-fineprint {
@@ -707,6 +1065,10 @@
   .nf-stage::before,
   .nf-reveal,
   .nf-story,
+  .nf-pulse,
+  .nf-phase,
+  .nf-verdict,
+  .nf-weight,
   .nf-arrive {
     transition: none !important;
     animation: none !important;
