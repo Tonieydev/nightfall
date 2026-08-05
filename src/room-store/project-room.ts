@@ -1,6 +1,7 @@
 import {
   computeAudioGraph,
   projectState,
+  type AudioGraph,
   type GameState,
   type ViewState,
 } from '../game-core/index.js';
@@ -60,11 +61,16 @@ export interface RoomView {
    * ahead instead of listening to their friend, and the drama is the friend.
    */
   narration: NarrationCard | null;
+  /**
+   * When the GM's target for the day runs out — GM only, and null everywhere
+   * else. Advisory: reaching it changes nothing, and no server timer watches
+   * it. The authoritative clock is GameState.phaseEndsAt, which is a different
+   * field for a different reason.
+   */
+  dayEndsAt: number | null;
 }
 
-function projectAudio(game: GameState, viewerId: string): AudioView {
-  const graph = computeAudioGraph(game);
-
+function projectAudio(viewerId: string, graph: AudioGraph): AudioView {
   const hears: string[] = [];
   for (const [speaker, listeners] of graph) {
     if (listeners.has(viewerId)) hears.push(speaker);
@@ -73,8 +79,13 @@ function projectAudio(game: GameState, viewerId: string): AudioView {
   return { speaksTo: [...(graph.get(viewerId) ?? [])], hears };
 }
 
-export function projectRoom(doc: RoomDocument, viewerId: string): RoomView {
+export function projectRoom(
+  doc: RoomDocument,
+  viewerId: string,
+  graph?: AudioGraph,
+): RoomView {
   const self = doc.members.find((m) => m.playerId === viewerId) ?? null;
+  const resolved = doc.game === null ? null : (graph ?? computeAudioGraph(doc.game));
 
   return {
     version: doc.version,
@@ -96,14 +107,21 @@ export function projectRoom(doc: RoomDocument, viewerId: string): RoomView {
             displayName: self.displayName,
             isGm: doc.gmPlayerId === self.playerId,
           },
-    chat: chatFor(doc, viewerId),
+    chat: chatFor(doc, viewerId, resolved ?? undefined),
     record: systemRecord(doc),
     // Projected here rather than merged in by the console, so there is one
     // place that decides who may see it — the same place that decides roles.
     narration:
       doc.game !== null && doc.gmPlayerId === viewerId ? narrationFor(doc.game.phase) : null,
+    dayEndsAt:
+      doc.gmPlayerId === viewerId &&
+      doc.game?.phase === 'DAY' &&
+      typeof doc.dayTargetMs === 'number' &&
+      typeof doc.phaseChangedAt === 'number'
+        ? doc.phaseChangedAt + doc.dayTargetMs
+        : null,
     game: doc.game === null ? null : gameView(doc.game, viewerId),
-    audio: doc.game === null ? null : projectAudio(doc.game, viewerId),
+    audio: doc.game === null || resolved === null ? null : projectAudio(viewerId, resolved),
   };
 }
 
@@ -115,4 +133,14 @@ export function projectRoom(doc: RoomDocument, viewerId: string): RoomView {
 function gameView(game: GameState, viewerId: string): ViewState {
   const view = projectState(game, viewerId);
   return game.phase === 'VOTE' ? view : { ...view, dayVotes: {} };
+}
+
+/**
+ * One broadcast, one graph. The room is identical for everyone receiving it, so
+ * rebuilding the graph per socket was pure repetition — and the projection still
+ * runs per recipient, which is the part that must never be shared.
+ */
+export function projectRoomFor(doc: RoomDocument, viewerIds: string[]): RoomView[] {
+  const graph = doc.game === null ? undefined : computeAudioGraph(doc.game);
+  return viewerIds.map((viewerId) => projectRoom(doc, viewerId, graph));
 }

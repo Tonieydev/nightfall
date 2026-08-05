@@ -1,4 +1,4 @@
-import { computeAudioGraph, type Phase } from '../game-core/index.js';
+import { computeAudioGraph, type AudioGraph, type Phase } from '../game-core/index.js';
 import { DomainError } from './errors.js';
 import type { RoomDocument } from './types.js';
 
@@ -52,10 +52,17 @@ const CAUSE_TEXT: Record<string, string> = {
  * else — chat and voice cannot drift apart, and there is no second routing
  * surface to leak through.
  */
-export function chatRecipients(doc: RoomDocument, senderId: string): string[] {
+export function chatRecipients(
+  doc: RoomDocument,
+  senderId: string,
+  graph?: AudioGraph,
+): string[] {
   if (doc.game === null) return [];
 
-  const audience = computeAudioGraph(doc.game).get(senderId) ?? new Set<string>();
+  // The graph is rebuilt from scratch on every call, so a caller resolving many
+  // senders — or many viewers — passes one in. Projecting a room used to build
+  // one per message per recipient on a path that runs on every state change.
+  const audience = (graph ?? computeAudioGraph(doc.game)).get(senderId) ?? new Set<string>();
   // Nobody is in their own audio audience — you do not hear yourself speak. Text
   // is different only in that the sender sees what they typed, which discloses
   // nothing. Routing to everyone else is still the graph, untouched.
@@ -79,8 +86,13 @@ function live(doc: RoomDocument): ChatMessage[] {
  * This viewer's messages, routed server-side. Never the whole log filtered on
  * the client: the filtering happens before the emit, per recipient.
  */
-export function chatFor(doc: RoomDocument, viewerId: string): ChatMessage[] {
-  return live(doc).filter((m) => chatRecipients(doc, m.senderId).includes(viewerId));
+export function chatFor(
+  doc: RoomDocument,
+  viewerId: string,
+  graph?: AudioGraph,
+): ChatMessage[] {
+  const resolved = doc.game === null ? undefined : (graph ?? computeAudioGraph(doc.game));
+  return live(doc).filter((m) => chatRecipients(doc, m.senderId, resolved).includes(viewerId));
 }
 
 export function postChat(
