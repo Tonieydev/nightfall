@@ -563,6 +563,13 @@ a {
   text-wrap: pretty;
 }
 
+/* A player with a tap to make is being addressed; one who is only listening is
+   being kept company. The difference is weight, not colour. */
+.nf-phase-sub[data-waiting='false'] {
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
 .nf-phase-control {
   display: grid;
   gap: var(--space-3);

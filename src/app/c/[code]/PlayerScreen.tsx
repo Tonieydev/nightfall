@@ -5,7 +5,8 @@ import { Countdown } from './Countdown';
 import { ElectionCard } from './ElectionCard';
 import { MicRow } from './MicRow';
 import type { VoiceStatus } from './useVoice';
-import { PHASE_LABEL, ROLE_LABEL, actionFor } from './phase-labels';
+import { ROLE_LABEL, actionFor } from './phase-labels';
+import { playerPhase } from '@/narration/player-phase';
 import type { RoomView } from '@/room-store';
 
 export interface PlayerActions {
@@ -34,6 +35,7 @@ export function PlayerScreen({
   const me = game.players.find((p) => p.id === view.you?.playerId) ?? null;
   const alive = me?.alive ?? false;
   const prompt = actionFor(game.phase, me?.role ?? null, alive);
+  const now = playerPhase(game.phase, me?.role ?? null, alive);
 
   const isNight = prompt !== null && game.phase !== 'VOTE';
   const myVote = view.you.playerId in game.dayVotes ? game.dayVotes[view.you.playerId] : null;
@@ -44,14 +46,26 @@ export function PlayerScreen({
 
   return (
     <div className="nf-card">
-      <p className="nf-kicker">{PHASE_LABEL[game.phase]}</p>
-      <h4 className={game.phase === 'ROLE_REVEAL' ? 'nf-reveal' : undefined}>
-        {me === null ? 'Watching' : ROLE_LABEL[me.role ?? 'VILLAGER']}
-      </h4>
+      {/* The phase leads. The role used to, and it is the one thing on this
+          screen guaranteed never to change, so a player watching a whole round
+          go by saw nothing move. The card keeps a permanent tag instead, and
+          takes the headline back only at the reveal, where it is the news. */}
+      <p className="nf-kicker">
+        {me === null ? (
+          'Watching'
+        ) : (
+          <span className="tag tag-neutral">{ROLE_LABEL[me.role ?? 'VILLAGER']}</span>
+        )}
+        {alive ? null : <span className="tag tag-neutral">eliminated</span>}
+      </p>
+      <h4 className={game.phase === 'ROLE_REVEAL' ? 'nf-reveal' : undefined}>{now.title}</h4>
+
+      <p className="nf-phase-sub" data-waiting={String(now.waiting)}>
+        {now.line}
+      </p>
 
       <p className="nf-muted">
         {game.phaseEndsAt === null ? null : <Countdown endsAt={game.phaseEndsAt} />}
-        {alive ? null : <span className="tag tag-neutral">eliminated</span>}
       </p>
 
       {/* The eliminated see this too: it is the room's result, not the living
