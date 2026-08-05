@@ -132,6 +132,74 @@
    rather than className soup so the components stay free of style literals.
    ══════════════════════════════════════════════════════════════════════ */
 
+/* ── phones ──────────────────────────────────────────────────────────────
+   Everything here is a fault that is invisible on a desktop and obvious the
+   moment a real device touches it. This product is opened from a WhatsApp
+   link on a phone; this is the common case, not an edge. */
+
+html,
+body {
+  /* One overflowing table or a long crew code and the whole page slides
+     sideways, which reads as the app being broken rather than as a wide
+     element. Wide things scroll inside themselves instead. */
+  overflow-x: hidden;
+  /* No rubber-band past the ends of the page while the GM is mid-tap. */
+  overscroll-behavior-y: none;
+}
+
+/* Safari zooms the viewport whenever a focused input is under 16px, and
+   Nocturne's .input is 14px. Worse, the zoom sticks: the page stays scaled
+   after the keyboard closes and the console is left cropped. 1rem is exactly
+   the threshold, so this costs nothing visually and removes the zoom. */
+@media (pointer: coarse) {
+  .input,
+  input,
+  textarea,
+  select {
+    font-size: 1rem;
+  }
+}
+
+/* Drops the double-tap-to-zoom gesture on controls — and with it Safari's
+   300ms click delay, which makes every tap feel like a slow app. */
+button,
+.btn,
+.seg-opt,
+summary,
+a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Apple's own floor for a touch target. The GM presses Advance while talking
+   and looking at the room, not at the screen. */
+@media (pointer: coarse) {
+  .btn,
+  .seg-opt {
+    min-height: 2.75rem;
+  }
+}
+
+/* Under the notch and clear of the home indicator.
+   Applied to the elements that already own their edge padding, never to a
+   parent as well — the landing sections each set their own inline padding, and
+   adding it to the container too would indent everything twice. max() keeps
+   whichever is larger, so on a phone without insets nothing changes at all. */
+.nf-stage,
+.nf-console,
+.nf-hero,
+.nf-section,
+.nf-footer {
+  padding-left: max(var(--space-6), env(safe-area-inset-left));
+  padding-right: max(var(--space-6), env(safe-area-inset-right));
+}
+
+.nf-stage,
+.nf-console,
+.nf-footer {
+  padding-bottom: max(var(--space-8), env(safe-area-inset-bottom));
+}
+
 /* — the lit room —
    Spec §6: players feel the phase rather than reading it. Night drops toward
    the ground under one light source; day lifts and opens out. The shift is
@@ -1120,10 +1188,13 @@
 }
 
 @media (min-width: 40rem) {
+  /* Still max(): a landscape iPhone is wider than 40rem and still has a
+     notch down one side. */
   .nf-hero,
   .nf-section,
   .nf-footer {
-    padding-inline: var(--space-8);
+    padding-left: max(var(--space-8), env(safe-area-inset-left));
+    padding-right: max(var(--space-8), env(safe-area-inset-right));
   }
 
   .nf-beats {
@@ -1136,7 +1207,8 @@
   .nf-hero,
   .nf-section,
   .nf-footer {
-    padding-inline: calc(var(--space-8) * 2);
+    padding-left: max(calc(var(--space-8) * 2), env(safe-area-inset-left));
+    padding-right: max(calc(var(--space-8) * 2), env(safe-area-inset-right));
   }
 
   .nf-beats {
