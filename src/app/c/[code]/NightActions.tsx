@@ -57,7 +57,7 @@ export function NightActions({ view }: { view: RoomView }) {
   ];
 
   return (
-    <section className="nf-panel" aria-label="Night actions">
+    <section className="card elev-sm nf-panel" aria-label="Night actions">
       <div className="nf-panel-head">
         <h4>Night actions</h4>
         <span className="nf-panel-note">Only you see this.</span>

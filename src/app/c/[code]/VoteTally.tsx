@@ -27,7 +27,7 @@ export function VoteTally({ view }: { view: RoomView }) {
   const tied = ranked.filter(([, voters]) => voters.length === top).length > 1;
 
   return (
-    <section className="nf-panel" aria-label="Vote tally">
+    <section className="card elev-sm nf-panel" aria-label="Vote tally">
       <div className="nf-panel-head">
         <h4>Vote tally</h4>
         <span className="nf-panel-note">

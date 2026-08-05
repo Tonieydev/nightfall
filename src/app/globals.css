@@ -340,22 +340,59 @@
 }
 
 /* — the GM console —
-   Two columns on a desk, one on a phone. The spine on the left is what gets
-   read mid-sentence; the roster and the overrides sit out of the way. */
+   Mobile first, and deliberately not eight equal cards in a column — that is
+   what made it read as scattered. On a phone the phase card is the screen and
+   everything else is a quiet list beneath it, tightened up and separated by
+   rules rather than by floating on its own surface. Two columns only once
+   there is a desk to put them on. */
 .nf-console {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-4);
   align-items: start;
   max-width: 78rem;
   margin: 0 auto;
+  padding-bottom: var(--space-8);
 }
 
 .nf-console-main,
 .nf-console-side {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-4);
   align-content: start;
   min-width: 0;
+}
+
+/* On a phone the panels stop being separate cards and become one continuous
+   list: no surface of their own, no shadow, divided by a single rule. Eight
+   floating boxes in a column is the scatter. */
+@media (max-width: 47.99rem) {
+  .nf-console-main .nf-panel,
+  .nf-console-side .nf-panel {
+    padding: var(--space-6) 0 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    border-top: 1px solid var(--color-divider);
+  }
+
+  .nf-console-main .nf-panel:first-child,
+  .nf-console-side .nf-panel:first-child {
+    border-top: 0;
+  }
+
+  .nf-panel-head {
+    margin-bottom: var(--space-3);
+  }
+
+  .nf-panel-head h4 {
+    font-size: 1rem;
+  }
+
+  /* The note under a heading wraps to its own line rather than fighting the
+     heading for the same row. */
+  .nf-panel-note {
+    flex: 1 0 100%;
+  }
 }
 
 @media (min-width: 60rem) {
@@ -363,18 +400,38 @@
     grid-template-columns: minmax(0, 1.9fr) minmax(18rem, 1fr);
     gap: var(--space-8);
   }
+
+  .nf-console-main,
+  .nf-console-side {
+    gap: var(--space-6);
+  }
 }
 
 /* The phase card. The largest thing on the screen on purpose: it is read at a
    glance by someone who is talking, not studying. */
 .nf-phase {
   display: grid;
-  gap: var(--space-6);
-  padding: var(--space-8);
+  gap: var(--space-4);
+  padding: var(--space-6);
   border-radius: var(--radius-md);
   background: var(--color-section);
   box-shadow: 0 0 0 1px var(--color-divider);
   transition: background 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 48rem) {
+  .nf-phase {
+    gap: var(--space-6);
+    padding: var(--space-8);
+  }
+}
+
+/* The one control worth a thumb. It sits last in the source so it lands under
+   the phase on a phone, which is where a thumb already is. */
+@media (max-width: 47.99rem) {
+  .nf-phase-advance {
+    min-height: 3.5rem;
+  }
 }
 
 /* Night drops toward the ground, exactly as the player stage does. */
@@ -463,12 +520,14 @@
   color: var(--color-neutral-600);
 }
 
-/* — panels — */
+/* — panels —
+   The surface, radius and shadow come from Nocturne's own `.card elev-sm`,
+   which is what the comp uses ten times over. This only adds the padding the
+   comp sets on them and the head row above the content — inventing a parallel
+   card is what made these read as a different product. */
 .nf-panel {
   padding: var(--space-6);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
+  gap: 0;
 }
 
 .nf-panel-head {
@@ -494,11 +553,19 @@
 
 /* — who can hear whom —
    The product's actual differentiator, and the one thing the GM otherwise has
-   to take on faith. */
+   to take on faith. Two up on a phone: one column wastes the width and four
+   makes the names unreadable. */
 .nf-audio-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: var(--space-2);
+}
+
+@media (min-width: 48rem) {
+  .nf-audio-grid {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+    gap: var(--space-3);
+  }
 }
 
 .nf-audio-cell {
@@ -543,34 +610,63 @@
 
 /* Carried by the accent's own ramp and by weight — never a second colour, and
    never red, whatever the state. */
-.nf-audio-cell .tag[data-hearing='both'] {
+.tag[data-hearing='mafia'] {
+  background: var(--color-accent-700);
+  color: var(--color-accent-100);
+}
+
+.tag[data-hearing='dead'] {
+  background: transparent;
+  color: var(--color-neutral-400);
+  box-shadow: inset 0 0 0 1px var(--color-neutral-700);
+}
+
+.tag[data-hearing='open'] {
   background: var(--color-accent-900);
   color: var(--color-accent-300);
 }
 
-.nf-audio-cell .tag[data-hearing='speaking'] {
-  background: var(--color-accent-900);
-  color: var(--color-accent-400);
-}
-
-.nf-audio-cell .tag[data-hearing='listening'] {
+.tag[data-hearing='silenced'] {
   background: var(--color-neutral-800);
-  color: var(--color-neutral-300);
+  color: var(--color-neutral-500);
 }
 
-.nf-audio-cell .tag[data-hearing='silent'] {
-  background: transparent;
+/* The table scrolls inside itself rather than pushing the page sideways —
+   five columns will not fit a phone and must not try. */
+.nf-table-wrap {
+  overflow-x: auto;
+  margin: 0 calc(var(--space-6) * -1) calc(var(--space-6) * -1);
+  padding: 0 var(--space-6) var(--space-6);
+}
+
+.nf-table-wrap .table {
+  min-width: 30rem;
+}
+
+.nf-table-wrap .table td {
+  white-space: nowrap;
+}
+
+/* Death is weight and the neutral ramp, never a colour. */
+.nf-table-wrap tbody tr[data-dead='true'] td {
   color: var(--color-neutral-600);
-  box-shadow: inset 0 0 0 1px var(--color-divider);
 }
 
 /* — night actions, tally, verdict, winner —
    All GM-side. Carried by the accent ramp and by weight; death never gets a
    colour of its own. */
+/* Stacked on a phone: three across makes each one too narrow to read the note
+   underneath, which is the only part that tells the GM what to do. */
 .nf-night-grid {
   display: grid;
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-2);
+}
+
+@media (min-width: 40rem) {
+  .nf-night-grid {
+    gap: var(--space-3);
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
 }
 
 .nf-night-cell {
