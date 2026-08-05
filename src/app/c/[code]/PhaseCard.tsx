@@ -51,9 +51,11 @@ export function PhaseCard({ view, onAdvance }: { view: RoomView; onAdvance: () =
                 : 'Game ended.'}
           </p>
         ) : (
+          // Named for the next thing out of the GM's mouth, not for the next
+          // phase — pressing it is the same gesture as saying it.
           <button type="button" className="nf-phase-advance btn btn-primary" onClick={onAdvance}>
             <ArrowRightIcon size={20} />
-            Advance
+            {view.advanceLabel ?? 'Advance'}
           </button>
         )}
 

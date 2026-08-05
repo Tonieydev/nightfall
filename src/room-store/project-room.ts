@@ -1,4 +1,5 @@
 import {
+  advancePhase,
   computeAudioGraph,
   projectState,
   type AudioGraph,
@@ -71,6 +72,12 @@ export interface RoomView {
   /** Which night cycle the room is on. Not a secret. */
   round: number;
   /**
+   * What the GM is about to say, for the button that says it — named for the
+   * phase the room will actually land in, which advancePhase decides. Null at
+   * GAME_OVER, and null for anyone who is not the GM.
+   */
+  advanceLabel: string | null;
+  /**
    * The whole speaker-to-listeners map, GM only and null for everyone else.
    * At NIGHT_MAFIA this map IS the mafia roster — whoever hears a mafia
    * speaker is mafia — so it is the single most damaging thing that could be
@@ -123,6 +130,13 @@ export function projectRoom(
     narration:
       doc.game !== null && doc.gmPlayerId === viewerId ? narrationFor(doc.game.phase) : null,
     round: doc.roundNumber ?? 1,
+    // Asking advancePhase where we are going keeps legal order in game-core —
+    // including the night roles it skips when nobody holds them. The peek is
+    // discarded and advancePhase is pure, so `now` here changes nothing.
+    advanceLabel:
+      doc.game !== null && doc.gmPlayerId === viewerId && doc.game.phase !== 'GAME_OVER'
+        ? narrationFor(advancePhase(doc.game, 0).phase).advanceLabel
+        : null,
     audioGraph:
       resolved !== null && doc.gmPlayerId === viewerId
         ? Object.fromEntries([...resolved].map(([speaker, hears]) => [speaker, [...hears]]))
