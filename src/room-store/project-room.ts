@@ -7,8 +7,9 @@ import {
   type ViewState,
 } from '../game-core/index.js';
 import { chatFor, systemRecord, type ChatMessage, type SystemEvent } from './chat.js';
+import { nightKillsFor } from './game-config.js';
 import { MIN_LOBBY_TO_START } from './keys.js';
-import { narrationFor, type NarrationCard } from '../narration/script.js';
+import { advanceLabelFor, narrationFor, type NarrationCard } from '../narration/script.js';
 import type { RoomDocument } from './types.js';
 
 export interface MemberView {
@@ -78,6 +79,12 @@ export interface RoomView {
    */
   advanceLabel: string | null;
   /**
+   * How many names the mafia's ballot may settle on tonight — GM only, null for
+   * everyone else. The room finds out how many died by being told at dawn, not
+   * by reading the setting off their own screen the night before.
+   */
+  nightKills: number | null;
+  /**
    * The whole speaker-to-listeners map, GM only and null for everyone else.
    * At NIGHT_MAFIA this map IS the mafia roster — whoever hears a mafia
    * speaker is mafia — so it is the single most damaging thing that could be
@@ -135,8 +142,10 @@ export function projectRoom(
     // discarded and advancePhase is pure, so `now` here changes nothing.
     advanceLabel:
       doc.game !== null && doc.gmPlayerId === viewerId && doc.game.phase !== 'GAME_OVER'
-        ? narrationFor(advancePhase(doc.game, 0).phase).advanceLabel
+        ? advanceLabelFor(doc.game.phase, advancePhase(doc.game, 0).phase)
         : null,
+    nightKills:
+      doc.game !== null && doc.gmPlayerId === viewerId ? nightKillsFor(doc.game.config) : null,
     audioGraph:
       resolved !== null && doc.gmPlayerId === viewerId
         ? Object.fromEntries([...resolved].map(([speaker, hears]) => [speaker, [...hears]]))

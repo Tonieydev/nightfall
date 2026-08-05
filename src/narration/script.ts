@@ -10,12 +10,20 @@ export interface NarrationCard {
   /** Private to the GM. Explains what to wait for, never what to decide. */
   cue: string | null;
   /**
-   * What the GM is about to SAY, shown on the button that opens this phase —
-   * "Mafia sleep", not "Night, doctor". The console labels its one control
-   * with the next thing out of the GM's mouth, so pressing it is the same
-   * gesture as saying it.
+   * What the GM is about to SAY to OPEN this phase — "Mafia wake up", not
+   * "Night, doctor". The console labels its one control with the next thing out
+   * of the GM's mouth, so pressing it is the same gesture as saying it.
    */
   advanceLabel: string;
+  /**
+   * What the GM says to CLOSE this phase, in the same breath as the line that
+   * opens the next one: "Mafia, sleep. Doctor, wake up." One tap is two
+   * sentences at the table, and a button that only carried the second half left
+   * the mafia awake for the rest of the night.
+   *
+   * Null where nobody is being put under.
+   */
+  sleepLabel: string | null;
 }
 
 /**
@@ -36,6 +44,7 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
     ],
     cue: 'Six in the room before you can start, and you will not hold a role — you narrate the whole night.',
     advanceLabel: 'Take your seats',
+    sleepLabel: null,
   },
 
   ROLE_REVEAL: {
@@ -45,15 +54,17 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
     ],
     cue: 'Give them a moment with it. Advance when the room goes quiet again.',
     advanceLabel: 'Deal the cards',
+    sleepLabel: 'Everyone sleep',
   },
 
   NIGHT_MAFIA: {
     lines: [
-      'Night falls. Everyone close your eyes — the village is asleep.',
+      'Night falls. Everyone, sleep — close your eyes.',
       'Mafia, wake up. Look at each other. Agree on who does not see the morning.',
     ],
     cue: 'Only the mafia hear each other now; the town hears you. Let them settle on a name or let the clock run out — a tie kills nobody, and that is allowed to happen.',
-    advanceLabel: 'Everyone sleep',
+    advanceLabel: 'Mafia wake up',
+    sleepLabel: 'Mafia sleep',
   },
 
   NIGHT_DOCTOR: {
@@ -62,7 +73,8 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
       'Doctor, wake up. One person lives through tonight if you choose them. Point.',
     ],
     cue: 'The doctor does not speak, they tap. Advance once they have chosen — they may choose themselves.',
-    advanceLabel: 'Mafia sleep',
+    advanceLabel: 'Doctor wake up',
+    sleepLabel: 'Doctor sleep',
   },
 
   NIGHT_DETECTIVE: {
@@ -71,16 +83,18 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
       'Detective, wake up. Choose one face. You will learn what they are, and no one else will.',
     ],
     cue: 'The answer lands on their screen the instant they tap. You never say it aloud, tonight or any night.',
-    advanceLabel: 'Doctor sleep',
+    advanceLabel: 'Detective wake up',
+    sleepLabel: 'Detective sleep',
   },
 
   DAWN: {
     lines: [
       'Detective, sleep.',
-      'The village wakes up. Open your eyes.',
+      'Everyone, wake up. The village opens its eyes.',
     ],
-    cue: 'Read what happened off the roster, then say the name — or tell them everyone made it through.',
-    advanceLabel: 'Detective sleep',
+    cue: 'Read what happened off the roster, then say who did not make it — or tell them everyone did.',
+    advanceLabel: 'Everyone wake up',
+    sleepLabel: null,
   },
 
   DAY: {
@@ -90,6 +104,7 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
     ],
     cue: 'This one is theirs. Listen, keep time, and advance when the room has said what it needs to.',
     advanceLabel: 'Open the day',
+    sleepLabel: null,
   },
 
   VOTE: {
@@ -98,6 +113,9 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
     ],
     cue: 'Votes appear live on every screen and can be pulled until you advance. A tie eliminates nobody.',
     advanceLabel: 'Call the vote',
+    // The next night is entered from here, not from the reveal, so the whole
+    // room still has to go down before the mafia open their eyes.
+    sleepLabel: 'Everyone sleep',
   },
 
   GAME_OVER: {
@@ -107,10 +125,47 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
     ],
     cue: null,
     advanceLabel: 'End the game',
+    sleepLabel: null,
   },
 };
 
 /** The card for a phase. Keyed by phase and nothing else. */
 export function narrationFor(phase: Phase): NarrationCard {
   return NARRATION_SCRIPT[phase];
+}
+
+/**
+ * Phases the GM talks the room INTO. Only these carry the sleep beat: a tap
+ * that opens the day or ends the game is one sentence, not two.
+ */
+const NIGHTFALL: ReadonlySet<Phase> = new Set<Phase>([
+  'NIGHT_MAFIA',
+  'NIGHT_DOCTOR',
+  'NIGHT_DETECTIVE',
+  'DAWN',
+]);
+
+/**
+ * The whole line on the button, for a move from one phase to another.
+ *
+ * Composed from both ends rather than stored per phase, because advancePhase
+ * skips any night role nobody alive is holding — with no doctor in the game the
+ * mafia hand straight over to the detective, and a label fixed to the
+ * destination would have the GM saying "Doctor, sleep" to an empty chair.
+ */
+export function advanceLabelFor(from: Phase, to: Phase): string {
+  const wake = narrationFor(to).advanceLabel;
+  const sleep = NIGHTFALL.has(to) ? narrationFor(from).sleepLabel : null;
+
+  return sleep === null ? wake : `${sleep}${BEAT_SEPARATOR}${wake}`;
+}
+
+const BEAT_SEPARATOR = ' · ';
+
+/**
+ * The label back apart into the sentences it was built from, so the button can
+ * keep each one unbroken and wrap between them instead of through them.
+ */
+export function advanceBeats(label: string): string[] {
+  return label.split(BEAT_SEPARATOR);
 }
