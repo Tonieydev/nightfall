@@ -13,6 +13,7 @@
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
     "start": "tsx server.ts",
+    "bots": "tsx scripts/play-with-bots.mjs",
     "lint": "node scripts/build-oxlint-config.mjs && oxlint -c .oxlintrc.generated.json --deny-warnings src server.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
