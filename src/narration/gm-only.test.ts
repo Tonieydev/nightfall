@@ -137,8 +137,20 @@ describe('the card prompts, it never gates', () => {
 
     // Advancing is the GM's one oversized button. A card that could move the
     // phase — or that had to be dismissed — would hand pacing to the app.
-    expect(card).not.toMatch(/onAdvance|advance\(|<button/);
+    //
+    // The card DOES carry one control: the script on/off toggle. That changes
+    // what the GM reads, never where the room is, so it is checked by what it
+    // can reach rather than by counting buttons — the first version banned all
+    // of them and would have blocked the toggle.
+    expect(card).not.toMatch(/onAdvance|advance\(/);
+    expect(card).not.toMatch(/emit\(|socket/);
     expect(card).not.toMatch(/setTimeout|setInterval/);
+
+    // Its only button is the toggle, and it only ever reports a boolean up.
+    const buttons = card.match(/<button/g) ?? [];
+    expect(buttons).toHaveLength(1);
+    expect(card).toMatch(/aria-pressed/);
+    expect(card).toMatch(/onToggle\(!on\)/);
   });
 
   it('leaves the phase alone no matter how often it is rendered', () => {
