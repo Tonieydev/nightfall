@@ -1,6 +1,6 @@
 'use client';
 
-import { CrownSimpleIcon, SkullIcon } from '@phosphor-icons/react';
+import { ArrowClockwiseIcon, CrownSimpleIcon, SkullIcon } from '@phosphor-icons/react';
 import { ClaimCard } from './ClaimCard';
 import { ROLE_LABEL } from './phase-labels';
 import type { RoomView } from '@/room-store';
@@ -27,7 +27,16 @@ function summaryFor(view: RoomView): string {
   return `You played ${role}, ${you.alive ? 'survived' : 'did not survive'}, ${outcome}.`;
 }
 
-export function Debrief({ view, claimAvailable }: { view: RoomView; claimAvailable: boolean }) {
+export function Debrief({
+  view,
+  claimAvailable,
+  onNewSession,
+}: {
+  view: RoomView;
+  claimAvailable: boolean;
+  /** Back to a lobby, same room, same people. */
+  onNewSession: () => void;
+}) {
   const game = view.game;
   if (game === null) return null;
 
@@ -86,6 +95,19 @@ export function Debrief({ view, claimAvailable }: { view: RoomView; claimAvailab
         <CrownSimpleIcon size={14} />{' '}
         {view.members.find((m) => m.playerId === view.gmPlayerId)?.displayName ?? 'Someone'} narrated
         this one. Anyone can start the next.
+      </p>
+
+      {/* The same room, not a new code. Sending a crew to the landing page for
+          a fresh link loses everybody who does not follow it, which on a group
+          call is most of them. The moderator seat opens up with it, which is
+          what makes the line above true. */}
+      <button type="button" className="nf-advance btn btn-primary" onClick={onNewSession}>
+        <ArrowClockwiseIcon size={18} />
+        Play again
+      </button>
+      <p className="nf-muted">
+        Same crew, same code. Everyone stays where they are and somebody new can
+        take the console.
       </p>
 
       {/* Last, and only here: the game is over and there is something to keep. */}

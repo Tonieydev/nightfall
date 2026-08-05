@@ -12,6 +12,7 @@ import {
   clearVote,
   advanceGame,
   endGame,
+  newSession,
   handOffGm,
   postChat,
   forceKill,
@@ -306,6 +307,11 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
     });
     socket.on('endGame', () => {
       command((doc) => endGame(doc, playerId));
+    });
+    // Not GM-gated on purpose: at GAME_OVER there is no console left to hold,
+    // and newSession refuses anything that is not a finished game.
+    socket.on('newSession', () => {
+      command((doc) => newSession(doc, Date.now()));
     });
     socket.on('handOffGm', (targetId) => {
       command((doc) => handOffGm(doc, playerId, targetId, Date.now()));

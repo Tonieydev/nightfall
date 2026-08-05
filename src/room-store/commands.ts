@@ -202,3 +202,34 @@ export function endGame(doc: RoomDocument, actorId: string): RoomDocument {
     game: { ...game, phase: 'GAME_OVER', phaseEndsAt: null, version: game.version + 1 },
   };
 }
+
+/**
+ * Back to a lobby, in the same room, with the same people.
+ *
+ * A crew that has just finished wants to play again where they already are.
+ * Sending them to the landing page for a fresh code loses everybody who does
+ * not follow the new link, which on a group call is most of them.
+ *
+ * Everything that belonged to the finished game goes: the state, the seed it
+ * was dealt from, the round count, and the moderator seat. The seat especially,
+ * because the spec's debrief asks who moderates next and the answer should not
+ * be "whoever ran the last one, forever".
+ *
+ * Deliberately not GM-only: at GAME_OVER the console is over too, and this is
+ * the whole crew's decision. It is refused while a game is running, which is
+ * what stops it being a reset button beside a live round.
+ */
+export function newSession(doc: RoomDocument, now: number): RoomDocument {
+  if (doc.game === null || doc.game.phase !== 'GAME_OVER') throw new GameNotStartedError();
+
+  return {
+    ...doc,
+    game: null,
+    gmPlayerId: null,
+    seed: null,
+    roundNumber: 1,
+    phaseChangedAt: now,
+    previousGame: null,
+    dayTargetMs: null,
+  };
+}

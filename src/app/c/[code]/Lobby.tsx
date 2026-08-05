@@ -100,7 +100,14 @@ export function Lobby({
     if (view.game.phase === 'GAME_OVER') {
       return (
         <div className="nf-stage" data-lit={lit}>
-          <Debrief view={view} claimAvailable={claimAvailable} />
+          <Debrief
+            view={view}
+            claimAvailable={claimAvailable}
+            onNewSession={() => {
+              setModerating(false);
+              emit?.emit('newSession');
+            }}
+          />
         </div>
       );
     }

@@ -13,6 +13,7 @@ export async function applyAudioGraph(
   service: VoiceRoomService,
   roomCode: string,
   graph: AudioGraph,
+  log: (line: string) => void = () => undefined,
 ): Promise<void> {
   const participants = await service.listParticipants(roomCode);
   const present = new Set(participants.map((p) => p.identity));
@@ -45,5 +46,13 @@ export async function applyAudioGraph(
     if (forbidden.length > 0) {
       await service.updateSubscriptions(roomCode, listener.identity, forbidden, false);
     }
+
+    // Whether anybody can hear anybody is otherwise invisible from outside the
+    // browser, which left a silent room indistinguishable from a working one.
+    log(
+      `voice ${roomCode}: ${listener.identity.slice(0, 8)} +${String(allowed.length)} -${String(forbidden.length)}`,
+    );
   }
+
+  if (participants.length === 0) log(`voice ${roomCode}: nobody in the voice room`);
 }

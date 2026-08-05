@@ -60,6 +60,7 @@ export {
   NotGmError,
   NothingToRevertError,
   advanceGame,
+  newSession,
   endGame,
   forceKill,
   forceRevive,

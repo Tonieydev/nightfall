@@ -66,6 +66,12 @@ export interface ClientToServerEvents {
   /** GM-only. The console moves; no game logic travels with it. */
   handOffGm: (targetId: string) => void;
   /**
+   * Back to a lobby, same room, same people. Anyone may ask for it once the
+   * game is over: the console is over too, and the next moderator is not
+   * decided yet. Refused while a game is running.
+   */
+  newSession: () => void;
+  /**
    * This device has finished connecting to the voice room.
    *
    * Subscriptions are issued by walking the participants LiveKit reports, so a

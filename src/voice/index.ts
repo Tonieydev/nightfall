@@ -63,7 +63,12 @@ export async function applyGraphToRoom(
   service: VoiceRoomService = roomService(),
 ): Promise<void> {
   if (!voiceEnabled) return;
-  await applyAudioGraph(service, roomCode, graph);
+  // Logged because who can hear whom is otherwise invisible from outside a
+  // browser: a room where nobody was ever subscribed looks exactly like a
+  // working one from the server, and looked exactly like one for a whole game.
+  await applyAudioGraph(service, roomCode, graph, (line) => {
+    console.log(line);
+  });
 }
 
 /**
