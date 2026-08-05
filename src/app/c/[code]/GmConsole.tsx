@@ -33,11 +33,13 @@ export function GmConsole({
   view,
   actions,
   voiceStatus,
+  voiceReason,
   onEnableVoice,
 }: {
   view: RoomView;
   actions: GmActions;
   voiceStatus: VoiceStatus;
+  voiceReason: string | null;
   onEnableVoice: () => void;
 }) {
   // Above the early return: hooks cannot sit behind a conditional.
@@ -67,7 +69,7 @@ export function GmConsole({
         {/* The GM is audible to every player in every phase and had no control
             to turn their own microphone on, so they were the one person in the
             room guaranteed to be silent. */}
-        <MicRow view={view} status={voiceStatus} onEnable={onEnableVoice} />
+        <MicRow view={view} status={voiceStatus} reason={voiceReason} onEnable={onEnableVoice} />
 
         <PhaseCard view={view} onAdvance={actions.onAdvance} />
 

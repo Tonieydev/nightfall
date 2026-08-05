@@ -8,10 +8,12 @@ export type MicState =
   | { kind: 'heard'; count: number }
   /** Live, and routed to nobody. Correct during the night, not a fault. */
   | { kind: 'silenced' }
+  /** In the room and hearing it, but this device's microphone was refused. */
+  | { kind: 'listening'; reason: string | null }
   /** The crew is playing without live audio this month. */
   | { kind: 'budget' }
-  /** This device could not connect. Everyone else may be fine. */
-  | { kind: 'failed' };
+  /** This device could not join at all. Everyone else may be fine. */
+  | { kind: 'failed'; reason: string | null };
 
 /**
  * What to tell this player about their microphone.
@@ -23,9 +25,14 @@ export type MicState =
  * same branch as 'live', and a confident wrong answer stops somebody
  * troubleshooting a mic that is genuinely off.
  */
-export function micState(view: RoomView, status: VoiceStatus): MicState {
+export function micState(
+  view: RoomView,
+  status: VoiceStatus,
+  reason: string | null = null,
+): MicState {
   if (!view.voiceEnabled || status === 'unavailable') return { kind: 'budget' };
-  if (status === 'failed') return { kind: 'failed' };
+  if (status === 'failed') return { kind: 'failed', reason };
+  if (status === 'listening') return { kind: 'listening', reason };
   if (status === 'idle' || status === 'connecting') {
     return { kind: 'offer', connecting: status === 'connecting' };
   }

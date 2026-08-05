@@ -17,13 +17,16 @@ import type { RoomView } from '@/room-store';
 export function MicRow({
   view,
   status,
+  reason = null,
   onEnable,
 }: {
   view: RoomView;
   status: VoiceStatus;
+  /** Why voice is not working, when it is not. */
+  reason?: string | null;
   onEnable: () => void;
 }) {
-  const state = micState(view, status);
+  const state = micState(view, status, reason);
 
   switch (state.kind) {
     case 'budget':
@@ -37,11 +40,26 @@ export function MicRow({
       return (
         <div className="nf-mic-slot">
           <p className="nf-muted">
-            <WifiSlashIcon size={14} /> Voice could not connect on this device.
+            <WifiSlashIcon size={14} />{' '}
+            {state.reason ?? 'Voice could not connect on this device.'}
           </p>
           <button type="button" className="nf-tile btn btn-secondary" onClick={onEnable}>
             <MicrophoneIcon size={16} />
             Try again
+          </button>
+        </div>
+      );
+
+    case 'listening':
+      return (
+        <div className="nf-mic-slot">
+          <p className="nf-muted">
+            <MicrophoneSlashIcon size={14} /> You can hear the room. They cannot hear you.
+          </p>
+          {state.reason === null ? null : <p className="nf-muted">{state.reason}</p>}
+          <button type="button" className="nf-tile btn btn-secondary" onClick={onEnable}>
+            <MicrophoneIcon size={16} />
+            Try the microphone again
           </button>
         </div>
       );

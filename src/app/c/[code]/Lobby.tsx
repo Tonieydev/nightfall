@@ -110,6 +110,7 @@ export function Lobby({
       <GmConsole
         view={view}
         voiceStatus={voice.status}
+        voiceReason={voice.reason}
         onEnableVoice={openVoice}
         actions={{
           onAdvance: () => emit?.emit('advance'),
@@ -136,6 +137,7 @@ export function Lobby({
           onEnableVoice: openVoice,
         }}
         voiceStatus={voice.status}
+        voiceReason={voice.reason}
       />
       </div>
     );
@@ -179,7 +181,7 @@ export function Lobby({
           the player screen, which does not exist until the game is under way,
           so the permission prompt arrived mid narration if it arrived at all.
           iOS wants this gesture early, and so does everybody else. */}
-      <MicRow view={view} status={voice.status} onEnable={openVoice} />
+      <MicRow view={view} status={voice.status} reason={voice.reason} onEnable={openVoice} />
 
       {view.gmPlayerId === null ? (
         !view.canStart ? (

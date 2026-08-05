@@ -44,6 +44,22 @@ describe('the mic row', () => {
     }
   });
 
+  it('keeps a device in the room when only its microphone was refused', () => {
+    // Losing the mic and losing the room are different failures. Somebody whose
+    // microphone is blocked can still hear every word, and dropping them out of
+    // the call for it takes away the half that still worked.
+    const state = micState(view(['a', 'b']), 'listening');
+
+    expect(state.kind).toBe('listening');
+  });
+
+  it('carries the reason a connection failed, so it can be read', () => {
+    expect(micState(view([]), 'failed', 'Permission denied')).toEqual({
+      kind: 'failed',
+      reason: 'Permission denied',
+    });
+  });
+
   it('separates a room with voice switched off from a device that failed', () => {
     // One is the whole crew playing silently on purpose; the other is this
     // phone. Telling a player the wrong one sends them to fix the wrong thing.

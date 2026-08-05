@@ -24,10 +24,12 @@ export function PlayerScreen({
   view,
   actions,
   voiceStatus,
+  voiceReason,
 }: {
   view: RoomView;
   actions: PlayerActions;
   voiceStatus: VoiceStatus;
+  voiceReason: string | null;
 }) {
   const game = view.game;
   if (game === null || view.you === null) return null;
@@ -129,7 +131,7 @@ export function PlayerScreen({
           </div>
         </>
       )}
-      <MicRow view={view} status={voiceStatus} onEnable={actions.onEnableVoice} />
+      <MicRow view={view} status={voiceStatus} reason={voiceReason} onEnable={actions.onEnableVoice} />
     </div>
   );
 }
