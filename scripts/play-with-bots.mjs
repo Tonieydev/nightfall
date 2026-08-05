@@ -20,11 +20,31 @@ import { REALTIME_NAMESPACE } from '../src/realtime/events.ts';
  * the socket namespace and needs tsx to load it.
  */
 const args = process.argv.slice(2);
-const isCode = (value) => typeof value === 'string' && /^[A-Z0-9]{6}$/i.test(value);
+const isCount = (value) => /^\d{1,2}$/.test(value);
+// A count is also six digits' worth of nothing, so it has to be ruled out
+// before a bare number could ever be read as a crew code.
+const isCode = (value) => /^[A-Z0-9]{6}$/i.test(value) && !isCount(value);
 
 const existingCode = args.find(isCode)?.toUpperCase() ?? null;
 const baseUrl = args.find((a) => a.startsWith('http')) ?? 'http://127.0.0.1:3000';
-const NAMES = ['Ada', 'Musa', 'Chidi', 'Bola', 'Emeka'];
+
+/** Eleven, because the twelfth of MAX_SEATS is the GM's and never a bot's. */
+const POOL = [
+  'Ada',
+  'Musa',
+  'Chidi',
+  'Bola',
+  'Emeka',
+  'Ngozi',
+  'Tunde',
+  'Amara',
+  'Kelechi',
+  'Yemi',
+  'Zainab',
+];
+
+const wanted = Number(args.find(isCount) ?? 5);
+const NAMES = POOL.slice(0, Math.min(Math.max(wanted, 1), POOL.length));
 
 /**
  * Where the bots' identities live between runs. The join route hands back an
@@ -125,6 +145,10 @@ function react(bot, view) {
   const game = view.game;
   if (!game) return;
 
+  // This bot's own idea of where the room is, so a queued action can tell
+  // whether its phase closed underneath it before emitting into the next one.
+  bot.phase = game.phase;
+
   if (game.phase !== lastPhase) {
     lastPhase = game.phase;
     const alive = game.players.filter((p) => p.alive).length;
@@ -145,17 +169,37 @@ function react(bot, view) {
 
   const act = (event, targetId, label) => {
     bot.acted.add(turn);
-    // A beat, so a human watching sees it happen rather than finding it done.
+    // A beat, so a human watching sees it happen rather than finding it done —
+    // but a SHORT one. This used to wait up to three seconds, which a GM
+    // tapping through the night beat every time: the emit landed a phase late,
+    // the server refused it as WRONG_PHASE, and the mafia killed nobody all
+    // game. The bots have to be quicker than the person testing them.
     setTimeout(() => {
+      if (bot.phase !== game.phase) {
+        console.log(`   ${bot.name} missed the window (${game.phase} closed)`);
+        return;
+      }
       bot.socket.emit(event, targetId);
       const target = game.players.find((p) => p.id === targetId);
       console.log(`   ${bot.name} ${label} ${target?.name ?? targetId}`);
-    }, 1200 + Math.random() * 1800);
+    }, 200 + Math.random() * 400);
   };
 
   if (game.phase === 'NIGHT_MAFIA' && me.role === 'MAFIA') {
-    const town = others.filter((p) => p.role !== 'MAFIA');
-    act('mafiaVote', pick(town.length > 0 ? town : others).id, 'targets');
+    // Every mafia bot reaches the SAME name, from state they can all already
+    // see. Picking independently at random meant two mafia against three town
+    // tied two nights in three, and a tie kills nobody — so the bots looked
+    // broken when they were only failing to agree. Real mafia talk; these
+    // cannot, so they agree by a rule instead. Rotating on the phase number
+    // keeps them from hunting the same person every single night.
+    const pool = (others.filter((p) => p.role !== 'MAFIA').length > 0
+      ? others.filter((p) => p.role !== 'MAFIA')
+      : others
+    )
+      .slice()
+      .sort((a, b) => (a.id < b.id ? -1 : 1));
+
+    act('mafiaVote', pool[game.phaseNumber % pool.length].id, 'targets');
   } else if (game.phase === 'NIGHT_DOCTOR' && me.role === 'DOCTOR') {
     act('doctorSave', pick(game.players.filter((p) => p.alive)).id, 'saves');
   } else if (game.phase === 'NIGHT_DETECTIVE' && me.role === 'DETECTIVE') {
@@ -167,7 +211,7 @@ function react(bot, view) {
 
 console.log(`
 ╭──────────────────────────────────────────────────────────────╮
-│  Five bots are seated. The sixth seat is yours.              │
+│${`  ${String(NAMES.length)} bots are seated. The next seat is yours.`.padEnd(62)}│
 ╰──────────────────────────────────────────────────────────────╯
 
    Open:  ${baseUrl}/c/${code}
