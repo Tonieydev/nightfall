@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import { ArrowRightIcon } from '@phosphor-icons/react';
 import { Lobby } from './Lobby';
+import { Wordmark } from '../../Wordmark';
 import {
   clearIdentity,
   readIdentity,
@@ -112,6 +113,7 @@ export default function JoinPage({ params }: { params: Promise<{ code: string }>
   return (
     <main className="nf-stage" data-lit="day">
       <div className="nf-card">
+        <Wordmark />
         <p className="nf-kicker">Crew {crewCode}</p>
         <h4>Join the game</h4>
 

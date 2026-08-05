@@ -6,6 +6,7 @@ import { ArrowRightIcon, UsersThreeIcon } from '@phosphor-icons/react';
 // The leaf module, not the '@/room-store' barrel — the barrel re-exports
 // server-only code that reaches node:crypto and cannot be bundled for a client.
 import { isCrewCode, normaliseCrewCode } from '@/room-store/crew-code';
+import { Wordmark } from './Wordmark';
 
 /**
  * The four states of one room. This is the thing no competitor has and the
@@ -66,7 +67,7 @@ export default function HomePage() {
   return (
     <main className="nf-landing">
       <section className="nf-hero nf-arrive">
-        <p className="nf-kicker">Nightfall</p>
+        <Wordmark />
 
         <h1>Run mafia for friends who are not in the room.</h1>
 
@@ -91,7 +92,7 @@ export default function HomePage() {
           </p>
 
           {/* The pinned link is the front door. This is for the code somebody
-              read out on the call — without it the only way in is guessing
+              read out on the call. Without it the only way in is guessing
               that /c/CODE is a URL, which nobody does. Deliberately secondary:
               it must not compete with Create for the eye. */}
           <div className="nf-join">
@@ -161,7 +162,7 @@ export default function HomePage() {
           <li>
             <strong>No account to make</strong>
             Your seat lives on your device. After a game you can attach an email if you want your
-            record to survive a new phone — offered once the game is over, never before.
+            record to survive a new phone, offered once the game is over, never before.
           </li>
           <li>
             <strong>Free, permanently</strong>
@@ -174,7 +175,7 @@ export default function HomePage() {
         </ul>
       </section>
 
-      <footer className="nf-footer">Nightfall — Stravn Limited</footer>
+      <footer className="nf-footer">Nightfall, by Stravn Limited</footer>
     </main>
   );
 }
