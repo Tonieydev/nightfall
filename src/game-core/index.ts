@@ -2,6 +2,7 @@ export { MIN_PLAYERS, assignRoles } from './assign-roles.js';
 export { advancePhase } from './advance-phase.js';
 export { checkWinCondition } from './check-win-condition.js';
 export { computeAudioGraph } from './compute-audio-graph.js';
+export { computeLobbyGraph } from './lobby-graph.js';
 export { projectState } from './project-state.js';
 export { resolveNight } from './resolve-night.js';
 export { tallyVotes } from './tally-votes.js';

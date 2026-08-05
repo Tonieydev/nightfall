@@ -1,4 +1,4 @@
-import { computeAudioGraph } from '../game-core/index.js';
+import { computeAudioGraph, computeLobbyGraph } from '../game-core/index.js';
 import type { RoomDocument } from '../room-store/index.js';
 
 export interface DurableSync {
@@ -23,7 +23,18 @@ export async function syncRoomVoice(
   voice: VoiceSync | undefined,
   durable?: DurableSync,
 ): Promise<void> {
-  if (doc.game === null) return;
+  // Before a game exists the lobby is one open room, and it has to be stated:
+  // subscriptions are explicit, so audio nobody grants is audio nobody hears.
+  // This used to work only because LiveKit subscribes a joiner to everything by
+  // default, which is the same default that was handing out the mafia channel.
+  if (doc.game === null) {
+    await voice?.applyGraph(
+      doc.crewCode,
+      computeLobbyGraph(doc.members.map((m) => m.playerId)),
+      doc.voiceEnabled,
+    );
+    return;
+  }
 
   if (doc.game.phase === 'GAME_OVER') {
     // The durable write happens here and only here: once, at game end, off the

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { computeAudioGraph } from '../game-core/index.js';
+import { computeAudioGraph, computeLobbyGraph } from '../game-core/index.js';
 import { MIN_LOBBY_TO_START } from '../room-store/keys.js';
 import { joinLobby, startSession } from '../room-store/lobby.js';
 import { advanceGame } from '../room-store/commands.js';
@@ -61,13 +61,30 @@ describe('voice follows the phase', () => {
     expect(voice.applyGraph.mock.calls[0]?.[2]).toBe(false);
   });
 
-  it('does nothing while the room is still a lobby', async () => {
+  it('opens the lobby to everyone in it, before a game exists', async () => {
+    // This used to do nothing, and the lobby was audible only because LiveKit
+    // subscribes a joiner to every track by default. That default is off now,
+    // so silence is what "nothing" would mean: people gather, turn on their
+    // microphones and hear no one until somebody presses Start.
+    const doc = lobby();
     const voice = spy();
 
-    await syncRoomVoice(lobby(), voice);
+    await syncRoomVoice(doc, voice);
 
-    expect(voice.applyGraph).not.toHaveBeenCalled();
+    expect(voice.applyGraph).toHaveBeenCalledWith(
+      doc.crewCode,
+      computeLobbyGraph(doc.members.map((m) => m.playerId)),
+      true,
+    );
     expect(voice.destroyRoom).not.toHaveBeenCalled();
+  });
+
+  it('leaves a voiceless lobby voiceless', async () => {
+    const voice = spy();
+
+    await syncRoomVoice(lobby(false), voice);
+
+    expect(voice.applyGraph).toHaveBeenCalledWith(expect.anything(), expect.anything(), false);
   });
 
   it('frees the LiveKit room at GAME_OVER instead of reapplying a graph', async () => {
