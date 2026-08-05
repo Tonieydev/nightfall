@@ -4,7 +4,6 @@ import type { VoiceRoomService } from './room-service.js';
 
 function spyService() {
   return {
-    updateParticipant: vi.fn(() => Promise.resolve({})),
     updateSubscriptions: vi.fn(() => Promise.resolve()),
     listParticipants: vi.fn(() => Promise.resolve([])),
     deleteRoom: vi.fn(() => Promise.resolve()),

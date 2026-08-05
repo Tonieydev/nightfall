@@ -47,7 +47,6 @@ const PARTICIPANTS: VoiceParticipant[] = ['gm', ...CAST.map((p) => p.id)].map((i
 function fakeService() {
   const calls: { identity: string; trackSids: string[]; subscribe: boolean }[] = [];
   const service: VoiceRoomService = {
-    updateParticipant: vi.fn(() => Promise.resolve({})),
     updateSubscriptions: vi.fn((_room, identity, trackSids, subscribe) => {
       calls.push({ identity, trackSids: [...trackSids].sort(), subscribe });
       return Promise.resolve();

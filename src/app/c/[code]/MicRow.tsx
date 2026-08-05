@@ -1,13 +1,18 @@
 'use client';
 
 import { MicrophoneIcon, MicrophoneSlashIcon, WifiSlashIcon } from '@phosphor-icons/react';
+import { micState } from './mic-state';
 import type { VoiceStatus } from './useVoice';
 import type { RoomView } from '@/room-store';
 
 /**
- * The indicator answers one question: can this player be heard right now. It is
- * read off the server's projected audio row, never off local mute, because a
- * player has to know with certainty rather than with hope.
+ * The indicator answers one question: can this player be heard right now. The
+ * count is read off the server's projected audio row rather than off local
+ * mute, because a player has to know with certainty rather than with hope.
+ *
+ * Which message to show is decided in mic-state.ts, where it can be tested. It
+ * used to be a chain of early returns here, and the chain let a device whose
+ * voice never opened fall through to "Heard by 6".
  */
 export function MicRow({
   view,
@@ -18,40 +23,51 @@ export function MicRow({
   status: VoiceStatus;
   onEnable: () => void;
 }) {
-  if (!view.voiceEnabled) {
-    return (
-      <p className="nf-mic-slot nf-muted">
-        Voice is at capacity this month — the game plays without live audio.
-      </p>
-    );
+  const state = micState(view, status);
+
+  switch (state.kind) {
+    case 'budget':
+      return (
+        <p className="nf-mic-slot nf-muted">
+          Voice is at capacity this month. The game plays without live audio.
+        </p>
+      );
+
+    case 'failed':
+      return (
+        <div className="nf-mic-slot">
+          <p className="nf-muted">
+            <WifiSlashIcon size={14} /> Voice could not connect on this device.
+          </p>
+          <button type="button" className="nf-tile btn btn-secondary" onClick={onEnable}>
+            <MicrophoneIcon size={16} />
+            Try again
+          </button>
+        </div>
+      );
+
+    case 'offer':
+      return (
+        <div className="nf-mic-slot">
+          <button type="button" className="nf-tile btn btn-primary" onClick={onEnable}>
+            <MicrophoneIcon size={16} />
+            {state.connecting ? 'Connecting…' : 'Turn on voice'}
+          </button>
+        </div>
+      );
+
+    case 'heard':
+      return (
+        <p className="nf-mic-slot nf-muted">
+          <MicrophoneIcon size={14} /> Heard by {state.count}
+        </p>
+      );
+
+    case 'silenced':
+      return (
+        <p className="nf-mic-slot nf-muted">
+          <MicrophoneSlashIcon size={14} /> Nobody is receiving you right now
+        </p>
+      );
   }
-
-  if (status === 'idle' || status === 'connecting') {
-    return (
-      <div className="nf-mic-slot">
-        <button type="button" className="nf-tile btn btn-primary" onClick={onEnable}>
-          <MicrophoneIcon size={16} />
-          {status === 'connecting' ? 'Connecting…' : 'Turn on voice'}
-        </button>
-      </div>
-    );
-  }
-
-  if (status === 'failed') {
-    return (
-      <p className="nf-mic-slot nf-muted">
-        <WifiSlashIcon size={14} /> Voice could not connect. The game continues.
-      </p>
-    );
-  }
-
-  // Server truth: an empty speaksTo means nobody is receiving this player.
-  const heardBy = view.audio?.speaksTo.length ?? 0;
-
-  return (
-    <p className="nf-mic-slot nf-muted">
-      {heardBy > 0 ? <MicrophoneIcon size={14} /> : <MicrophoneSlashIcon size={14} />}
-      {heardBy > 0 ? ` Heard by ${String(heardBy)}` : ' Not heard by anyone right now'}
-    </p>
-  );
 }

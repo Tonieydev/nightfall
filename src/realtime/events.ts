@@ -65,6 +65,15 @@ export interface ClientToServerEvents {
   sendChat: (text: string) => void;
   /** GM-only. The console moves; no game logic travels with it. */
   handOffGm: (targetId: string) => void;
+  /**
+   * This device has finished connecting to the voice room.
+   *
+   * Subscriptions are issued by walking the participants LiveKit reports, so a
+   * player who joins between phase changes is invisible to the last pass and
+   * hears nobody until the next one. Announcing arrival is what closes that
+   * window; it carries no argument and grants nothing.
+   */
+  voiceReady: () => void;
 }
 
 export type InterServerEvents = Record<string, never>;

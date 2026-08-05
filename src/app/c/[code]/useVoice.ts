@@ -70,7 +70,13 @@ export function useVoice(crewCode: string, playerToken: string) {
         setStatus('idle');
       });
 
-      await room.connect(parsed.url ?? '', parsed.token ?? '');
+      // autoSubscribe off, so the SFU hands this device nothing it was not
+      // explicitly granted. LiveKit's default subscribes a joiner to every
+      // published track, which would let somebody opening their mic during
+      // NIGHT_MAFIA hear the mafia until the server's next pass pruned it.
+      // The audio graph is the only thing that may decide who hears whom, and
+      // the rule everywhere else applies here too: filter before the send.
+      await room.connect(parsed.url ?? '', parsed.token ?? '', { autoSubscribe: false });
 
       // Both halves of the gesture, in the order iOS needs them. The mic prompt
       // consumes the gesture, so playback is unlocked immediately after inside

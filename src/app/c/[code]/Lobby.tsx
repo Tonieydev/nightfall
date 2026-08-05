@@ -40,6 +40,16 @@ export function Lobby({
    * Start, which is the spec's rule.
    */
   const [moderating, setModerating] = useState(false);
+
+  /**
+   * Opening voice, then telling the server the device has arrived. Subscriptions
+   * are issued by walking the participants LiveKit reports, so joining between
+   * phase changes used to leave a player connected, unsubscribed and silent
+   * until the GM happened to advance. This closes that window.
+   */
+  const openVoice = (): void => {
+    void voice.connect().then(() => socketRef.current?.emit('voiceReady'));
+  };
   const socketRef = useRef<LobbySocket | null>(null);
   const voice = useVoice(crewCode, token);
 
@@ -100,13 +110,14 @@ export function Lobby({
       <GmConsole
         view={view}
         voiceStatus={voice.status}
-        onEnableVoice={() => void voice.connect()}
+        onEnableVoice={openVoice}
         actions={{
           onAdvance: () => emit?.emit('advance'),
           onForceKill: (id) => emit?.emit('forceKill', id),
           onForceRevive: (id) => emit?.emit('forceRevive', id),
           onRevertPhase: () => emit?.emit('revertPhase'),
           onEndGame: () => emit?.emit('endGame'),
+          onHandOff: (id) => emit?.emit('handOffGm', id),
         }}
       />
       </div>
@@ -122,7 +133,7 @@ export function Lobby({
           },
           onVote: (id) => emit?.emit('castVote', id),
           onClearVote: () => emit?.emit('clearVote'),
-          onEnableVoice: () => void voice.connect(),
+          onEnableVoice: openVoice,
         }}
         voiceStatus={voice.status}
       />
@@ -168,7 +179,7 @@ export function Lobby({
           the player screen, which does not exist until the game is under way,
           so the permission prompt arrived mid narration if it arrived at all.
           iOS wants this gesture early, and so does everybody else. */}
-      <MicRow view={view} status={voice.status} onEnable={() => void voice.connect()} />
+      <MicRow view={view} status={voice.status} onEnable={openVoice} />
 
       {view.gmPlayerId === null ? (
         !view.canStart ? (

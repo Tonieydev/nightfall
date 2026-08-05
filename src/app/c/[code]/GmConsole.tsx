@@ -20,6 +20,8 @@ export interface GmActions {
   onForceRevive: (playerId: string) => void;
   onRevertPhase: () => void;
   onEndGame: () => void;
+  /** Pass the console to another member. No game logic travels with it. */
+  onHandOff: (playerId: string) => void;
 }
 
 /**
@@ -109,6 +111,38 @@ export function GmConsole({
             </ul>
           </section>
         )}
+
+        {/* The console can move. Somebody who took the seat by mistake, or who
+            has to leave, hands it over rather than ending the game: the state
+            is the server's and none of it travels with the handover. The GM
+            holds no role, so whoever takes it is narrating from here on. */}
+        <details className="nf-overrides">
+          <summary className="nf-kicker">Hand over the console</summary>
+          <div className="mt-2 flex flex-col gap-2">
+            <p className="nf-muted">
+              They take over narrating from wherever the room is now. You stay in
+              the crew and still hold no card.
+            </p>
+            {view.members
+              .filter((m) => m.playerId !== view.gmPlayerId)
+              .map((member) => (
+                <div key={member.playerId} className="nf-row">
+                  <span className="nf-name">{member.displayName}</span>
+                  {member.connected ? null : <span className="tag tag-neutral">away</span>}
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    disabled={!member.connected}
+                    onClick={() => {
+                      actions.onHandOff(member.playerId);
+                    }}
+                  >
+                    Hand over
+                  </button>
+                </div>
+              ))}
+          </div>
+        </details>
 
         <details className="nf-overrides">
           <summary className="nf-kicker">Overrides</summary>

@@ -4,13 +4,12 @@
  * import LiveKit at all.
  */
 export interface VoiceRoomService {
-  /** Standing allow-list: who may subscribe to this publisher's tracks. */
-  updateParticipant(
-    room: string,
-    identity: string,
-    options: { permission: { canPublish: boolean; canSubscribe: boolean } },
-  ): Promise<unknown>;
-  /** Server-driven subscribe/unsubscribe for the honest path. */
+  /**
+   * Server-driven subscribe/unsubscribe. The only mechanism that decides who
+   * hears whom, deliberately: a second one, such as flipping a participant's
+   * standing canSubscribe permission, would be a second place for the audio
+   * rules to live and a second place for them to disagree.
+   */
   updateSubscriptions(
     room: string,
     identity: string,

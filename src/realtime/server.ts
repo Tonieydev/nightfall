@@ -282,6 +282,16 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
       })();
     };
 
+    // Not a command: no state changes, the room is simply re-broadcast so the
+    // audio graph is reapplied against a participant list that now includes
+    // this device. Rate limited like everything else, because it reaches Redis.
+    socket.on('voiceReady', () => {
+      void (async () => {
+        if (!commandBudget.allow(playerId, Date.now())) return;
+        await broadcastRoom(namespace, deps.store, crewCode, timers, deps.voice, deps.durable);
+      })();
+    });
+
     socket.on('advance', () => {
       command((doc) => advanceGame(doc, playerId, Date.now()));
     });
