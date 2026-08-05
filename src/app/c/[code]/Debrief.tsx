@@ -16,7 +16,7 @@ const CAUSE_LABEL: Record<string, string> = {
  * runs alongside this and is not a dependency of it: if the durable copy fails,
  * the crew still gets their debrief.
  */
-/** What this player just did, in their own terms — the reason to keep a record. */
+/** What this player just did, in their own terms, the reason to keep a record. */
 function summaryFor(view: RoomView): string {
   const you = view.game?.players.find((p) => p.id === view.you?.playerId);
   if (you === undefined) return 'You narrated this one.';
@@ -48,7 +48,7 @@ export function Debrief({ view, claimAvailable }: { view: RoomView; claimAvailab
           <li key={player.id} className="nf-row" data-dead={String(!player.alive)}>
             <span className="nf-name">{player.name}</span>
             <span className="tag tag-neutral">
-              {player.role === null ? '—' : ROLE_LABEL[player.role]}
+              {player.role === null ? '-' : ROLE_LABEL[player.role]}
             </span>
             {player.id === view.you?.playerId ? <span className="tag tag-outline">you</span> : null}
           </li>

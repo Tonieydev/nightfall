@@ -65,7 +65,7 @@ export function Roster({ view }: { view: RoomView }) {
                   {row.isGm ? (
                     <span className="tag tag-outline">Narrator</span>
                   ) : row.role === null ? (
-                    <span className="tag tag-neutral">—</span>
+                    <span className="tag tag-neutral">-</span>
                   ) : (
                     <span className="tag tag-neutral">
                       {ROLE_LABEL[row.role as 'MAFIA'] ?? row.role}

@@ -123,7 +123,7 @@ export function Lobby({
 
   return (
     <div className="nf-card">
-      <p className="nf-kicker">Crew code — paste this into the group</p>
+      <p className="nf-kicker">Crew code, paste this into the group</p>
       <p className="nf-code">{view.crewCode}</p>
 
       <p className="nf-muted">

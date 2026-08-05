@@ -79,7 +79,7 @@ export function ClaimCard({ summary }: { summary: string }) {
         <p className="nf-kicker">Saved</p>
         <p className="nf-muted">
           {merged
-            ? 'Welcome back — this device is now linked to the record you already had.'
+            ? 'Welcome back. This device is now linked to the record you already had.'
             : 'Your record is attached to that address. Enter it on a new device to bring it with you.'}
         </p>
       </div>
@@ -96,7 +96,7 @@ export function ClaimCard({ summary }: { summary: string }) {
         <>
           <p>{summary}</p>
           <p className="nf-muted">
-            Add an email and your crew history follows you to a new phone. Nothing else changes —
+            Add an email and your crew history follows you to a new phone. Nothing else changes.
             no password, no account, and it is never shown to anyone else.
           </p>
           <button

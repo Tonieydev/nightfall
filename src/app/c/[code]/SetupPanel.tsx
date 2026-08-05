@@ -163,7 +163,7 @@ export function SetupPanel({
         </div>
       </div>
       <p className="nf-setup-note">
-        A guide for you only — players never see it, and it never ends the day.
+        A guide for you only. Players never see it, and it never ends the day.
         You still press Advance.
       </p>
 
@@ -182,7 +182,7 @@ export function SetupPanel({
         onClick={() => onStart(setup)}
       >
         <PlayIcon size={18} />
-        Start — you moderate
+        Start, you moderate
       </button>
     </div>
   );

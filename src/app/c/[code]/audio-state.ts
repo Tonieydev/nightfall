@@ -47,7 +47,7 @@ export function channelFor(view: RoomView, playerId: string): Channel {
 /** How that player is voting right now, as the roster shows it. */
 export function voteOf(view: RoomView, playerId: string): string {
   const game = view.game;
-  if (game === null || game.phase !== 'VOTE') return '—';
+  if (game === null || game.phase !== 'VOTE') return '-';
 
   const target = game.dayVotes[playerId];
   if (target === undefined) return 'No vote';

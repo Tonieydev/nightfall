@@ -7,7 +7,7 @@ export interface VerdictCopy {
   detail: string;
 }
 
-/** "Ada", "Ada and Musa", "Ada, Musa and Chidi" — the way a person says a list. */
+/** "Ada", "Ada and Musa", "Ada, Musa and Chidi", the way a person says a list. */
 function spokenList(names: string[]): string {
   if (names.length <= 1) return names[0] ?? '';
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1] ?? ''}`;
@@ -32,8 +32,8 @@ export function verdictCopy(night: NightOutcome, nameOf: (id: string) => string)
       headline: `${spokenList(dead)} did not survive the night.`,
       detail:
         saved === null
-          ? `${say} Do not say the role — the cards stay down until the end.`
-          : `${say} Somebody else was taken and pulled back — that is theirs to know, not yours to tell.`,
+          ? `${say} Do not say the role. The cards stay down until the end.`
+          : `${say} Somebody else was taken and pulled back. That is theirs to know, not yours to tell.`,
     };
   }
 

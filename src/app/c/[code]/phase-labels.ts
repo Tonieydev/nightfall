@@ -3,9 +3,9 @@ import type { Phase, Role } from '@/game-core';
 export const PHASE_LABEL: Record<Phase, string> = {
   LOBBY: 'Lobby',
   ROLE_REVEAL: 'Roles',
-  NIGHT_MAFIA: 'Night — Mafia',
-  NIGHT_DOCTOR: 'Night — Doctor',
-  NIGHT_DETECTIVE: 'Night — Detective',
+  NIGHT_MAFIA: 'Night: Mafia',
+  NIGHT_DOCTOR: 'Night: Doctor',
+  NIGHT_DETECTIVE: 'Night: Detective',
   DAWN: 'Dawn',
   DAY: 'Day',
   VOTE: 'Vote',

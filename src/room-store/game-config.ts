@@ -53,7 +53,7 @@ export function configProblems(
 
   if (playerCount < MIN_PLAYERS_TO_START) {
     problems.push(
-      `You need ${String(MIN_PLAYERS_TO_START)} players besides yourself to start — there are ${String(playerCount)}.`,
+      `You need ${String(MIN_PLAYERS_TO_START)} players besides yourself to start, and there are ${String(playerCount)}.`,
     );
   }
 
@@ -64,7 +64,7 @@ export function configProblems(
     );
   } else if (mafia >= playerCount - mafia) {
     problems.push(
-      `${String(mafia)} mafia against ${String(playerCount - mafia)} town starts at or above parity — the town cannot win from there.`,
+      `${String(mafia)} mafia against ${String(playerCount - mafia)} town starts at or above parity, so the town cannot win from there.`,
     );
   }
 

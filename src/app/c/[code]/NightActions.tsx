@@ -13,7 +13,7 @@ export function NightActions({ view }: { view: RoomView }) {
   if (game === null || !game.phase.startsWith('NIGHT_')) return null;
 
   const nameOf = (id: string | null | undefined): string =>
-    game.players.find((p) => p.id === id)?.name ?? '—';
+    game.players.find((p) => p.id === id)?.name ?? '-';
 
   const votes = Object.values(game.night.mafiaVotes ?? {});
   const kills = view.nightKills ?? 1;
@@ -25,7 +25,7 @@ export function NightActions({ view }: { view: RoomView }) {
     votes.length === 0
       ? 'nobody yet'
       : settled.length === 0
-        ? 'tied — nobody dies'
+        ? 'tied, nobody dies'
         : settled.map(nameOf).join(', ');
 
   const cells = [
@@ -45,7 +45,7 @@ export function NightActions({ view }: { view: RoomView }) {
       // The save is not projected to anyone, GM included, until the night
       // resolves. Showing it live would need a game-core change, and the GM
       // knowing early is exactly what would leak into how they narrate.
-      note: 'Nobody sees this until dawn — not even you.',
+      note: 'Nobody sees this until dawn. Not even you.',
     },
     {
       label: 'Detective',
