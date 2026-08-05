@@ -31,6 +31,16 @@ export interface GameConfig {
   doctor: boolean;
   detective: boolean;
   mafiaNightMs: number;
+  /**
+   * Whether the eliminated get a room of their own. Optional and absent means
+   * closed, which is both the spec's default and what every existing game was
+   * played under — a required field here would have rewritten history.
+   *
+   * It never opens the night to them and never makes them audible to the
+   * living: the first player eliminated knows the whole Mafia roster, and that
+   * leaks through timing and tone long before it leaks through words.
+   */
+  deadChannel?: boolean;
 }
 
 export interface NightState {
