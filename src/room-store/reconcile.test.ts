@@ -9,7 +9,7 @@ import type { RoomDocument } from './types.js';
 
 const NOW = 1_700_000_000_000;
 const GM = 'p1';
-const NIGHT_MS = 45_000;
+const NIGHT_MS = 60_000;
 
 function started(): RoomDocument {
   let doc: RoomDocument = {

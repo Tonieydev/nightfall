@@ -41,6 +41,15 @@ export function GmConsole({ view, actions }: { view: RoomView; actions: GmAction
         </span>
       </p>
 
+      {/* Advisory only: it counts down and then says so. No phase moves. */}
+      {view.dayEndsAt === null ? null : (
+        <p className="nf-day-target">
+          <span className="nf-kicker">Your day target</span>
+          <Countdown endsAt={view.dayEndsAt} />
+          <span className="nf-muted"> · you still press Advance</span>
+        </p>
+      )}
+
       {/* Keyed on the phase so the card re-enters with the ground shift instead
           of swapping its words under the GM mid-sentence. Null for anyone who
           is not the GM — the projection decides that, not this component. */}

@@ -18,9 +18,11 @@ import {
   forceRevive,
   revertPhase,
   newSeed,
-  projectRoom,
+  projectRoomFor,
   setConnected,
   startSession,
+  configProblems,
+  DEFAULT_GAME_CONFIG,
   type RoomDocument,
   type RoomStoreFacade,
 } from '../room-store/index.js';
@@ -30,6 +32,7 @@ import {
   type ClientToServerEvents,
   type InterServerEvents,
   type RoomErrorCode,
+  type SessionSetup,
   type ServerToClientEvents,
   type SocketData,
 } from './events.js';
@@ -77,7 +80,19 @@ const WIRE_CODES: ReadonlySet<string> = new Set<RoomErrorCode>([
   'INVALID_TARGET',
   'CHAT_NOT_ALLOWED',
   'CHAT_RATE_LIMITED',
+  'INVALID_CONFIG',
 ]);
+
+/** The GM's setup, or the defaults when an older client sends nothing. */
+function configOf(setup: SessionSetup | undefined) {
+  if (setup === undefined) return DEFAULT_GAME_CONFIG;
+  return {
+    mafiaCount: setup.mafiaCount,
+    doctor: setup.doctor,
+    detective: setup.detective,
+    mafiaNightMs: setup.mafiaNightMs,
+  };
+}
 
 function errorCodeFor(error: unknown): RoomErrorCode {
   const code = domainErrorCode(error);
@@ -113,9 +128,18 @@ export async function broadcastRoom(
     }
   }
 
-  for (const socket of await namespace.in(crewCode).fetchSockets()) {
-    socket.emit('roomState', projectRoom(doc, socket.data.playerId));
-  }
+  // Projected per recipient, as always — but the audio graph behind those
+  // projections is built once for the whole broadcast rather than once per
+  // socket, and once per socket rather than once per chat message.
+  const sockets = await namespace.in(crewCode).fetchSockets();
+  const views = projectRoomFor(
+    doc,
+    sockets.map((socket) => socket.data.playerId),
+  );
+  sockets.forEach((socket, i) => {
+    const view = views[i];
+    if (view !== undefined) socket.emit('roomState', view);
+  });
 
   // Audio last: the graph is applied after players have already seen the phase
   // change, so voice follows the 400ms visual transition instead of leading it.
@@ -123,18 +147,23 @@ export async function broadcastRoom(
 }
 
 /**
- * A short token bucket per player, held in process. Chat is a utility layer —
- * this is here to stop a stuck key flooding the room, not to police conduct.
+ * A token bucket per player, held in process. Not conduct policing — every one
+ * of these events triggers a Redis compare-and-set, so an unthrottled client
+ * can burn the Upstash request quota and churn version conflicts for everyone
+ * else in the room. One backend instance, so in-process state is sufficient.
  */
-class ChatBudget {
+class Budget {
   readonly #recent = new Map<string, number[]>();
-  static readonly WINDOW_MS = 10_000;
-  static readonly ALLOWANCE = 5;
+
+  constructor(
+    private readonly windowMs: number,
+    private readonly allowance: number,
+  ) {}
 
   allow(playerId: string, now: number): boolean {
-    const since = now - ChatBudget.WINDOW_MS;
+    const since = now - this.windowMs;
     const kept = (this.#recent.get(playerId) ?? []).filter((at) => at > since);
-    if (kept.length >= ChatBudget.ALLOWANCE) {
+    if (kept.length >= this.allowance) {
       this.#recent.set(playerId, kept);
       return false;
     }
@@ -146,7 +175,10 @@ class ChatBudget {
 export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): RealtimeServer {
   const io: RealtimeServer = new Server(httpServer, { serveClient: false });
   const timers = new PhaseTimers();
-  const chatBudget = new ChatBudget();
+  // Chat is a stuck-key guard; commands are a quota guard. Generous enough that
+  // a decisive GM or a player changing their vote never notices.
+  const chatBudget = new Budget(10_000, 5);
+  const commandBudget = new Budget(10_000, 25);
   const namespace: RoomNamespace = io.of(REALTIME_NAMESPACE);
 
   namespace.use((socket, next) => {
@@ -186,8 +218,21 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
       await broadcastRoom(namespace, deps.store, crewCode, timers, deps.voice, deps.durable);
     })();
 
-    socket.on('startSession', () => {
+    socket.on('startSession', (setup) => {
       void (async () => {
+        // Validated here as well as in the panel: the client's check warns the
+        // GM early, it does not authorise anything.
+        const doc = await deps.store.room.read(crewCode);
+        const problems = configProblems(
+          configOf(setup),
+          Math.max(0, (doc?.members.length ?? 0) - 1),
+          setup?.dayTargetMs ?? null,
+        );
+        if (problems.length > 0) {
+          fail('INVALID_CONFIG', problems.join(' '));
+          return;
+        }
+
         // SETNX decides the race; the loser stays a player rather than erroring.
         const won = await deps.store.session.claim(crewCode, playerId);
         if (!won) {
@@ -200,7 +245,12 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
           // assignment can be replayed from the document later.
           const seed = newSeed();
           await deps.store.room.mutate(crewCode, (doc) =>
-            startSession(doc, playerId, { seed, now: Date.now() }),
+            startSession(doc, playerId, {
+              seed,
+              now: Date.now(),
+              config: configOf(setup),
+              dayTargetMs: setup?.dayTargetMs ?? null,
+            }),
           );
         } catch (error) {
           // The claim is only real if the lobby rules accepted it.
@@ -217,6 +267,10 @@ export function attachRealtime(httpServer: HttpServer, deps: RealtimeDeps): Real
     // Authorization is never read from the client.
     const command = (apply: (doc: RoomDocument) => RoomDocument): void => {
       void (async () => {
+        if (!commandBudget.allow(playerId, Date.now())) {
+          fail('CONFLICT', 'slow down a moment');
+          return;
+        }
         try {
           await deps.store.room.mutate(crewCode, apply);
         } catch (error) {

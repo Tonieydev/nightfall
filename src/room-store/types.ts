@@ -53,4 +53,16 @@ export interface RoomDocument {
    * clear it.
    */
   chat?: ChatMessage[];
+  /**
+   * The GM's target length for the day, or null when they did not set one.
+   * Deliberately NOT on GameConfig: that type lives in game-core, and this is
+   * a pacing aid rather than a rule — nothing in the engine may read it.
+   */
+  dayTargetMs?: number | null;
+  /**
+   * When the current phase began. The day countdown is anchored here; the
+   * mafia night uses GameState.phaseEndsAt, which is authoritative and
+   * resolves. These are different clocks on purpose.
+   */
+  phaseChangedAt?: number;
 }

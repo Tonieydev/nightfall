@@ -5,6 +5,7 @@ import { io, type Socket } from 'socket.io-client';
 import { CircleIcon, CrownSimpleIcon, PlayIcon, UsersThreeIcon } from '@phosphor-icons/react';
 import { Debrief } from './Debrief';
 import { GmConsole } from './GmConsole';
+import { SetupPanel } from './SetupPanel';
 import { litFor } from './phase-labels';
 import { useVoice } from './useVoice';
 import { PlayerScreen } from './PlayerScreen';
@@ -153,15 +154,20 @@ export function Lobby({
       </ul>
 
       {view.gmPlayerId === null ? (
-        <button
-          type="button"
-          className="nf-advance btn btn-primary"
-          disabled={!view.canStart}
-          onClick={() => socketRef.current?.emit('startSession')}
-        >
-          <PlayIcon size={16} />
-          {view.canStart ? 'Start — you moderate' : `Waiting for ${6 - seated} more`}
-        </button>
+        view.canStart ? (
+          // Whoever presses Start becomes the GM, so the setup belongs to
+          // whoever is looking at it — there is no host to gate it behind.
+          <SetupPanel
+            playerCount={Math.max(0, view.members.length - 1)}
+            canStart={view.canStart}
+            onStart={(setup) => socketRef.current?.emit('startSession', setup)}
+          />
+        ) : (
+          <button type="button" className="nf-advance btn btn-primary" disabled>
+            <PlayIcon size={16} />
+            {`Waiting for ${String(6 - seated)} more`}
+          </button>
+        )
       ) : (
         <p className="nf-muted">
           {view.you?.isGm === true

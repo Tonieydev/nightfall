@@ -77,7 +77,15 @@ function applyAdvance(doc: RoomDocument, game: GameState, now: number): RoomDocu
 
   // advancePhase runs checkWinCondition on what it is given, so handing it the
   // post-elimination state is what makes GAME_OVER game-core's decision.
-  return { ...doc, previousGame: game, game: advancePhase(resolved, now) };
+  // Stamped here because this is the one funnel both ADVANCE and the server's
+  // own reconciliation pass through. It anchors the GM's advisory day
+  // countdown and nothing else — no rule reads it.
+  return {
+    ...doc,
+    previousGame: game,
+    phaseChangedAt: now,
+    game: advancePhase(resolved, now),
+  };
 }
 
 /**

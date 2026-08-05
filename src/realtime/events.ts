@@ -17,7 +17,17 @@ export type RoomErrorCode =
   | 'INVALID_TARGET'
   | 'CHAT_NOT_ALLOWED'
   | 'CHAT_RATE_LIMITED'
+  | 'INVALID_CONFIG'
   | 'CONFLICT';
+
+export interface SessionSetup {
+  mafiaCount: number | null;
+  doctor: boolean;
+  detective: boolean;
+  mafiaNightMs: number;
+  /** Advisory day length, or null. Drives nothing. */
+  dayTargetMs: number | null;
+}
 
 export interface RoomErrorPayload {
   code: RoomErrorCode;
@@ -31,7 +41,11 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  startSession: () => void;
+  /**
+   * The GM's pre-game setup. Validated server-side regardless: the client's
+   * pre-Start check exists to warn the GM early, not to be trusted.
+   */
+  startSession: (setup?: SessionSetup) => void;
   /** GM-only. The GM never names the target phase; the server owns legal order. */
   advance: () => void;
   forceKill: (targetId: string) => void;

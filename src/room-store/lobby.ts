@@ -105,11 +105,13 @@ export const DEFAULT_GAME_CONFIG: GameConfig = {
   mafiaCount: null,
   doctor: true,
   detective: true,
-  mafiaNightMs: 45_000,
+  mafiaNightMs: 60_000,
 };
 
 export interface StartOptions {
   seed: number;
+  /** The GM's target day length. Advisory: it drives nothing, ever. */
+  dayTargetMs?: number | null;
   now: number;
   config?: GameConfig;
 }
@@ -152,6 +154,8 @@ export function startSession(
     ...doc,
     gmPlayerId,
     seed: options.seed,
+    dayTargetMs: options.dayTargetMs ?? null,
+    phaseChangedAt: options.now,
     game: {
       version: 1,
       // The game opens where the phase machine opens; ADVANCE moves it on, so

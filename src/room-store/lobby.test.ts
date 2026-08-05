@@ -176,7 +176,7 @@ describe('lobby', () => {
   it('carries the players a five-player game needs, and no GM slot', () => {
     const started = startSession(withMembers(MIN_LOBBY_TO_START), 'p6', { seed: 11, now: NOW });
 
-    expect(started.game?.config.mafiaNightMs).toBe(45_000);
+    expect(started.game?.config.mafiaNightMs).toBe(60_000);
     expect(started.game?.players.find((p) => p.id === 'p6')).toBeUndefined();
     expect(started.members.find((m) => m.playerId === 'p6')).toBeDefined();
   });
