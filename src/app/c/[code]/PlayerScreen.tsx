@@ -2,6 +2,7 @@
 
 import { CircleIcon, DetectiveIcon, SkullIcon } from '@phosphor-icons/react';
 import { Countdown } from './Countdown';
+import { ElectionCard } from './ElectionCard';
 import { MicRow } from './MicRow';
 import type { VoiceStatus } from './useVoice';
 import { PHASE_LABEL, ROLE_LABEL, actionFor } from './phase-labels';
@@ -52,6 +53,10 @@ export function PlayerScreen({
         {game.phaseEndsAt === null ? null : <Countdown endsAt={game.phaseEndsAt} />}
         {alive ? null : <span className="tag tag-neutral">eliminated</span>}
       </p>
+
+      {/* The eliminated see this too: it is the room's result, not the living
+          players' result. Keyed on the round so it plays once per verdict. */}
+      <ElectionCard key={`election-${String(game.phaseNumber)}`} view={view} />
 
       {game.detectiveResult === null ? null : (
         <p className="card-body">

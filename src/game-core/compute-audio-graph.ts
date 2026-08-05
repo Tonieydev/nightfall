@@ -18,6 +18,9 @@ function stageFor(state: GameState): Stage {
       return { speakers: livingMafia, audience: [state.gmPlayerId, ...livingMafia] };
     case 'DAY':
     case 'VOTE':
+    // The GM says what the room just did and the room reacts. Silence here
+    // would read as the call dropping at the most charged beat of the round.
+    case 'VERDICT':
       return { speakers: living, audience: everyone };
     // Nobody is dead before the first night, so "everyone speaks" and "the dead
     // never speak" only diverge in unreachable states. The stricter rule wins.

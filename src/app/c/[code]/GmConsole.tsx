@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { AudioMap } from './AudioMap';
+import { ElectionCard } from './ElectionCard';
 import { NightActions } from './NightActions';
 import { PhaseCard } from './PhaseCard';
 import { Roster } from './Roster';
@@ -63,6 +64,9 @@ export function GmConsole({ view, actions }: { view: RoomView; actions: GmAction
           />
         )}
 
+        {/* Keyed on the round so it plays its rise once per verdict, and again
+            next round rather than sitting still for the rest of the game. */}
+        <ElectionCard key={`election-${String(game.phaseNumber)}`} view={view} />
         <Verdict view={view} />
         <NightActions view={view} />
         <VoteTally view={view} />

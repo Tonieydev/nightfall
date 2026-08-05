@@ -12,6 +12,7 @@ const ALL_PHASES: Phase[] = [
   'DAWN',
   'DAY',
   'VOTE',
+  'VERDICT',
   'GAME_OVER',
 ];
 
@@ -38,7 +39,7 @@ function speaks(graph: AudioGraph, speakerId: string): Set<string> {
 }
 
 describe('computeAudioGraph', () => {
-  it('makes the GM audible to every player in all nine phases', () => {
+  it('makes the GM audible to every player in every phase', () => {
     for (const phase of ALL_PHASES) {
       const state = gameState([...cast(), dead('v3', 'VILLAGER')], { phase });
       const graph = computeAudioGraph(state);
@@ -195,6 +196,9 @@ function phaseTableOracle(players: Player[]) {
       case 'ROLE_REVEAL':
       case 'DAY':
       case 'VOTE':
+      // The verdict is announced to the room and reacted to by it, so the
+      // living speak and everybody hears, exactly as in the day.
+      case 'VERDICT':
         return speaker.alive;
       case 'GAME_OVER':
         return true;

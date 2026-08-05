@@ -197,12 +197,16 @@ describe('vote lock', () => {
     expect(locked.game?.phase).toBe('GAME_OVER');
   });
 
-  it('carries on to the next night when the game is not over', () => {
+  it('shows the room the verdict before it carries on to the night', () => {
+    // Locking the ballot used to eliminate somebody and drop the room straight
+    // into night on one press, so nobody ever saw the outcome of their own
+    // vote. The verdict is its own beat, and the night is one press further.
     const doc = atVote();
     const [a, b] = living(doc);
     const locked = advanceGame(castVote(doc, a ?? '', b ?? ''), GM, NOW);
 
-    expect(locked.game?.phase).toBe('NIGHT_MAFIA');
+    expect(locked.game?.phase).toBe('VERDICT');
     expect(locked.game?.winner).toBeNull();
+    expect(advanceGame(locked, GM, NOW).game?.phase).toBe('NIGHT_MAFIA');
   });
 });

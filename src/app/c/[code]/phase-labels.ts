@@ -8,6 +8,7 @@ export const PHASE_LABEL: Record<Phase, string> = {
   NIGHT_DETECTIVE: 'Night: Detective',
   DAWN: 'Dawn',
   DAY: 'Day',
+  VERDICT: 'Verdict',
   VOTE: 'Vote',
   GAME_OVER: 'Game over',
 };

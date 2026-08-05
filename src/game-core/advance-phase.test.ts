@@ -23,6 +23,7 @@ describe('advancePhase', () => {
       'DAWN',
       'DAY',
       'VOTE',
+      'VERDICT',
       'NIGHT_MAFIA',
     ];
 
@@ -159,7 +160,7 @@ describe('advancePhase', () => {
 
   it('starts a clean cycle on entering NIGHT_MAFIA', () => {
     const state = gameState(cast(), {
-      phase: 'VOTE',
+      phase: 'VERDICT',
       phaseNumber: 1,
       night: { mafiaVotes: { m1: 'v1' }, doctorSave: 'v1', detectiveCheck: 'v2' },
     });

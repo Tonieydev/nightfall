@@ -10,7 +10,8 @@ const ORDER: Record<Phase, Phase> = {
   NIGHT_DETECTIVE: 'DAWN',
   DAWN: 'DAY',
   DAY: 'VOTE',
-  VOTE: 'NIGHT_MAFIA',
+  VOTE: 'VERDICT',
+  VERDICT: 'NIGHT_MAFIA',
   GAME_OVER: 'GAME_OVER',
 };
 

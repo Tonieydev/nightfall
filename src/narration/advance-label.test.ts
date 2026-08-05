@@ -66,10 +66,16 @@ describe('the script names every move', () => {
     }
   });
 
-  it('sends the room back to sleep after a vote, not just the mafia', () => {
-    // The second night is entered from VOTE, not from ROLE_REVEAL, and the GM
-    // still has to put everybody down before the mafia open their eyes.
-    expect(advanceLabelFor('VOTE', 'NIGHT_MAFIA')).toBe('Everyone sleep');
+  it('locks the ballot before it names the outcome', () => {
+    // The vote used to tally, eliminate and open the night on one press. The
+    // verdict is its own beat now, so the button that ends VOTE says so.
+    expect(advanceLabelFor('VOTE', 'VERDICT')).toBe('Confirm election');
+  });
+
+  it('sends the room back to sleep after the verdict, not just the mafia', () => {
+    // The second night is entered from VERDICT, and the GM still has to put
+    // everybody down before the mafia open their eyes.
+    expect(advanceLabelFor('VERDICT', 'NIGHT_MAFIA')).toBe('Everyone sleep');
   });
 
   it('never wakes a role nobody is holding', () => {

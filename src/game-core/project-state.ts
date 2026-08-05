@@ -47,6 +47,13 @@ function canSeeRoleOf(
   if (viewer === undefined) return false;
   if (subject.id === viewer.id) return true;
 
+  // The room turns over the card it voted out, and cannot un-see it. This is
+  // the one place a living player learns another's role before the debrief:
+  // without it the day vote returns no information at all and town spends
+  // every round guessing blind. A night kill stays face down, because a free
+  // true read every night is a different game.
+  if (!subject.alive && subject.eliminatedBy === 'VOTE') return true;
+
   // Death trades the Mafia roster for the graveyard: a dead player learns who
   // the dead were, and loses any standing claim on a living player's role.
   if (!viewer.alive) return !subject.alive;

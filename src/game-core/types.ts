@@ -10,6 +10,7 @@ export type Phase =
   | 'DAWN'
   | 'DAY'
   | 'VOTE'
+  | 'VERDICT'
   | 'GAME_OVER';
 
 // 'GM' is a moderator override, not a game outcome — the durable record has to

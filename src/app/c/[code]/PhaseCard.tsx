@@ -15,6 +15,7 @@ const PHASE_SUB: Record<string, string> = {
   DAWN: 'Read the night out, then open the day.',
   DAY: 'Theirs, not yours. Listen and keep time.',
   VOTE: 'Live and public. A tie eliminates nobody.',
+  VERDICT: 'Their card is face up. Let the room see it, then close the day.',
   GAME_OVER: 'Every card is face up.',
 };
 

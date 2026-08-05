@@ -112,8 +112,18 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
     ],
     cue: 'Votes appear live on every screen and can be pulled until you advance. A tie eliminates nobody.',
     advanceLabel: 'Call the vote',
-    // The next night is entered from here, not from the reveal, so the whole
-    // room still has to go down before the mafia open their eyes.
+    sleepLabel: null,
+  },
+
+  VERDICT: {
+    lines: [
+      'The room has decided. Their card is face up.',
+      'Look at what you chose.',
+    ],
+    cue: 'Everyone sees this one, living and dead. Give them the beat to react before you put them under.',
+    advanceLabel: 'Confirm election',
+    // The night is entered from here now, so this is where the whole room goes
+    // down before the mafia open their eyes.
     sleepLabel: 'Everyone sleep',
   },
 

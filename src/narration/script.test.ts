@@ -13,11 +13,12 @@ const PHASES: Phase[] = [
   'DAWN',
   'DAY',
   'VOTE',
+  'VERDICT',
   'GAME_OVER',
 ];
 
 describe('the narration script', () => {
-  it('has real content for all nine phases', () => {
+  it('has real content for every phase', () => {
     expect(Object.keys(NARRATION_SCRIPT).sort()).toEqual([...PHASES].sort());
 
     for (const phase of PHASES) {

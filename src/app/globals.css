@@ -575,6 +575,64 @@ a {
   font-size: 1rem;
 }
 
+/* The card the room turns over after a vote. It rises, holds, and settles:
+   one movement, 400ms of travel matched to the phase transition, then still.
+   The only motion in play besides the role reveal. */
+.nf-election {
+  margin: var(--space-4) 0;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  animation: nf-election-rise 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes nf-election-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.96);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(-0.375rem) scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* A caught mafia gets the accent edge. A miss gets none: no red, the weight
+   and the words carry it. */
+.nf-election[data-caught='true'] {
+  border-color: var(--color-accent);
+}
+
+.nf-election-head {
+  margin: var(--space-2) 0 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.nf-election-verdict {
+  margin: var(--space-1) 0 0;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.nf-election-detail {
+  margin: var(--space-2) 0 0;
+  font-size: 0.875rem;
+  color: var(--color-neutral-500);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nf-election {
+    animation: none;
+  }
+}
+
 /* The lockup. A mark, the name, and what the product is, in that order. */
 .nf-wordmark {
   display: inline-flex;
