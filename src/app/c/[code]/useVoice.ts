@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { Room, RoomEvent, type LocalAudioTrack } from 'livekit-client';
+import { CAPTURE_DEFAULTS, PUBLISH_DEFAULTS, RECONNECT } from './capture';
 
 export type VoiceStatus = 'idle' | 'connecting' | 'live' | 'unavailable' | 'failed';
 
@@ -51,14 +52,16 @@ export function useVoice(crewCode: string, playerToken: string) {
         return;
       }
 
+      // Spec section 2: interruption is the game, so nothing may gate the
+      // microphone. Everything in capture.ts cleans the signal or bounds the
+      // uplink — none of it closes the mic or delays a first syllable.
       const room = new Room({
-        // Spec section 2: interruption is the game, so nothing may gate it.
-        audioCaptureDefaults: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
+        audioCaptureDefaults: CAPTURE_DEFAULTS,
+        publishDefaults: PUBLISH_DEFAULTS,
+        reconnectPolicy: {
+          nextRetryDelayInMs: ({ retryCount }) =>
+            retryCount >= RECONNECT.maxRetries ? null : RECONNECT.delayFor(retryCount),
         },
-        publishDefaults: { dtx: false, red: true, audioPreset: { maxBitrate: 32_000 } },
       });
       roomRef.current = room;
 
