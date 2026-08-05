@@ -80,11 +80,18 @@ function applyAdvance(doc: RoomDocument, game: GameState, now: number): RoomDocu
   // Stamped here because this is the one funnel both ADVANCE and the server's
   // own reconciliation pass through. It anchors the GM's advisory day
   // countdown and nothing else — no rule reads it.
+  const next = advancePhase(resolved, now);
+
   return {
     ...doc,
     previousGame: game,
     phaseChangedAt: now,
-    game: advancePhase(resolved, now),
+    // A new night is a new round. Every other phase leaves it alone.
+    roundNumber:
+      next.phase === 'NIGHT_MAFIA' && game.phase !== 'NIGHT_MAFIA'
+        ? (doc.roundNumber ?? 1) + 1
+        : (doc.roundNumber ?? 1),
+    game: next,
   };
 }
 

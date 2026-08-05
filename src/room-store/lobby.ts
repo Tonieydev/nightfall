@@ -156,6 +156,7 @@ export function startSession(
     seed: options.seed,
     dayTargetMs: options.dayTargetMs ?? null,
     phaseChangedAt: options.now,
+    roundNumber: 1,
     game: {
       version: 1,
       // The game opens where the phase machine opens; ADVANCE moves it on, so

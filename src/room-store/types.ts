@@ -65,4 +65,10 @@ export interface RoomDocument {
    * resolves. These are different clocks on purpose.
    */
   phaseChangedAt?: number;
+  /**
+   * Which night cycle the room is on. A round is a cycle, not a phase — nine
+   * phases in one round must not read as round nine. Counted here rather than
+   * in game-core, which has no notion of a round and does not need one.
+   */
+  roundNumber?: number;
 }

@@ -68,6 +68,15 @@ export interface RoomView {
    * field for a different reason.
    */
   dayEndsAt: number | null;
+  /** Which night cycle the room is on. Not a secret. */
+  round: number;
+  /**
+   * The whole speaker-to-listeners map, GM only and null for everyone else.
+   * At NIGHT_MAFIA this map IS the mafia roster — whoever hears a mafia
+   * speaker is mafia — so it is the single most damaging thing that could be
+   * projected. Every other viewer still gets only their own row, in `audio`.
+   */
+  audioGraph: Record<string, string[]> | null;
 }
 
 function projectAudio(viewerId: string, graph: AudioGraph): AudioView {
@@ -113,6 +122,11 @@ export function projectRoom(
     // place that decides who may see it — the same place that decides roles.
     narration:
       doc.game !== null && doc.gmPlayerId === viewerId ? narrationFor(doc.game.phase) : null,
+    round: doc.roundNumber ?? 1,
+    audioGraph:
+      resolved !== null && doc.gmPlayerId === viewerId
+        ? Object.fromEntries([...resolved].map(([speaker, hears]) => [speaker, [...hears]]))
+        : null,
     dayEndsAt:
       doc.gmPlayerId === viewerId &&
       doc.game?.phase === 'DAY' &&
