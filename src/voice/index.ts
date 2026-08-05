@@ -52,6 +52,39 @@ export async function mintToken(roomCode: string, playerId: string): Promise<str
 }
 
 /**
+ * "That room is not there" is an answer, not a failure. LiveKit rooms exist
+ * only while somebody is in them, so a lobby nobody has opened a microphone in
+ * has no room behind it, and a finished one may already be gone.
+ */
+function isMissingRoom(error: unknown): boolean {
+  const status = (error as { status?: unknown }).status;
+  const code = (error as { code?: unknown }).code;
+  return status === 404 || code === 'not_found';
+}
+
+/**
+ * Voice is a projection of the game and never a dependency of it, so nothing in
+ * here may throw into the caller.
+ *
+ * It used to. destroyRoom ran at GAME_OVER inside broadcastRoom, called from a
+ * socket disconnect handler whose try/catch covered only the Redis write, so a
+ * 404 from LiveKit escaped as an unhandled rejection and took the process down
+ * with it. Every socket in every room dropped, and the room that had merely
+ * finished took the ones still playing with it.
+ *
+ * The durable write already follows this rule. Voice is the same shape of
+ * dependency and gets the same treatment.
+ */
+async function tolerate(what: string, operation: () => Promise<void>): Promise<void> {
+  try {
+    await operation();
+  } catch (error) {
+    if (isMissingRoom(error)) return;
+    console.warn(`voice ${what} failed:`, error instanceof Error ? error.message : error);
+  }
+}
+
+/**
  * Called after every phase change, once the state is written and broadcast.
  * A voiceless room has no LiveKit room behind it, so there is nothing to
  * subscribe and this does nothing.
@@ -66,9 +99,11 @@ export async function applyGraphToRoom(
   // Logged because who can hear whom is otherwise invisible from outside a
   // browser: a room where nobody was ever subscribed looks exactly like a
   // working one from the server, and looked exactly like one for a whole game.
-  await applyAudioGraph(service, roomCode, graph, (line) => {
-    console.log(line);
-  });
+  await tolerate(`applyGraph ${roomCode}`, () =>
+    applyAudioGraph(service, roomCode, graph, (line) => {
+      console.log(line);
+    }),
+  );
 }
 
 /**
@@ -81,5 +116,5 @@ export async function destroyRoom(
   service: VoiceRoomService = roomService(),
 ): Promise<void> {
   if (!voiceEnabled) return;
-  await service.deleteRoom(roomCode);
+  await tolerate(`destroyRoom ${roomCode}`, () => service.deleteRoom(roomCode));
 }

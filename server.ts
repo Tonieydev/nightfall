@@ -46,6 +46,22 @@ attachRealtime(httpServer, {
   durable: { recordFinishedGame: (doc, endedAt) => recordFinishedGame(doc, endedAt) },
 });
 
+/**
+ * The last resort, not the strategy.
+ *
+ * One instance serves every live room, so anything that reaches Node's default
+ * handler takes the whole product down: a LiveKit 404 in a room that had merely
+ * finished dropped every socket in every room still playing. Faults are handled
+ * where they happen, and this is here so the next one nobody predicted costs a
+ * log line instead of a restart.
+ */
+process.on('unhandledRejection', (reason) => {
+  console.error('unhandled rejection, kept the process alive:', reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('uncaught exception, kept the process alive:', error);
+});
+
 httpServer.listen(port, hostname, () => {
   const backing = config.memoryRedis ? 'memory (dev)' : 'upstash';
   console.log(
