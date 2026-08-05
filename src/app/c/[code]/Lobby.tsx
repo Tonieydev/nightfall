@@ -111,7 +111,9 @@ export function Lobby({
         view={view}
         voiceStatus={voice.status}
         voiceReason={voice.reason}
+        audioBlocked={voice.audioBlocked}
         onEnableVoice={openVoice}
+        onEnableAudio={() => void voice.enableAudio()}
         actions={{
           onAdvance: () => emit?.emit('advance'),
           onForceKill: (id) => emit?.emit('forceKill', id),
@@ -135,9 +137,11 @@ export function Lobby({
           onVote: (id) => emit?.emit('castVote', id),
           onClearVote: () => emit?.emit('clearVote'),
           onEnableVoice: openVoice,
+          onEnableAudio: () => void voice.enableAudio(),
         }}
         voiceStatus={voice.status}
         voiceReason={voice.reason}
+        audioBlocked={voice.audioBlocked}
       />
       </div>
     );
@@ -181,7 +185,14 @@ export function Lobby({
           the player screen, which does not exist until the game is under way,
           so the permission prompt arrived mid narration if it arrived at all.
           iOS wants this gesture early, and so does everybody else. */}
-      <MicRow view={view} status={voice.status} reason={voice.reason} onEnable={openVoice} />
+      <MicRow
+        view={view}
+        status={voice.status}
+        reason={voice.reason}
+        audioBlocked={voice.audioBlocked}
+        onEnable={openVoice}
+        onEnableAudio={() => void voice.enableAudio()}
+      />
 
       {view.gmPlayerId === null ? (
         !view.canStart ? (

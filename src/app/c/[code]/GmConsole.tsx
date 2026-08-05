@@ -34,13 +34,17 @@ export function GmConsole({
   actions,
   voiceStatus,
   voiceReason,
+  audioBlocked,
   onEnableVoice,
+  onEnableAudio,
 }: {
   view: RoomView;
   actions: GmActions;
   voiceStatus: VoiceStatus;
   voiceReason: string | null;
+  audioBlocked: boolean;
   onEnableVoice: () => void;
+  onEnableAudio: () => void;
 }) {
   // Above the early return: hooks cannot sit behind a conditional.
   const [script, setScript] = useState(true);
@@ -69,7 +73,14 @@ export function GmConsole({
         {/* The GM is audible to every player in every phase and had no control
             to turn their own microphone on, so they were the one person in the
             room guaranteed to be silent. */}
-        <MicRow view={view} status={voiceStatus} reason={voiceReason} onEnable={onEnableVoice} />
+        <MicRow
+          view={view}
+          status={voiceStatus}
+          reason={voiceReason}
+          audioBlocked={audioBlocked}
+          onEnable={onEnableVoice}
+          onEnableAudio={onEnableAudio}
+        />
 
         <PhaseCard view={view} onAdvance={actions.onAdvance} />
 

@@ -14,6 +14,7 @@ export interface PlayerActions {
   onVote: (targetId: string) => void;
   onClearVote: () => void;
   onEnableVoice: () => void;
+  onEnableAudio: () => void;
 }
 
 /**
@@ -25,11 +26,13 @@ export function PlayerScreen({
   actions,
   voiceStatus,
   voiceReason,
+  audioBlocked,
 }: {
   view: RoomView;
   actions: PlayerActions;
   voiceStatus: VoiceStatus;
   voiceReason: string | null;
+  audioBlocked: boolean;
 }) {
   const game = view.game;
   if (game === null || view.you === null) return null;
@@ -131,7 +134,14 @@ export function PlayerScreen({
           </div>
         </>
       )}
-      <MicRow view={view} status={voiceStatus} reason={voiceReason} onEnable={actions.onEnableVoice} />
+      <MicRow
+        view={view}
+        status={voiceStatus}
+        reason={voiceReason}
+        audioBlocked={audioBlocked}
+        onEnable={actions.onEnableVoice}
+        onEnableAudio={actions.onEnableAudio}
+      />
     </div>
   );
 }

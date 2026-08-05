@@ -60,6 +60,14 @@ function parseToken(body: unknown): VoiceTokenResponse | null {
 export function useVoice(crewCode: string, playerToken: string) {
   const [status, setStatus] = useState<VoiceStatus>('idle');
   const [reason, setReason] = useState<string | null>(null);
+  /**
+   * The browser is holding remote audio until a gesture releases it. Every
+   * browser may do this and doing it quietly is the normal behaviour, so a
+   * player whose microphone works perfectly sits in silence with nothing on
+   * screen suggesting why. It has to be watched, not assumed away by calling
+   * startAudio once and hoping.
+   */
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const roomRef = useRef<Room | null>(null);
 
   const connect = useCallback(async (): Promise<void> => {
@@ -120,7 +128,14 @@ export function useVoice(crewCode: string, playerToken: string) {
 
       room.on(RoomEvent.Disconnected, () => {
         roomRef.current = null;
+        setAudioBlocked(false);
         setStatus('idle');
+      });
+
+      // Playback can be revoked later, not only refused at the start: a tab
+      // going to the background is enough on some browsers.
+      room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
+        setAudioBlocked(!room.canPlaybackAudio);
       });
 
       // autoSubscribe off, so the SFU hands this device nothing it was not
@@ -142,9 +157,11 @@ export function useVoice(crewCode: string, playerToken: string) {
         // after, inside the same call stack.
         await room.localParticipant.setMicrophoneEnabled(true);
         await room.startAudio();
+        setAudioBlocked(!room.canPlaybackAudio);
         setStatus('live');
       } catch (micError) {
         await room.startAudio().catch(() => undefined);
+        setAudioBlocked(!room.canPlaybackAudio);
         setReason(reasonFor(micError));
         setStatus('listening');
       }
@@ -158,6 +175,14 @@ export function useVoice(crewCode: string, playerToken: string) {
       setStatus('failed');
     }
   }, [crewCode, playerToken, status]);
+
+  /** Release the browser's hold on playback. Must be called from a gesture. */
+  const enableAudio = useCallback(async (): Promise<void> => {
+    const room = roomRef.current;
+    if (room === null) return;
+    await room.startAudio().catch(() => undefined);
+    setAudioBlocked(!room.canPlaybackAudio);
+  }, []);
 
   const disconnect = useCallback(async (): Promise<void> => {
     const room = roomRef.current;
@@ -173,7 +198,7 @@ export function useVoice(crewCode: string, playerToken: string) {
     await room.localParticipant.setMicrophoneEnabled(!muted);
   }, []);
 
-  return { status, reason, connect, disconnect, setMuted };
+  return { status, reason, audioBlocked, connect, enableAudio, disconnect, setMuted };
 }
 
 export type { LocalAudioTrack };

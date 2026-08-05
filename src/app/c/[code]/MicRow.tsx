@@ -1,6 +1,11 @@
 'use client';
 
-import { MicrophoneIcon, MicrophoneSlashIcon, WifiSlashIcon } from '@phosphor-icons/react';
+import {
+  MicrophoneIcon,
+  MicrophoneSlashIcon,
+  SpeakerHighIcon,
+  WifiSlashIcon,
+} from '@phosphor-icons/react';
 import { micState } from './mic-state';
 import type { VoiceStatus } from './useVoice';
 import type { RoomView } from '@/room-store';
@@ -18,15 +23,20 @@ export function MicRow({
   view,
   status,
   reason = null,
+  audioBlocked = false,
   onEnable,
+  onEnableAudio,
 }: {
   view: RoomView;
   status: VoiceStatus;
   /** Why voice is not working, when it is not. */
   reason?: string | null;
+  /** The browser is holding remote audio until a gesture releases it. */
+  audioBlocked?: boolean;
   onEnable: () => void;
+  onEnableAudio: () => void;
 }) {
-  const state = micState(view, status, reason);
+  const state = micState({ view, status, reason, audioBlocked });
 
   switch (state.kind) {
     case 'budget':
@@ -47,6 +57,20 @@ export function MicRow({
             <MicrophoneIcon size={16} />
             Try again
           </button>
+        </div>
+      );
+
+    case 'deaf':
+      // Primary and loud, unlike every other message here: the player is in the
+      // room, everything looks healthy and they can hear nothing at all. One
+      // tap fixes it, and nothing else on screen would ever tell them that.
+      return (
+        <div className="nf-mic-slot">
+          <button type="button" className="nf-tile btn btn-primary" onClick={onEnableAudio}>
+            <SpeakerHighIcon size={16} />
+            Tap to hear the room
+          </button>
+          <p className="nf-muted">Your browser is holding the sound until you allow it.</p>
         </div>
       );
 
