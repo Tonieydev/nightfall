@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { Room, RoomEvent, type LocalAudioTrack } from 'livekit-client';
+import { Room, RoomEvent, Track, type LocalAudioTrack, type RemoteTrack } from 'livekit-client';
 import { CAPTURE_DEFAULTS, PUBLISH_DEFAULTS, RECONNECT } from './capture';
 
 export type VoiceStatus =
@@ -69,6 +69,16 @@ export function useVoice(crewCode: string, playerToken: string) {
    */
   const [audioBlocked, setAudioBlocked] = useState(false);
   const roomRef = useRef<Room | null>(null);
+  /**
+   * Where remote audio actually plays.
+   *
+   * livekit-client hands a subscribed track to the application and stops there:
+   * it does not put audio on the page by itself, and startAudio() only resumes
+   * elements that are already attached. Nothing here attached any, so there was
+   * nothing to resume. Publishing worked, the server's subscriptions worked,
+   * and not one person ever heard another.
+   */
+  const sinkRef = useRef<HTMLDivElement | null>(null);
 
   const connect = useCallback(async (): Promise<void> => {
     if (status === 'connecting') return;
@@ -126,8 +136,30 @@ export function useVoice(crewCode: string, playerToken: string) {
       });
       roomRef.current = room;
 
+      // A hidden sink for the audio elements. Off-document they do not play.
+      const sink = document.createElement('div');
+      sink.dataset['nfVoice'] = 'sink';
+      sink.style.display = 'none';
+      document.body.appendChild(sink);
+      sinkRef.current = sink;
+
+      room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => {
+        if (track.kind !== Track.Kind.Audio) return;
+        const element = track.attach();
+        element.autoplay = true;
+        sinkRef.current?.appendChild(element);
+      });
+
+      // The server revokes subscriptions at every phase change. An element left
+      // playing would be a channel the graph has already closed.
+      room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
+        for (const element of track.detach()) element.remove();
+      });
+
       room.on(RoomEvent.Disconnected, () => {
         roomRef.current = null;
+        sinkRef.current?.remove();
+        sinkRef.current = null;
         setAudioBlocked(false);
         setStatus('idle');
       });
@@ -170,6 +202,8 @@ export function useVoice(crewCode: string, playerToken: string) {
       // attached would leak a participant and make a retry the second one.
       const room = roomRef.current;
       roomRef.current = null;
+      sinkRef.current?.remove();
+      sinkRef.current = null;
       if (room !== null) await room.disconnect().catch(() => undefined);
       setReason(reasonFor(error));
       setStatus('failed');
@@ -187,6 +221,8 @@ export function useVoice(crewCode: string, playerToken: string) {
   const disconnect = useCallback(async (): Promise<void> => {
     const room = roomRef.current;
     roomRef.current = null;
+    sinkRef.current?.remove();
+    sinkRef.current = null;
     if (room !== null) await room.disconnect();
     setReason(null);
     setStatus('idle');

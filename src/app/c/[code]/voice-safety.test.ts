@@ -46,3 +46,34 @@ describe('the client never subscribes to audio the server did not grant', () => 
     expect(LOBBY).toMatch(/connect\(\)\s*\.then\(|await voice\.connect\(\)/);
   });
 });
+
+/**
+ * The last link, and the one that was missing for the whole of this product's
+ * life: LiveKit hands a subscribed track to the browser and stops there.
+ *
+ * livekit-client does not put remote audio on the page by itself. startAudio()
+ * only resumes elements that are already attached, so with nothing attaching
+ * them there is nothing to resume: publishing worked, subscriptions worked, and
+ * not one person ever heard another.
+ */
+describe('a subscribed track is actually played', () => {
+  it('listens for tracks arriving', () => {
+    expect(USE_VOICE).toMatch(/TrackSubscribed/);
+  });
+
+  it('attaches remote audio to the page', () => {
+    expect(USE_VOICE).toMatch(/\.attach\(/);
+    expect(USE_VOICE).toMatch(/appendChild|append\(/);
+  });
+
+  it('takes it away again when the server revokes it', () => {
+    // Subscriptions are revoked every night. An element left playing would be
+    // the mafia channel leaking out of a page nobody is looking at.
+    expect(USE_VOICE).toMatch(/TrackUnsubscribed/);
+    expect(USE_VOICE).toMatch(/\.detach\(/);
+  });
+
+  it('cleans up when the room goes away', () => {
+    expect(USE_VOICE).toMatch(/remove\(\)/);
+  });
+});
