@@ -1,5 +1,9 @@
 import type { Phase, Role } from '@/game-core';
 
+// One map, kept with the rest of the copy. Re-exported here so the console's
+// imports stay where they were.
+export { ROLE_LABEL } from '@/narration/roles';
+
 export const PHASE_LABEL: Record<Phase, string> = {
   LOBBY: 'Lobby',
   ROLE_REVEAL: 'Roles',
@@ -11,13 +15,6 @@ export const PHASE_LABEL: Record<Phase, string> = {
   VERDICT: 'Verdict',
   VOTE: 'Vote',
   GAME_OVER: 'Game over',
-};
-
-export const ROLE_LABEL: Record<Role, string> = {
-  VILLAGER: 'Villager',
-  MAFIA: 'Mafia',
-  DOCTOR: 'Doctor',
-  DETECTIVE: 'Detective',
 };
 
 /**

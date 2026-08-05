@@ -134,8 +134,12 @@ export function projectRoom(
     record: systemRecord(doc),
     // Projected here rather than merged in by the console, so there is one
     // place that decides who may see it — the same place that decides roles.
+    // The round decides which telling the GM gets, so the same night does not
+    // read out identically four games running.
     narration:
-      doc.game !== null && doc.gmPlayerId === viewerId ? narrationFor(doc.game.phase) : null,
+      doc.game !== null && doc.gmPlayerId === viewerId
+        ? narrationFor(doc.game.phase, doc.roundNumber ?? 1)
+        : null,
     round: doc.roundNumber ?? 1,
     // Asking advancePhase where we are going keeps legal order in game-core —
     // including the night roles it skips when nobody holds them. The peek is

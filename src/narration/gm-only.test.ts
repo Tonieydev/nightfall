@@ -52,7 +52,9 @@ function everyPhase(): { phase: Phase; doc: RoomDocument }[] {
 
 /** Everything the script could possibly leak, as raw strings. */
 const EVERY_NARRATION_STRING = Object.values(NARRATION_SCRIPT).flatMap((card) => [
-  ...card.lines,
+  // Every telling, not just this round's: a leak test that only checked the
+  // variant in play would pass for three rounds and fail on the fourth.
+  ...card.variants.flat(),
   ...(card.cue === null ? [] : [card.cue]),
 ]);
 
@@ -71,7 +73,7 @@ describe('narration reaches the GM and nobody else', () => {
     for (const { phase, doc } of everyPhase()) {
       const view = projectRoom(doc, GM);
 
-      expect(view.narration, phase).toEqual(narrationFor(phase));
+      expect(view.narration, phase).toEqual(narrationFor(phase, doc.roundNumber ?? 1));
     }
   });
 
@@ -105,7 +107,7 @@ describe('narration reaches the GM and nobody else', () => {
   it('carries the card on the wire for the GM, so the console can read it', () => {
     for (const { phase, doc } of everyPhase()) {
       const wire = JSON.stringify(projectRoom(doc, GM));
-      const first = narrationFor(phase).lines[0] ?? '';
+      const first = narrationFor(phase, doc.roundNumber ?? 1).lines[0] ?? '';
 
       expect(wire, phase).toContain(first.slice(0, 24));
     }
@@ -154,13 +156,15 @@ describe('the card prompts, it never gates', () => {
   });
 
   it('leaves the phase alone no matter how often it is rendered', () => {
-    // The script is keyed by phase and nothing else, so it cannot depend on
-    // how long the GM has been looking at it.
+    // The script is keyed by phase and round and nothing else, so it cannot
+    // depend on how long the GM has been looking at it. Value equality, not
+    // identity: the card is composed per call now that a round picks a telling.
     const doc = seated();
     const phase = doc.game?.phase;
     if (phase === undefined) throw new Error('no game');
 
-    expect(narrationFor(phase)).toBe(narrationFor(phase));
+    expect(narrationFor(phase, 3)).toEqual(narrationFor(phase, 3));
+    expect(narrationFor(phase, 3)).not.toEqual(narrationFor(phase, 2));
     expect(doc.game?.phase).toBe(phase);
   });
 });

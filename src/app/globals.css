@@ -580,7 +580,10 @@ a {
    The only motion in play besides the role reveal. */
 .nf-election {
   margin: var(--space-4) 0;
-  padding: var(--space-5);
+  /* Room to breathe off the edge. The verdict is the one card in the game that
+     gets read rather than glanced at, and text against the border reads as
+     cramped at exactly the moment the room is paying most attention. */
+  padding: var(--space-6);
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-lg);
@@ -622,8 +625,9 @@ a {
 }
 
 .nf-election-detail {
-  margin: var(--space-2) 0 0;
+  margin: var(--space-3) 0 0;
   font-size: 0.875rem;
+  line-height: 1.5;
   color: var(--color-neutral-500);
 }
 

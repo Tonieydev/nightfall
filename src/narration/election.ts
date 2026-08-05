@@ -1,3 +1,4 @@
+import { ROLE_LABEL } from './roles.js';
 import type { PlayerView } from '../game-core/index.js';
 
 export interface ElectionCopy {
@@ -52,10 +53,15 @@ export function electionCopy(players: PlayerView[], phaseNumber: number): Electi
   return {
     name: elected.name,
     caught,
-    headline: `${elected.name} is out.`,
-    verdict: caught ? 'You caught a mafia.' : 'You did not catch the mafia.',
+    // The bracket is the whole point of turning the card over: the room needs
+    // to read what it actually lost, not only whether it won the round. A
+    // doctor going down is the most expensive miss there is.
+    headline: `${elected.name} is out (${ROLE_LABEL[elected.role]}).`,
+    // Never a restatement of the bracket. That line says what they were; this
+    // one says what it cost.
+    verdict: caught ? 'You caught a mafia.' : 'That was one of your own.',
     detail: caught
-      ? 'One down. There may be more of them at this table.'
-      : 'They were town. The mafia are still here, and now there are fewer of you.',
+      ? 'One of them is gone. The rest are still sitting at this table.'
+      : 'The mafia are still here, and there is one less of you to find them.',
   };
 }

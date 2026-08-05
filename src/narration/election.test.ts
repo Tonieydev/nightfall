@@ -32,8 +32,27 @@ describe('the election card', () => {
 
     expect(copy.caught).toBe(true);
     expect(copy.name).toBe('M1');
-    expect(copy.headline).toContain('M1');
+    expect(copy.headline).toBe('M1 is out (Mafia).');
     expect(copy.verdict.toLowerCase()).toContain('mafia');
+  });
+
+  it('names the role in brackets, whatever the card turned out to be', () => {
+    // The room needs to read what it actually lost, not just whether it won
+    // the round. A doctor going down is the single most expensive miss there is.
+    const labels = { MAFIA: 'Mafia', DOCTOR: 'Doctor', DETECTIVE: 'Detective', VILLAGER: 'Villager' };
+
+    for (const [role, label] of Object.entries(labels)) {
+      const players = [
+        seat('x', {
+          alive: false,
+          eliminatedAtPhase: ROUND,
+          eliminatedBy: 'VOTE',
+          role: role as 'MAFIA',
+        }),
+      ];
+
+      expect(electionCopy(players, ROUND).headline, role).toBe(`X is out (${label}).`);
+    }
   });
 
   it('says so when the room got it wrong', () => {
@@ -50,7 +69,11 @@ describe('the election card', () => {
     const copy = electionCopy(players, ROUND);
 
     expect(copy.caught).toBe(false);
-    expect(copy.verdict).toBe('You did not catch the mafia.');
+    expect(copy.headline).toBe('V1 is out (Villager).');
+    // Not a restatement of the bracket. The bracket says what they were; this
+    // says what it cost the room.
+    expect(copy.verdict).not.toContain('Villager');
+    expect(copy.verdict).toBe('That was one of your own.');
   });
 
   it('counts the doctor and the detective as a miss, not a catch', () => {
@@ -107,5 +130,6 @@ describe('the election card', () => {
 
     expect(copy.caught).toBeNull();
     expect(copy.name).toBe('V1');
+    expect(copy.headline).toBe('V1 is out.');
   });
 });
