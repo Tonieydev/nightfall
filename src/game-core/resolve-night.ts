@@ -1,5 +1,5 @@
 import { nextState } from './next-state.js';
-import { plurality } from './plurality.js';
+import { topTargets } from './plurality.js';
 import { teamOf } from './team.js';
 import type { GameState, NightOutcome } from './types.js';
 
@@ -27,21 +27,27 @@ function detectiveResult(state: GameState): NightOutcome['detective'] {
 }
 
 export function resolveNight(state: GameState): GameState {
-  const { leader: target } = plurality(eligibleMafiaVotes(state));
-  const saved = target !== null && state.night.doctorSave === target;
-  const eliminated = saved ? null : target;
+  // Absent means one. The GM raising it changes how many names the ballot may
+  // settle on, never who chooses them.
+  const targetIds = topTargets(eligibleMafiaVotes(state), state.config.nightKills ?? 1);
+
+  // The doctor covers one person, so at most one of the night's targets comes
+  // back — the save does not scale with the kill count.
+  const save = state.night.doctorSave;
+  const savedId = save !== null && targetIds.includes(save) ? save : null;
+  const eliminatedIds = targetIds.filter((id) => id !== savedId);
 
   return nextState(state, {
     players: state.players.map((p) =>
-      p.id === eliminated
+      eliminatedIds.includes(p.id)
         ? { ...p, alive: false, eliminatedAtPhase: state.phaseNumber, eliminatedBy: 'MAFIA' }
         : { ...p },
     ),
     lastNight: {
       phaseNumber: state.phaseNumber,
-      targetId: target,
-      saved,
-      eliminatedId: eliminated,
+      targetIds,
+      savedId,
+      eliminatedIds,
       detective: detectiveResult(state),
     },
   });

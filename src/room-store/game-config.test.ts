@@ -5,6 +5,7 @@ import {
   MAFIA_NIGHT_CHOICES,
   MAFIA_NIGHT_MAX_MS,
   MAFIA_NIGHT_MIN_MS,
+  NIGHT_KILL_CHOICES,
   configProblems,
   mafiaCountFor,
 } from './game-config.js';
@@ -29,6 +30,43 @@ describe('the default night is a minute', () => {
   it('lets the GM skip the day target entirely', () => {
     // Not every GM wants a clock on the conversation.
     expect(DAY_TARGET_CHOICES).toContain(null);
+  });
+});
+
+describe('how many the mafia may take in a night', () => {
+  it('is one unless the GM says otherwise', () => {
+    // Absent rather than 1, so a game recorded before the setting existed reads
+    // back the same way it was played.
+    expect(DEFAULT_GAME_CONFIG.nightKills).toBeUndefined();
+    expect(NIGHT_KILL_CHOICES[0]).toBe(1);
+  });
+
+  it('passes a big room taking two a night', () => {
+    expect(configProblems({ ...base, mafiaCount: 2, nightKills: 2 }, 10, null)).toEqual([]);
+  });
+
+  it('refuses a kill count below one', () => {
+    // A night that cannot take anybody is not a game, it is a stalemate.
+    expect(configProblems({ ...base, nightKills: 0 }, 8, null)).not.toEqual([]);
+  });
+
+  it('refuses more kills than there are mafia to name them', () => {
+    // Each mafia casts one name, so two mafia can never settle on three.
+    const problems = configProblems({ ...base, mafiaCount: 2, nightKills: 3 }, 11, null);
+
+    expect(problems.join(' ')).toMatch(/mafia/i);
+  });
+
+  it('refuses a kill count that ends the game on the first night', () => {
+    // Six players, one mafia, two kills: town goes 5 -> 3 -> 1 and it is over
+    // before anybody has said anything worth hearing.
+    const problems = configProblems({ ...base, mafiaCount: 2, nightKills: 2 }, 6, null);
+
+    expect(problems.join(' ')).toMatch(/night/i);
+  });
+
+  it('says nothing about a kill count the GM left alone', () => {
+    expect(configProblems(base, 5, null)).toEqual([]);
   });
 });
 

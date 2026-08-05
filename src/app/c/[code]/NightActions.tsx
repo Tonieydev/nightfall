@@ -1,5 +1,6 @@
 'use client';
 
+import { topTargets } from '@/game-core/plurality';
 import type { RoomView } from '@/room-store';
 
 /**
@@ -15,28 +16,28 @@ export function NightActions({ view }: { view: RoomView }) {
     game.players.find((p) => p.id === id)?.name ?? '—';
 
   const votes = Object.values(game.night.mafiaVotes ?? {});
-  const tally = new Map<string, number>();
-  for (const target of votes) tally.set(target, (tally.get(target) ?? 0) + 1);
-
-  const ranked = [...tally.entries()].sort((a, b) => b[1] - a[1]);
-  const top = ranked[0];
-  const tied = ranked.length > 1 && ranked[1]?.[1] === top?.[1];
+  const kills = view.nightKills ?? 1;
+  // The same rule the night will actually resolve under, so what the GM reads
+  // here cannot disagree with what happens when they advance.
+  const settled = topTargets(game.night.mafiaVotes ?? {}, kills);
 
   const mafia =
-    top === undefined
+    votes.length === 0
       ? 'nobody yet'
-      : tied
+      : settled.length === 0
         ? 'tied — nobody dies'
-        : `${nameOf(top[0])} (${String(top[1])})`;
+        : settled.map(nameOf).join(', ');
 
   const cells = [
     {
-      label: 'Mafia',
+      label: kills === 1 ? 'Mafia' : `Mafia · ${String(kills)} a night`,
       value: mafia,
       note:
         votes.length === 0
           ? 'Still deciding. A tie or an empty ballot kills nobody.'
-          : `${String(votes.length)} cast.`,
+          : kills === 1
+            ? `${String(votes.length)} cast.`
+            : `${String(votes.length)} cast, ${String(settled.length)} of ${String(kills)} settled.`,
     },
     {
       label: 'Doctor',

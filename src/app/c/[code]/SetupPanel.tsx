@@ -8,6 +8,7 @@ import { GearSixIcon, PlayIcon } from '@phosphor-icons/react';
 import {
   DAY_TARGET_CHOICES,
   MAFIA_NIGHT_CHOICES,
+  NIGHT_KILL_CHOICES,
   configProblems,
   mafiaCountFor,
 } from '@/room-store/game-config';
@@ -36,11 +37,19 @@ export function SetupPanel({
   const [doctor, setDoctor] = useState(true);
   const [detective, setDetective] = useState(true);
   const [mafiaNightMs, setMafiaNightMs] = useState(60_000);
+  const [nightKills, setNightKills] = useState(1);
   const [dayTargetMs, setDayTargetMs] = useState<number | null>(null);
 
-  const setup: SessionSetup = { mafiaCount, doctor, detective, mafiaNightMs, dayTargetMs };
+  const setup: SessionSetup = {
+    mafiaCount,
+    doctor,
+    detective,
+    mafiaNightMs,
+    nightKills,
+    dayTargetMs,
+  };
   const problems = configProblems(
-    { mafiaCount, doctor, detective, mafiaNightMs },
+    { mafiaCount, doctor, detective, mafiaNightMs, nightKills },
     playerCount,
     dayTargetMs,
   );
@@ -98,6 +107,27 @@ export function SetupPanel({
           </button>
         </div>
       </div>
+
+      <div className="nf-setup-row">
+        <span className="nf-setup-label">Kills a night</span>
+        <div className="nf-choices">
+          {NIGHT_KILL_CHOICES.map((n) => (
+            <button
+              key={n}
+              type="button"
+              className="btn btn-secondary"
+              data-on={String(nightKills === n)}
+              onClick={() => setNightKills(n)}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="nf-setup-note">
+        A ceiling on the ballot, not a quota. The mafia still have to agree on
+        every name, and a tie for the last one takes nobody.
+      </p>
 
       <div className="nf-setup-row">
         <span className="nf-setup-label">Mafia night</span>

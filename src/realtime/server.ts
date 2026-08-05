@@ -91,6 +91,7 @@ function configOf(setup: SessionSetup | undefined) {
     doctor: setup.doctor,
     detective: setup.detective,
     mafiaNightMs: setup.mafiaNightMs,
+    nightKills: setup.nightKills,
   };
 }
 

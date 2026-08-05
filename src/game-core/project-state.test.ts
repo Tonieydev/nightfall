@@ -135,9 +135,9 @@ describe('projectState', () => {
       phase: 'DAWN',
       lastNight: {
         phaseNumber: 2,
-        targetId: 'v1',
-        saved: true,
-        eliminatedId: null,
+        targetIds: ['v1'],
+        savedId: 'v1',
+        eliminatedIds: [],
         detective: { targetId: 'm1', team: 'MAFIA' },
       },
     });
@@ -159,9 +159,9 @@ describe('projectState', () => {
   it('keeps the full night outcome to the GM', () => {
     const outcome = {
       phaseNumber: 2,
-      targetId: 'v1',
-      saved: true,
-      eliminatedId: null,
+      targetIds: ['v1'],
+      savedId: 'v1',
+      eliminatedIds: [],
       detective: null,
     };
     const state = day(cast(), { phase: 'DAWN', lastNight: outcome });
@@ -171,7 +171,7 @@ describe('projectState', () => {
       const view = projectState(state, viewerId);
 
       expect(view.lastNight, viewerId).toBeNull();
-      expect(JSON.stringify(view), viewerId).not.toContain('"saved"');
+      expect(JSON.stringify(view), viewerId).not.toContain('"savedId"');
     }
   });
 

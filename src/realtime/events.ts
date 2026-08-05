@@ -25,6 +25,8 @@ export interface SessionSetup {
   doctor: boolean;
   detective: boolean;
   mafiaNightMs: number;
+  /** How many the mafia may take in a night. A ceiling on the ballot, not a quota. */
+  nightKills: number;
   /** Advisory day length, or null. Drives nothing. */
   dayTargetMs: number | null;
 }

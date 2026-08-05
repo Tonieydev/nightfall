@@ -136,6 +136,111 @@ describe('resolveNight', () => {
     expect(resolveNight(night({ detectiveCheck: 'nobody' })).lastNight?.detective).toBeNull();
   });
 
+  it('records the names taken, not a single name', () => {
+    const next = resolveNight(night({ mafiaVotes: { m1: 'v1', m2: 'v1' }, doctorSave: 'v1' }));
+
+    expect(next.lastNight).toMatchObject({
+      targetIds: ['v1'],
+      savedId: 'v1',
+      eliminatedIds: [],
+    });
+  });
+});
+
+/**
+ * How many the mafia may take in a night is the GM's to set before the game.
+ * The ballot still decides WHO — the count only says how many names it is
+ * allowed to settle on.
+ */
+describe('resolveNight with more than one kill a night', () => {
+  const twoKills = (players: Player[] = cast()): Partial<GameState> => ({
+    config: { ...gameState(players).config, nightKills: 2 },
+  });
+
+  it('takes one a night when the GM never said otherwise', () => {
+    // Absent, not zero: every game played before the setting existed, and every
+    // game whose GM leaves it alone, is a one-kill game.
+    const state = night({ mafiaVotes: { m1: 'v1', m2: 'v2' } });
+
+    expect(state.config.nightKills).toBeUndefined();
+    expect(resolveNight(state).players.filter((p) => !p.alive)).toHaveLength(0);
+  });
+
+  it('takes both names when two were allowed and two were cast', () => {
+    const next = resolveNight(night({ mafiaVotes: { m1: 'v1', m2: 'v2' } }, cast(), twoKills()));
+
+    expect(alive(next, 'v1')).toBe(false);
+    expect(alive(next, 'v2')).toBe(false);
+    expect(next.lastNight?.eliminatedIds.sort()).toEqual(['v1', 'v2']);
+  });
+
+  it('lets the doctor pull back one of the two, never both', () => {
+    const next = resolveNight(
+      night({ mafiaVotes: { m1: 'v1', m2: 'v2' }, doctorSave: 'v1' }, cast(), twoKills()),
+    );
+
+    expect(alive(next, 'v1')).toBe(true);
+    expect(alive(next, 'v2')).toBe(false);
+    expect(next.lastNight).toMatchObject({ savedId: 'v1', eliminatedIds: ['v2'] });
+  });
+
+  it('stamps every one of them with the cause and the phase', () => {
+    const next = resolveNight(
+      night({ mafiaVotes: { m1: 'v1', m2: 'doc' } }, cast(), {
+        ...twoKills(),
+        phaseNumber: 4,
+      }),
+    );
+
+    for (const id of ['v1', 'doc']) {
+      expect(next.players.find((p) => p.id === id), id).toMatchObject({
+        alive: false,
+        eliminatedBy: 'MAFIA',
+        eliminatedAtPhase: 4,
+      });
+    }
+  });
+
+  it('still takes nobody when the mafia never agreed on anyone', () => {
+    const next = resolveNight(night({ mafiaVotes: {} }, cast(), twoKills()));
+
+    expect(next.players.every((p) => p.alive)).toBe(true);
+    expect(next.lastNight?.eliminatedIds).toEqual([]);
+  });
+
+  it('leaves the second kill unspent rather than break a tie for it', () => {
+    // Four mafia: two on v1, then v2 and doc level for the one slot left. v1
+    // goes; the slot stays empty. A tie kills nobody, at any kill count.
+    const players = [
+      player('m1', 'MAFIA'),
+      player('m2', 'MAFIA'),
+      player('m3', 'MAFIA'),
+      player('m4', 'MAFIA'),
+      player('v1', 'VILLAGER'),
+      player('v2', 'VILLAGER'),
+      player('doc', 'DOCTOR'),
+    ];
+    const next = resolveNight(
+      night({ mafiaVotes: { m1: 'v1', m2: 'v1', m3: 'v2', m4: 'doc' } }, players, twoKills(players)),
+    );
+
+    expect(next.lastNight?.eliminatedIds).toEqual(['v1']);
+    expect(alive(next, 'v2')).toBe(true);
+    expect(alive(next, 'doc')).toBe(true);
+  });
+
+  it('cannot take a name the mafia never cast', () => {
+    // Three kills allowed, one name agreed on. The extra slots go unused —
+    // the count is a ceiling, never a quota.
+    const next = resolveNight(
+      night({ mafiaVotes: { m1: 'v1', m2: 'v1' } }, cast(), {
+        config: { ...gameState(cast()).config, nightKills: 3 },
+      }),
+    );
+
+    expect(next.players.filter((p) => !p.alive).map((p) => p.id)).toEqual(['v1']);
+  });
+
   it('never mutates the state it was given', () => {
     const state = night({ mafiaVotes: { m1: 'v1', m2: 'v1' }, detectiveCheck: 'm2' });
     const before = structuredClone(state);

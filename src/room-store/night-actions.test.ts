@@ -142,7 +142,7 @@ describe('night resolution', () => {
     }
 
     expect(doc.game?.players.every((p) => p.alive)).toBe(true);
-    expect(doc.game?.lastNight?.saved).toBe(true);
+    expect(doc.game?.lastNight?.savedId).toBe(target);
   });
 
   it('kills nobody when no Mafia voted — no fallback', () => {
@@ -153,7 +153,7 @@ describe('night resolution', () => {
     }
 
     expect(doc.game?.players.every((p) => p.alive)).toBe(true);
-    expect(doc.game?.lastNight?.eliminatedId).toBeNull();
+    expect(doc.game?.lastNight?.eliminatedIds).toEqual([]);
   });
 });
 

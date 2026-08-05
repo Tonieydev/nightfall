@@ -11,6 +11,19 @@ export const MAFIA_NIGHT_CHOICES = [30_000, 45_000, 60_000, 90_000] as const;
 export const DAY_TARGET_CHOICES = [null, 180_000, 300_000, 420_000, 600_000] as const;
 
 /**
+ * How many names the mafia's ballot may settle on in one night. One is the game
+ * everybody knows; more is for rooms big enough that a single kill a night makes
+ * the day drag. Three is the ceiling because a room this size runs out of town
+ * before it runs out of conversation.
+ */
+export const NIGHT_KILL_CHOICES = [1, 2, 3] as const;
+
+/** The count in force, given a GM who never touched the setting. */
+export function nightKillsFor(config: GameConfig): number {
+  return config.nightKills ?? 1;
+}
+
+/**
  * The same derivation game-core uses when the GM does not override it. Copied
  * rather than imported because it is not exported from there, and game-core is
  * not being touched — the test asserts the two agree for every room size, which
@@ -52,6 +65,27 @@ export function configProblems(
   } else if (mafia >= playerCount - mafia) {
     problems.push(
       `${String(mafia)} mafia against ${String(playerCount - mafia)} town starts at or above parity — the town cannot win from there.`,
+    );
+  }
+
+  const kills = nightKillsFor(config);
+  const town = playerCount - mafia;
+  if (kills < 1) {
+    problems.push('A night the mafia cannot take anybody from is a stalemate, not a game.');
+  } else if (kills > mafia) {
+    problems.push(
+      `Each mafia names one person, so ${String(mafia)} of them can never settle on ${String(kills)}.`,
+    );
+  } else if (kills > 1 && town - kills <= mafia) {
+    // The win condition is mafia >= town. If one night gets there, the game is
+    // decided before anybody has said anything worth hearing.
+    //
+    // Only checked once the GM has raised the count. A one-kill game that ends
+    // on the first night is a tight lineup, not a misconfiguration, and it is
+    // how this has always been allowed to play — a guard rail on a new setting
+    // must not start refusing old ones.
+    problems.push(
+      `${String(kills)} a night against ${String(town)} town ends it on the first night.`,
     );
   }
 

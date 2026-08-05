@@ -32,6 +32,15 @@ export interface GameConfig {
   detective: boolean;
   mafiaNightMs: number;
   /**
+   * How many names the mafia's ballot may settle on in one night. Optional and
+   * absent means one, which is what every game before the setting existed was
+   * played under.
+   *
+   * A ceiling, never a quota: the mafia still have to agree on each name, and
+   * slots the ballot cannot fill go unspent. The GM sets it and never spends it.
+   */
+  nightKills?: number;
+  /**
    * Whether the eliminated get a room of their own. Optional and absent means
    * closed, which is both the spec's default and what every existing game was
    * played under — a required field here would have rewritten history.
@@ -51,9 +60,12 @@ export interface NightState {
 
 export interface NightOutcome {
   phaseNumber: number;
-  targetId: string | null;
-  saved: boolean;
-  eliminatedId: string | null;
+  /** Every name the ballot settled on. Empty when it settled on none. */
+  targetIds: string[];
+  /** The one the doctor pulled back, if they were on that list. */
+  savedId: string | null;
+  /** Who actually did not survive: the targets, less the save. */
+  eliminatedIds: string[];
   // The Detective learns a team, never a role — the distinction is the mechanic.
   detective: { targetId: string; team: Team } | null;
 }
