@@ -3,9 +3,6 @@
 import { ArrowRightIcon } from '@phosphor-icons/react';
 import { Countdown } from './Countdown';
 import { PHASE_LABEL } from './phase-labels';
-// The leaf module, not the '@/room-store' barrel: the barrel reaches
-// node:crypto, which a client component cannot bundle.
-import { advanceBeats } from '@/narration/script';
 import type { RoomView } from '@/room-store';
 
 /** What this phase is for, in one line, for the person running it. */
@@ -54,18 +51,12 @@ export function PhaseCard({ view, onAdvance }: { view: RoomView; onAdvance: () =
                 : 'Game ended.'}
           </p>
         ) : (
-          // Named for the next thing out of the GM's mouth, not for the next
-          // phase — pressing it is the same gesture as saying it. Two beats,
-          // because one tap is two sentences: "Mafia, sleep. Doctor, wake up."
+          // One sentence, the one the GM says as they press it. Not the name of
+          // the phase, and never two sentences at once: this is read mid
+          // narration, at a glance, by someone already talking.
           <button type="button" className="nf-phase-advance btn btn-primary" onClick={onAdvance}>
             <ArrowRightIcon size={20} />
-            <span className="nf-beats">
-              {advanceBeats(view.advanceLabel ?? 'Advance').map((beat) => (
-                <span key={beat} className="nf-beat">
-                  {beat}
-                </span>
-              ))}
-            </span>
+            {view.advanceLabel ?? 'Advance'}
           </button>
         )}
 

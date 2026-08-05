@@ -5,7 +5,7 @@ import type { Phase } from '../game-core/index.js';
  * apart on purpose: `lines` are spoken aloud, `cue` never is.
  */
 export interface NarrationCard {
-  /** Read aloud, in the GM's own voice. They may paraphrase — it is a prompt. */
+  /** Read aloud, in the GM's own voice. They may paraphrase; it is a prompt. */
   lines: string[];
   /** Private to the GM. Explains what to wait for, never what to decide. */
   cue: string | null;
@@ -16,12 +16,11 @@ export interface NarrationCard {
    */
   advanceLabel: string;
   /**
-   * What the GM says to CLOSE this phase, in the same breath as the line that
-   * opens the next one: "Mafia, sleep. Doctor, wake up." One tap is two
-   * sentences at the table, and a button that only carried the second half left
-   * the mafia awake for the rest of the night.
+   * What the GM says to CLOSE this phase: "Mafia, sleep."
    *
-   * Null where nobody is being put under.
+   * This is what the advance button carries on the way into the night, because
+   * it is the sentence the GM is saying at the moment they press it. Null where
+   * nobody is being put under.
    */
   sleepLabel: string | null;
 }
@@ -42,7 +41,7 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
       'Everyone find a seat. Check your mic, say something so we know you are there.',
       'Once we start, the only thing you can trust is what someone says out loud.',
     ],
-    cue: 'Six in the room before you can start, and you will not hold a role — you narrate the whole night.',
+    cue: 'Six in the room before you can start, and you will not hold a role: you narrate the whole night.',
     advanceLabel: 'Take your seats',
     sleepLabel: null,
   },
@@ -59,10 +58,10 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
 
   NIGHT_MAFIA: {
     lines: [
-      'Night falls. Everyone, sleep — close your eyes.',
+      'Night falls. Everyone, sleep. Close your eyes.',
       'Mafia, wake up. Look at each other. Agree on who does not see the morning.',
     ],
-    cue: 'Only the mafia hear each other now; the town hears you. Let them settle on a name or let the clock run out — a tie kills nobody, and that is allowed to happen.',
+    cue: 'Only the mafia hear each other now; the town hears you. Let them settle on a name or let the clock run out. A tie kills nobody, and that is allowed to happen.',
     advanceLabel: 'Mafia wake up',
     sleepLabel: 'Mafia sleep',
   },
@@ -72,7 +71,7 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
       'Mafia, sleep.',
       'Doctor, wake up. One person lives through tonight if you choose them. Point.',
     ],
-    cue: 'The doctor does not speak, they tap. Advance once they have chosen — they may choose themselves.',
+    cue: 'The doctor does not speak, they tap. Advance once they have chosen. They may choose themselves.',
     advanceLabel: 'Doctor wake up',
     sleepLabel: 'Doctor sleep',
   },
@@ -92,7 +91,7 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
       'Detective, sleep.',
       'Everyone, wake up. The village opens its eyes.',
     ],
-    cue: 'Read what happened off the roster, then say who did not make it — or tell them everyone did.',
+    cue: 'Read what happened off the roster, then say who did not make it, or tell them everyone did.',
     advanceLabel: 'Everyone wake up',
     sleepLabel: null,
   },
@@ -121,7 +120,7 @@ export const NARRATION_SCRIPT: Record<Phase, NarrationCard> = {
   GAME_OVER: {
     lines: [
       'It is over. Every card is face up.',
-      'Go on then — tell each other what you were.',
+      'Go on then. Tell each other what you were.',
     ],
     cue: null,
     advanceLabel: 'End the game',
@@ -154,18 +153,11 @@ const NIGHTFALL: ReadonlySet<Phase> = new Set<Phase>([
  * destination would have the GM saying "Doctor, sleep" to an empty chair.
  */
 export function advanceLabelFor(from: Phase, to: Phase): string {
-  const wake = narrationFor(to).advanceLabel;
+  // Going into the night, the button is the sentence that CLOSES the phase the
+  // GM is standing in: "Mafia, sleep." Naming the waking half here as well put
+  // two sentences on one control, and the GM reads the button mid-narration,
+  // not between narrations. The card carries the waking half.
   const sleep = NIGHTFALL.has(to) ? narrationFor(from).sleepLabel : null;
 
-  return sleep === null ? wake : `${sleep}${BEAT_SEPARATOR}${wake}`;
-}
-
-const BEAT_SEPARATOR = ' · ';
-
-/**
- * The label back apart into the sentences it was built from, so the button can
- * keep each one unbroken and wrap between them instead of through them.
- */
-export function advanceBeats(label: string): string[] {
-  return label.split(BEAT_SEPARATOR);
+  return sleep ?? narrationFor(to).advanceLabel;
 }

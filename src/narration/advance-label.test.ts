@@ -3,7 +3,7 @@ import { advanceGame } from '../room-store/commands.js';
 import { MIN_LOBBY_TO_START } from '../room-store/keys.js';
 import { joinLobby, startSession } from '../room-store/lobby.js';
 import { projectRoom } from '../room-store/project-room.js';
-import { NARRATION_SCRIPT, advanceBeats, advanceLabelFor, narrationFor } from './script.js';
+import { NARRATION_SCRIPT, advanceLabelFor, narrationFor } from './script.js';
 import type { Phase } from '../game-core/index.js';
 import type { RoomDocument } from '../room-store/types.js';
 
@@ -49,32 +49,35 @@ describe('the script names every move', () => {
     expect(narrationFor('DAWN').advanceLabel).toBe('Everyone wake up');
   });
 
-  it('puts the previous role to sleep in the same breath', () => {
-    // One tap is two sentences at the table: "Mafia, sleep. Doctor, wake up."
-    // Labelling it with only the second half leaves the mafia awake all night,
-    // which is what the console did before.
-    expect(advanceLabelFor('ROLE_REVEAL', 'NIGHT_MAFIA')).toBe('Everyone sleep · Mafia wake up');
-    expect(advanceLabelFor('NIGHT_MAFIA', 'NIGHT_DOCTOR')).toBe('Mafia sleep · Doctor wake up');
-    expect(advanceLabelFor('NIGHT_DOCTOR', 'NIGHT_DETECTIVE')).toBe(
-      'Doctor sleep · Detective wake up',
-    );
-    expect(advanceLabelFor('NIGHT_DETECTIVE', 'DAWN')).toBe('Detective sleep · Everyone wake up');
+  it('names the sentence that closes the phase the GM is standing in', () => {
+    // One press, one sentence. The GM reads this mid-narration, so it carries
+    // what they say NOW; the card beside it carries who wakes.
+    expect(advanceLabelFor('ROLE_REVEAL', 'NIGHT_MAFIA')).toBe('Everyone sleep');
+    expect(advanceLabelFor('NIGHT_MAFIA', 'NIGHT_DOCTOR')).toBe('Mafia sleep');
+    expect(advanceLabelFor('NIGHT_DOCTOR', 'NIGHT_DETECTIVE')).toBe('Doctor sleep');
+    expect(advanceLabelFor('NIGHT_DETECTIVE', 'DAWN')).toBe('Detective sleep');
+  });
+
+  it('never puts two sentences on one button', () => {
+    for (const from of Object.keys(NARRATION_SCRIPT) as Phase[]) {
+      for (const to of Object.keys(NARRATION_SCRIPT) as Phase[]) {
+        expect(advanceLabelFor(from, to), `${from} -> ${to}`).not.toContain('·');
+      }
+    }
   });
 
   it('sends the room back to sleep after a vote, not just the mafia', () => {
     // The second night is entered from VOTE, not from ROLE_REVEAL, and the GM
     // still has to put everybody down before the mafia open their eyes.
-    expect(advanceLabelFor('VOTE', 'NIGHT_MAFIA')).toBe('Everyone sleep · Mafia wake up');
+    expect(advanceLabelFor('VOTE', 'NIGHT_MAFIA')).toBe('Everyone sleep');
   });
 
   it('never wakes a role nobody is holding', () => {
     // advancePhase skips a night role when nobody alive holds it. The label has
     // to skip it too — "Doctor sleep" in a game with no doctor is the console
     // telling the GM to say something false.
-    expect(advanceLabelFor('NIGHT_MAFIA', 'NIGHT_DETECTIVE')).toBe(
-      'Mafia sleep · Detective wake up',
-    );
-    expect(advanceLabelFor('NIGHT_MAFIA', 'DAWN')).toBe('Mafia sleep · Everyone wake up');
+    expect(advanceLabelFor('NIGHT_MAFIA', 'NIGHT_DETECTIVE')).toBe('Mafia sleep');
+    expect(advanceLabelFor('NIGHT_MAFIA', 'DAWN')).toBe('Mafia sleep');
   });
 
   it('says nothing about sleep when the day is what comes next', () => {
@@ -84,21 +87,10 @@ describe('the script names every move', () => {
     expect(advanceLabelFor('VOTE', 'GAME_OVER')).toBe('End the game');
   });
 
-  it('hands the button its beats whole, so neither breaks mid-phrase', () => {
-    // On a phone "Detective sleep · Everyone wake up" is wider than the button.
-    // It has to wrap between the two sentences, never inside one of them, so
-    // the console never shows the GM the words "Everyone wake" on a line.
-    expect(advanceBeats('Detective sleep · Everyone wake up')).toEqual([
-      'Detective sleep',
-      'Everyone wake up',
-    ]);
-    expect(advanceBeats('Open the day')).toEqual(['Open the day']);
-  });
-
   it('matches the line the GM actually reads on arrival', () => {
-    // "Mafia sleep · Doctor wake up" on the button, then "Mafia, sleep." and
-    // "Doctor, wake up." on the card. If these disagree the button is lying
-    // about what happens next.
+    // "Mafia sleep" on the button, then "Mafia, sleep." as the first line of
+    // the card it lands on. If these disagree the button is lying about what
+    // the GM is meant to say.
     const pairs: [Phase, Phase][] = [
       ['ROLE_REVEAL', 'NIGHT_MAFIA'],
       ['NIGHT_MAFIA', 'NIGHT_DOCTOR'],
@@ -109,9 +101,8 @@ describe('the script names every move', () => {
     for (const [from, to] of pairs) {
       const spoken = narrationFor(to).lines.join(' ').toLowerCase().replace(/[^a-z ]/g, ' ');
 
-      for (const beat of advanceLabelFor(from, to).split(' · ')) {
-        expect(spoken.replace(/\s+/g, ' '), `${from} -> ${to}`).toContain(beat.toLowerCase());
-      }
+      const beat = advanceLabelFor(from, to);
+      expect(spoken.replace(/\s+/g, ' '), `${from} -> ${to}`).toContain(beat.toLowerCase());
     }
   });
 });
