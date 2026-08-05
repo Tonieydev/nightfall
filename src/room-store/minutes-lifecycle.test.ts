@@ -7,7 +7,7 @@ import {
 import { createRoomStoreFacade } from './index.js';
 import { MemoryRedis } from './memory-redis.js';
 import { joinLobby } from './lobby.js';
-import { minutesReserved } from './minutes.js';
+import { minutesCommitted } from './minutes.js';
 import { projectRoom } from './project-room.js';
 
 const AUG = Date.UTC(2026, 7, 15, 12, 0, 0);
@@ -35,21 +35,21 @@ describe('the concurrent-room ceiling fits the provider', () => {
 });
 
 describe('minutes across the room lifecycle', () => {
-  it('reserves a room’s worst case at creation', async () => {
+  it('commits a room’s worst case at creation', async () => {
     const { redis, store } = setup(4500);
 
     await store.room.open('ABC234');
 
-    expect(await minutesReserved(redis, AUG)).toBe(ROOM_MAX);
+    expect(await minutesCommitted(redis, AUG)).toBe(ROOM_MAX);
   });
 
-  it('does not reserve twice for a room that already exists', async () => {
+  it('does not commit twice for a room that already exists', async () => {
     const { redis, store } = setup(4500);
     await store.room.open('ABC234');
 
     await store.room.open('ABC234');
 
-    expect(await minutesReserved(redis, AUG)).toBe(ROOM_MAX);
+    expect(await minutesCommitted(redis, AUG)).toBe(ROOM_MAX);
   });
 
   it('opens the room voiceless rather than refusing a spent month', async () => {
@@ -63,7 +63,7 @@ describe('minutes across the room lifecycle', () => {
     expect(degraded.voiceEnabled).toBe(false);
     expect(degraded.reservedMinutes).toBe(0);
     // And it costs the budget nothing, because it publishes nothing.
-    expect(await minutesReserved(redis, AUG)).toBe(ROOM_MAX);
+    expect(await minutesCommitted(redis, AUG)).toBe(ROOM_MAX);
   });
 
   it('tells every player when voice is unavailable', async () => {
@@ -77,7 +77,7 @@ describe('minutes across the room lifecycle', () => {
     expect(projectRoom(doc, 'anyone').voiceEnabled).toBe(false);
   });
 
-  it('hands a voiceless room back to the budget untouched', async () => {
+  it('never charges a voiceless room', async () => {
     const { redis, store } = setup(1500);
     await store.room.open('AAA222');
     await store.room.open('BBB333');
@@ -85,7 +85,7 @@ describe('minutes across the room lifecycle', () => {
     await store.room.close('BBB333');
 
     // Reconciling a room that held nothing must not credit minutes it never had.
-    expect(await minutesReserved(redis, AUG)).toBe(ROOM_MAX);
+    expect(await minutesCommitted(redis, AUG)).toBe(ROOM_MAX);
   });
 
   it('still refuses when the concurrency ceiling is reached', async () => {
@@ -104,7 +104,7 @@ describe('minutes across the room lifecycle', () => {
     expect(await store.room.read('BBB333')).toBeNull();
   });
 
-  it('gives back the reservation the room did not spend', async () => {
+  it('records only what the room actually spent', async () => {
     let clock = AUG;
     const { redis, store } = setup(4500, () => clock);
     await store.room.open('ABC234');
@@ -120,7 +120,7 @@ describe('minutes across the room lifecycle', () => {
     await store.room.close('ABC234');
 
     // Six seats for twenty minutes is 120, not the 1080 held.
-    expect(await minutesReserved(redis, AUG)).toBe(120);
+    expect(await minutesCommitted(redis, AUG)).toBe(120);
   });
 
   it('prefers LiveKit’s own figure when one is supplied', async () => {
@@ -129,7 +129,7 @@ describe('minutes across the room lifecycle', () => {
 
     await store.room.close('ABC234', 47);
 
-    expect(await minutesReserved(redis, AUG)).toBe(47);
+    expect(await minutesCommitted(redis, AUG)).toBe(47);
   });
 
   it('restores voice for the next room once one closes', async () => {
@@ -154,7 +154,7 @@ describe('minutes across the room lifecycle', () => {
 
     // Two get voice, one degrades — the budget is never oversold.
     expect(rooms.filter((r) => r.voiceEnabled)).toHaveLength(2);
-    expect(await minutesReserved(redis, AUG)).toBe(2 * ROOM_MAX);
+    expect(await minutesCommitted(redis, AUG)).toBe(2 * ROOM_MAX);
   });
 
   it('raises the alarm as the month fills', async () => {

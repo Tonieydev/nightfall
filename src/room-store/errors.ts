@@ -38,6 +38,7 @@ export const DOMAIN_ERROR_CODES = [
   'CHAT_NOT_ALLOWED',
   'CHAT_RATE_LIMITED',
   'EMAIL_SEND_FAILED',
+  'CREW_RATE_LIMITED',
 ] as const;
 
 export type DomainErrorCode = (typeof DOMAIN_ERROR_CODES)[number];

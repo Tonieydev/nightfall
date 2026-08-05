@@ -1,132 +1,138 @@
 import { describe, expect, it, vi } from 'vitest';
+import { acquireRoomSlot } from './capacity.js';
+import { MemoryRedis } from './memory-redis.js';
 import {
   ALARM_FRACTION,
-  MinuteBudgetExceededError,
+  MINUTE_BUDGET_DEFAULT,
+  claimVoiceMinutes,
   maxSpendFor,
-  minutesReserved,
+  minutesCommitted,
+  minutesInUse,
+  minutesSpent,
   monthKey,
-  reconcileMinutes,
-  reserveMinutes,
+  recordMinutesSpent,
 } from './minutes.js';
 import { MAX_SEATS, ROOM_TTL_SECONDS } from './keys.js';
-import { MemoryRedis } from './memory-redis.js';
 
 const AUG = Date.UTC(2026, 7, 15, 12, 0, 0);
 const SEP = Date.UTC(2026, 8, 1, 0, 0, 0);
+const ROOM = maxSpendFor(MAX_SEATS, ROOM_TTL_SECONDS / 60);
+const open = { maxConcurrentRooms: 8, killSwitch: false };
 
-const policy = (budget: number, onAlarm?: (reserved: number, budget: number) => void) =>
-  onAlarm === undefined ? { budget } : { budget, onAlarm };
+/** Grants a room voice the way the facade does, so the tests exercise one path. */
+async function grant(redis: MemoryRedis, code: string, at: number, budget = MINUTE_BUDGET_DEFAULT) {
+  await acquireRoomSlot(redis, open, code, at);
+  return await claimVoiceMinutes(redis, at, code, { budget });
+}
 
-describe('participant-minute budget', () => {
-  it('reserves a room’s maximum possible spend, not its current usage', () => {
-    // 12 seats for the full 90-minute lifetime is the worst a room can cost.
-    expect(maxSpendFor(MAX_SEATS, ROOM_TTL_SECONDS / 60)).toBe(1080);
+describe('what a month is committed to', () => {
+  it('holds a room’s worst case, not its current usage', () => {
+    // Minutes accrue continuously and there is no safe moment to cut a game off
+    // mid-play, so a room is admitted only if its worst case fits.
+    expect(ROOM).toBe(MAX_SEATS * 90);
   });
 
-  it('keys the counter by month', () => {
-    expect(monthKey(AUG)).toBe('livekit:minutes:2026-08');
-    expect(monthKey(SEP)).toBe('livekit:minutes:2026-09');
+  it('keys spend by month', () => {
+    expect(monthKey(AUG)).toBe('livekit:spent:2026-08');
+    expect(monthKey(SEP)).toBe('livekit:spent:2026-09');
   });
 
-  it('adds the reservation to the month', async () => {
+  it('derives what is held from the rooms that are live', async () => {
     const redis = new MemoryRedis(() => AUG);
 
-    await reserveMinutes(redis, AUG, 1080, policy(4500));
+    await grant(redis, 'AAA222', AUG);
+    await grant(redis, 'BBB333', AUG);
 
-    expect(await minutesReserved(redis, AUG)).toBe(1080);
+    // Never a stored total. Holding voice IS holding the minutes.
+    expect(await minutesInUse(redis, AUG)).toBe(2 * ROOM);
   });
 
-  it('fails closed when the reservation would exceed the budget', async () => {
+  it('stops holding them the moment the rooms expire', async () => {
     const redis = new MemoryRedis(() => AUG);
-    // 2000 fits one room's 1080 but not two.
-    await reserveMinutes(redis, AUG, 1080, policy(2000));
+    await grant(redis, 'AAA222', AUG);
 
-    await expect(reserveMinutes(redis, AUG, 1080, policy(2000))).rejects.toThrow(
-      MinuteBudgetExceededError,
-    );
-
-    // The refused reservation must not linger and strand the budget.
-    expect(await minutesReserved(redis, AUG)).toBe(1080);
+    // The leak this replaced: a room that died by TTL held its worst case for
+    // the rest of the month, and nothing was ever going to release it.
+    expect(await minutesInUse(redis, AUG + (ROOM_TTL_SECONDS + 1) * 1000)).toBe(0);
   });
 
-  it('refuses pessimistically rather than admitting a room it cannot fund', async () => {
+  it('adds real spend to what is currently held', async () => {
     const redis = new MemoryRedis(() => AUG);
-    await reserveMinutes(redis, AUG, 4000, policy(4500));
+    await grant(redis, 'AAA222', AUG);
+    await recordMinutesSpent(redis, AUG, 400);
 
-    // 500 left, a room could cost 1080 — refuse, do not admit and cut off mid-game.
-    await expect(reserveMinutes(redis, AUG, 1080, policy(4500))).rejects.toThrow(/capacity/i);
+    expect(await minutesSpent(redis, AUG)).toBe(400);
+    expect(await minutesCommitted(redis, AUG)).toBe(400 + ROOM);
   });
+});
 
-  it('sells the last slot exactly once when two creates race', async () => {
-    const redis = new MemoryRedis(() => AUG);
-    await reserveMinutes(redis, AUG, 3000, policy(4500));
-
-    const results = await Promise.allSettled([
-      reserveMinutes(redis, AUG, 1080, policy(4500)),
-      reserveMinutes(redis, AUG, 1080, policy(4500)),
-    ]);
-
-    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
-    expect(results.filter((r) => r.status === 'rejected')).toHaveLength(1);
-    expect(await minutesReserved(redis, AUG)).toBe(4080);
-  });
-
-  it('reconciles the reservation down to what was actually spent', async () => {
-    const redis = new MemoryRedis(() => AUG);
-    await reserveMinutes(redis, AUG, 1080, policy(4500));
-
-    // Six players for twenty minutes is 120, not the 1080 held.
-    await reconcileMinutes(redis, AUG, 1080, 120);
-
-    expect(await minutesReserved(redis, AUG)).toBe(120);
-  });
-
-  it('frees the reservation for the next room', async () => {
-    const redis = new MemoryRedis(() => AUG);
-    await reserveMinutes(redis, AUG, 1080, policy(1200));
-    await reconcileMinutes(redis, AUG, 1080, 100);
-
-    await expect(reserveMinutes(redis, AUG, 1080, policy(1200))).resolves.toBeUndefined();
-  });
-
-  it('never lets reconciliation drive the counter below zero', async () => {
+describe('the budget still governs', () => {
+  it('grants voice to a room the month can fund', async () => {
     const redis = new MemoryRedis(() => AUG);
 
-    await reconcileMinutes(redis, AUG, 1080, 0);
-
-    expect(await minutesReserved(redis, AUG)).toBe(0);
+    expect(await grant(redis, 'AAA222', AUG)).toBe(true);
   });
 
-  it('raises the alarm when reservations cross the threshold', async () => {
+  it('refuses once the funded rooms are all taken', async () => {
+    const redis = new MemoryRedis(() => AUG);
+
+    // 4,500 funds four rooms of 1,080. The fifth opens voiceless.
+    for (let i = 0; i < 4; i += 1) {
+      expect(await grant(redis, `R${String(i)}`, AUG), `room ${String(i)}`).toBe(true);
+    }
+    expect(await grant(redis, 'R4', AUG)).toBe(false);
+  });
+
+  it('counts a month’s spend against the same budget', async () => {
+    const redis = new MemoryRedis(() => AUG);
+    await recordMinutesSpent(redis, AUG, MINUTE_BUDGET_DEFAULT);
+
+    expect(await grant(redis, 'AAA222', AUG)).toBe(false);
+  });
+
+  it('raises the alarm as the month runs out', async () => {
     const redis = new MemoryRedis(() => AUG);
     const onAlarm = vi.fn();
+    await recordMinutesSpent(redis, AUG, Math.round(ALARM_FRACTION * MINUTE_BUDGET_DEFAULT));
 
-    await reserveMinutes(redis, AUG, 3000, policy(4500, onAlarm));
-    expect(onAlarm, 'below 70% of 4500 = 3150').not.toHaveBeenCalled();
+    await acquireRoomSlot(redis, open, 'AAA222', AUG);
+    await claimVoiceMinutes(redis, AUG, 'AAA222', { budget: MINUTE_BUDGET_DEFAULT, onAlarm });
 
-    await reserveMinutes(redis, AUG, 200, policy(4500, onAlarm));
+    expect(onAlarm).toHaveBeenCalled();
+  });
+});
 
-    expect(onAlarm).toHaveBeenCalledTimes(1);
-    expect(onAlarm).toHaveBeenCalledWith(3200, 4500);
-    expect(Math.round(ALARM_FRACTION * 4500)).toBe(3150);
+
+describe('spend is recorded once, at close', () => {
+  it('accumulates across rooms', async () => {
+    const redis = new MemoryRedis(() => AUG);
+
+    await recordMinutesSpent(redis, AUG, 120);
+    await recordMinutesSpent(redis, AUG, 80);
+
+    expect(await minutesSpent(redis, AUG)).toBe(200);
   });
 
-  it('starts a new month on a clean budget', async () => {
+  it('ignores a nonsense figure rather than going backwards', async () => {
     const redis = new MemoryRedis(() => AUG);
-    await reserveMinutes(redis, AUG, 4400, policy(4500));
+    await recordMinutesSpent(redis, AUG, 120);
 
-    expect(await minutesReserved(redis, SEP)).toBe(0);
-    await expect(reserveMinutes(redis, SEP, 1080, policy(4500))).resolves.toBeUndefined();
-    expect(await minutesReserved(redis, AUG), 'August untouched').toBe(4400);
+    await recordMinutesSpent(redis, AUG, -500);
+
+    expect(await minutesSpent(redis, AUG)).toBe(120);
+  });
+
+  it('starts a new month clean', async () => {
+    const redis = new MemoryRedis(() => AUG);
+    await recordMinutesSpent(redis, AUG, 4_000);
+
+    expect(await minutesSpent(redis, SEP)).toBe(0);
   });
 
   it('lets an old month evict itself', async () => {
-    let clock = AUG;
-    const redis = new MemoryRedis(() => clock);
-    await reserveMinutes(redis, AUG, 1080, policy(4500));
+    const redis = new MemoryRedis(() => AUG);
+    await recordMinutesSpent(redis, AUG, 100);
 
-    clock = AUG + 41 * 24 * 60 * 60 * 1000;
-
-    expect(await minutesReserved(redis, AUG)).toBe(0);
+    expect(await redis.ttl(monthKey(AUG))).toBeGreaterThan(0);
   });
 });

@@ -3,17 +3,16 @@ import { acquireRoomSlot, releaseRoomSlot, type CapacityPolicy } from './capacit
 import { reconcilePhase } from './commands.js';
 import { reclaimGm } from './handoff.js';
 import { createCrew, readCrew, type CrewRecord } from './crew.js';
-import { domainErrorCode } from './errors.js';
 import { MemoryRedis } from './memory-redis.js';
 import {
   ALARM_FRACTION,
   MINUTE_BUDGET_DEFAULT,
-  maxSpendFor,
-  reconcileMinutes,
-  reserveMinutes,
+  claimVoiceMinutes,
+  recordMinutesSpent,
+  releaseVoiceMinutes,
   type MinutePolicy,
 } from './minutes.js';
-import { MAX_SEATS, ROOM_TTL_SECONDS } from './keys.js';
+
 import { claimSession, releaseSession } from './session.js';
 import { createRoomStore, type RoomStore } from './store.js';
 import { createUpstashRedis } from './upstash-redis.js';
@@ -22,6 +21,7 @@ import type { RoomDocument } from './types.js';
 
 export { RoomFullError, NotEnoughPlayersError, SessionAlreadyStartedError, NotAMemberError, joinLobby, setConnected, startSession } from './lobby.js';
 export { RoomCeilingReachedError, KillSwitchError } from './capacity.js';
+export { CREWS_PER_IP_PER_HOUR, CrewRateLimitedError, spendCrewAllowance } from './abuse.js';
 export {
   DOMAIN_ERROR_CODES,
   DomainError,
@@ -33,11 +33,15 @@ export {
   ALARM_FRACTION,
   MINUTE_BUDGET_DEFAULT,
   MinuteBudgetExceededError,
+  ROOM_RESERVATION,
+  claimVoiceMinutes,
   maxSpendFor,
-  minutesReserved,
+  minutesCommitted,
+  minutesInUse,
+  minutesSpent,
   monthKey,
-  reconcileMinutes,
-  reserveMinutes,
+  recordMinutesSpent,
+  releaseVoiceMinutes,
 } from './minutes.js';
 export {
   ChatNotAllowedError,
@@ -73,11 +77,19 @@ export {
 } from './night-actions.js';
 export { castVote, clearVote } from './voting.js';
 export { DEFAULT_GAME_CONFIG } from './lobby.js';
+export {
+  DAY_TARGET_CHOICES,
+  MAFIA_NIGHT_CHOICES,
+  MAFIA_NIGHT_MAX_MS,
+  MAFIA_NIGHT_MIN_MS,
+  configProblems,
+  mafiaCountFor,
+} from './game-config.js';
 export { CrewCodeExhaustedError } from './crew.js';
 export { RoomNotFoundError, VersionConflictError } from './store.js';
 export { isCrewCode, normaliseCrewCode } from './crew-code.js';
 export { MAX_DISPLAY_NAME, parseDisplayName } from './display-name.js';
-export { projectRoom } from './project-room.js';
+export { projectRoom, projectRoomFor } from './project-room.js';
 export { MAX_SEATS, MIN_LOBBY_TO_START, MIN_PLAYERS_TO_START, ROOM_TTL_SECONDS } from './keys.js';
 export type { MemberView, RoomView, SelfView } from './project-room.js';
 export type { LobbyMember, RoomDocument } from './types.js';
@@ -112,8 +124,6 @@ export function createRoomStoreFacade(
   minutes: MinutePolicy = { budget: MINUTE_BUDGET_DEFAULT, onAlarm: logMinuteAlarm },
   onRoomClosed?: (crewCode: string) => Promise<void>,
 ): RoomStoreFacade {
-  // Worst case for one room: every seat, the whole lifetime.
-  const roomReservation = maxSpendFor(MAX_SEATS, ROOM_TTL_SECONDS / 60);
   const store = createRoomStore({ redis, now });
 
   return {
@@ -145,38 +155,22 @@ export function createRoomStoreFacade(
         const existing = await store.read(crewCode);
         if (existing !== null) return existing;
 
-        // Minutes are reserved before the room exists, so a month that cannot
-        // fund a full room never admits one and then cuts it off mid-game.
-        // A month that cannot fund it degrades to a voiceless room instead of
-        // refusing: the pinned crew link has to keep working.
-        let voice = { enabled: true, reservedMinutes: roomReservation };
-        try {
-          await reserveMinutes(redis, now(), roomReservation, minutes);
-        } catch (error) {
-          // Same registry today, but the discriminator is the same everywhere:
-          // there is one way to recognise a domain error in this codebase.
-          if (domainErrorCode(error) !== 'MINUTE_BUDGET_EXCEEDED') throw error;
-          voice = { enabled: false, reservedMinutes: 0 };
-        }
+        // The slot first, because holding it IS the room's minute reservation:
+        // rooms:live expires its members by the room's own lifetime, so a room
+        // that dies by TTL releases both at the same instant and neither can be
+        // stranded by nobody remembering to release it.
+        await acquireRoomSlot(redis, policy, crewCode, now());
 
-        const releaseReservation = async (): Promise<void> => {
-          if (voice.reservedMinutes > 0) {
-            await reconcileMinutes(redis, now(), voice.reservedMinutes, 0);
-          }
-        };
-
-        try {
-          await acquireRoomSlot(redis, policy, crewCode, now());
-        } catch (error) {
-          await releaseReservation();
-          throw error;
-        }
+        // A month that cannot fund a full room opens a voiceless one rather
+        // than refusing: the pinned crew link has to keep working.
+        const enabled = await claimVoiceMinutes(redis, now(), crewCode, minutes);
+        const voice = { enabled, reservedMinutes: 0 };
 
         try {
           return await store.create(crewCode, voice);
         } catch (error) {
           await releaseRoomSlot(redis, crewCode);
-          await releaseReservation();
+          await releaseVoiceMinutes(redis, crewCode);
           throw error;
         }
       },
@@ -190,16 +184,14 @@ export function createRoomStoreFacade(
 
         if (existing !== null) {
           await releaseRoomSlot(redis, crewCode);
-          // Hand back the difference between the worst case held and what the
-          // room actually cost, so a pessimistic reservation cannot starve a
-          // month that had capacity all along.
-          // A voiceless room held nothing and published nothing, so there is
-          // nothing to hand back.
-          if (existing.reservedMinutes > 0) {
-            await reconcileMinutes(
+          await releaseVoiceMinutes(redis, crewCode);
+          // Only what the room actually cost. Nothing was ever held back, so
+          // there is nothing to hand back — and a voiceless room published
+          // nothing, so it spent nothing.
+          if (existing.voiceEnabled) {
+            await recordMinutesSpent(
               redis,
               now(),
-              existing.reservedMinutes,
               actualMinutes ?? estimateSpend(existing, now()),
             );
           }

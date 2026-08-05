@@ -24,3 +24,10 @@ export const sessionKey = (crewCode: string): string => `crew:${crewCode}:sessio
  * `rooms:concurrent` holds a drifted value and must not be read again.
  */
 export const LIVE_ROOMS_KEY = 'rooms:live';
+
+/**
+ * Rooms that actually hold voice. A separate set from LIVE_ROOMS_KEY because a
+ * voiceless room occupies a seat but publishes nothing, so it must cost the
+ * participant-minute budget nothing.
+ */
+export const VOICE_ROOMS_KEY = 'rooms:voice';
