@@ -1,4 +1,4 @@
-import { domainErrorCode, getRoomStore } from '@/room-store';
+import { domainErrorCode, getRedis, getRoomStore, spendCrewAllowance } from '@/room-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +10,28 @@ function readName(body: unknown): string {
   return 'Nightfall crew';
 }
 
+/** Railway terminates TLS upstream, so the caller's address arrives in a header. */
+function callerIp(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const first = forwarded?.split(',')[0]?.trim();
+  return first !== undefined && first !== '' ? first : 'unknown';
+}
+
 export async function POST(request: Request): Promise<Response> {
   const body: unknown = await request.json().catch(() => ({}));
+
+  // Crews have no TTL, so creation has to be bounded or Redis grows forever.
+  try {
+    await spendCrewAllowance(getRedis(), callerIp(request), Date.now());
+  } catch (error) {
+    if (domainErrorCode(error) === 'CREW_RATE_LIMITED') {
+      return Response.json(
+        { error: 'too many crews from here — try again later' },
+        { status: 429 },
+      );
+    }
+    throw error;
+  }
 
   try {
     const crew = await getRoomStore().crew.create(readName(body));
