@@ -4,12 +4,14 @@ import { useState } from 'react';
 
 import { AudioMap } from './AudioMap';
 import { ElectionCard } from './ElectionCard';
+import { MicRow } from './MicRow';
 import { NightActions } from './NightActions';
 import { PhaseCard } from './PhaseCard';
 import { Roster } from './Roster';
 import { StoryCard } from './StoryCard';
 import { Verdict } from './Verdict';
 import { VoteTally } from './VoteTally';
+import type { VoiceStatus } from './useVoice';
 import type { RoomView } from '@/room-store';
 
 export interface GmActions {
@@ -25,7 +27,17 @@ export interface GmActions {
  * the clock, and the roster. Overrides are collapsed so a mis-tap cannot cost a
  * round.
  */
-export function GmConsole({ view, actions }: { view: RoomView; actions: GmActions }) {
+export function GmConsole({
+  view,
+  actions,
+  voiceStatus,
+  onEnableVoice,
+}: {
+  view: RoomView;
+  actions: GmActions;
+  voiceStatus: VoiceStatus;
+  onEnableVoice: () => void;
+}) {
   // Above the early return: hooks cannot sit behind a conditional.
   const [script, setScript] = useState(true);
 
@@ -49,6 +61,11 @@ export function GmConsole({ view, actions }: { view: RoomView; actions: GmAction
             <p className="nf-muted">Every card is revealed below.</p>
           </div>
         )}
+
+        {/* The GM is audible to every player in every phase and had no control
+            to turn their own microphone on, so they were the one person in the
+            room guaranteed to be silent. */}
+        <MicRow view={view} status={voiceStatus} onEnable={onEnableVoice} />
 
         <PhaseCard view={view} onAdvance={actions.onAdvance} />
 

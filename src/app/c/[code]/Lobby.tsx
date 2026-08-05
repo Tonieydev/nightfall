@@ -5,6 +5,7 @@ import { io, type Socket } from 'socket.io-client';
 import { CircleIcon, CrownSimpleIcon, PlayIcon, UsersThreeIcon } from '@phosphor-icons/react';
 import { Debrief } from './Debrief';
 import { GmConsole } from './GmConsole';
+import { MicRow } from './MicRow';
 import { SetupPanel } from './SetupPanel';
 import { litFor } from './phase-labels';
 import { useVoice } from './useVoice';
@@ -31,6 +32,14 @@ export function Lobby({
   const [view, setView] = useState<RoomView | null>(null);
   const [error, setError] = useState<RoomErrorPayload | null>(null);
   const [live, setLive] = useState(false);
+  /**
+   * Whether this person has put their hand up to run the game. Local, and
+   * deliberately not on the server: nothing is reserved and nobody is blocked,
+   * it only stops the Start button being the biggest thing on a stranger's
+   * screen the moment they arrive. The seat is still taken by whoever presses
+   * Start, which is the spec's rule.
+   */
+  const [moderating, setModerating] = useState(false);
   const socketRef = useRef<LobbySocket | null>(null);
   const voice = useVoice(crewCode, token);
 
@@ -90,6 +99,8 @@ export function Lobby({
       <div className="nf-stage" data-lit={lit}>
       <GmConsole
         view={view}
+        voiceStatus={voice.status}
+        onEnableVoice={() => void voice.connect()}
         actions={{
           onAdvance: () => emit?.emit('advance'),
           onForceKill: (id) => emit?.emit('forceKill', id),
@@ -153,20 +164,40 @@ export function Lobby({
         ))}
       </ul>
 
+      {/* Voice is opened here, before a game exists. It was only reachable from
+          the player screen, which does not exist until the game is under way,
+          so the permission prompt arrived mid narration if it arrived at all.
+          iOS wants this gesture early, and so does everybody else. */}
+      <MicRow view={view} status={voice.status} onEnable={() => void voice.connect()} />
+
       {view.gmPlayerId === null ? (
-        view.canStart ? (
-          // Whoever presses Start becomes the GM, so the setup belongs to
-          // whoever is looking at it — there is no host to gate it behind.
+        !view.canStart ? (
+          <button type="button" className="nf-advance btn btn-secondary" disabled>
+            <PlayIcon size={16} />
+            {`Waiting for ${String(6 - seated)} more`}
+          </button>
+        ) : moderating ? (
+          // Whoever presses Start still becomes the GM. This is only the step
+          // that makes the press deliberate.
           <SetupPanel
             playerCount={Math.max(0, view.members.length - 1)}
             canStart={view.canStart}
             onStart={(setup) => socketRef.current?.emit('startSession', setup)}
           />
         ) : (
-          <button type="button" className="nf-advance btn btn-primary" disabled>
-            <PlayIcon size={16} />
-            {`Waiting for ${String(6 - seated)} more`}
-          </button>
+          <>
+            <button
+              type="button"
+              className="nf-advance btn btn-secondary"
+              onClick={() => setModerating(true)}
+            >
+              <CrownSimpleIcon size={16} />
+              I will moderate
+            </button>
+            <p className="nf-muted">
+              One of you runs the night and does not play. Everyone else waits here.
+            </p>
+          </>
         )
       ) : (
         <p className="nf-muted">
