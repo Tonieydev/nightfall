@@ -50,6 +50,18 @@ export function Lobby({
   const openVoice = (): void => {
     void voice.connect().then(() => socketRef.current?.emit('voiceReady'));
   };
+
+  /**
+   * Turning the mic on publishes a track nobody is subscribed to yet, so the
+   * room has to be told: the graph is applied against the participants LiveKit
+   * reports, and a track that appears between passes is invisible to the last
+   * one. Muting needs no announcement, the track simply goes quiet.
+   */
+  const toggleMic = (): void => {
+    void voice.setMic(!voice.micOn).then((on) => {
+      if (on) socketRef.current?.emit('voiceReady');
+    });
+  };
   const socketRef = useRef<LobbySocket | null>(null);
   const voice = useVoice(crewCode, token);
 
@@ -119,8 +131,11 @@ export function Lobby({
         voiceStatus={voice.status}
         voiceReason={voice.reason}
         audioBlocked={voice.audioBlocked}
-        onEnableVoice={openVoice}
+        micOn={voice.micOn}
+        micReason={voice.micReason}
+        onJoin={openVoice}
         onEnableAudio={() => void voice.enableAudio()}
+        onToggleMic={toggleMic}
         actions={{
           onAdvance: () => emit?.emit('advance'),
           onForceKill: (id) => emit?.emit('forceKill', id),
@@ -143,13 +158,16 @@ export function Lobby({
           },
           onVote: (id) => emit?.emit('castVote', id),
           onClearVote: () => emit?.emit('clearVote'),
-          onEnableVoice: openVoice,
+          onJoinVoice: openVoice,
           onEnableAudio: () => void voice.enableAudio(),
+          onToggleMic: toggleMic,
           onSendChat: (text) => emit?.emit('sendChat', text),
         }}
         voiceStatus={voice.status}
         voiceReason={voice.reason}
         audioBlocked={voice.audioBlocked}
+        micOn={voice.micOn}
+        micReason={voice.micReason}
       />
       </div>
     );
@@ -171,8 +189,9 @@ export function Lobby({
         status={voice.status}
         reason={voice.reason}
         audioBlocked={voice.audioBlocked}
-        onEnable={openVoice}
+        onJoin={openVoice}
         onEnableAudio={() => void voice.enableAudio()}
+        onToggleMic={toggleMic}
       />
 
       <p className="nf-muted">

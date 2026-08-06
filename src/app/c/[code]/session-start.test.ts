@@ -60,7 +60,7 @@ describe('every microphone gets asked for', () => {
     // The only route to voice.connect() was the player screen, which does not
     // exist until the game has started. So the permission prompt arrived mid
     // narration if it arrived at all, and iOS wants that gesture early.
-    expect(LOBBY).toMatch(/MicRow|onEnableVoice|voice\.connect/);
+    expect(LOBBY).toMatch(/MicRow|onJoin|voice\.connect/);
     const beforeGame = LOBBY.slice(LOBBY.indexOf('const seated'));
 
     expect(beforeGame, 'the lobby body offers voice').toMatch(/MicRow|voice\.connect/);
@@ -70,7 +70,7 @@ describe('every microphone gets asked for', () => {
     // The GM is audible to every player in every phase, and had no control to
     // turn their own microphone on. They were the one person guaranteed to be
     // silent.
-    expect(GM_CONSOLE).toMatch(/MicRow|onEnableVoice/);
+    expect(GM_CONSOLE).toMatch(/MicRow|onJoin/);
     expect(GM_CONSOLE).toMatch(/voiceStatus|VoiceStatus/);
   });
 

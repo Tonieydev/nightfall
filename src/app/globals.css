@@ -1639,3 +1639,9 @@ a {
     transition: none;
   }
 }
+
+/* The mic bar carries a control now: join, mute or unmute. */
+.nf-mic-bar .btn {
+  flex: none;
+  margin-left: auto;
+}

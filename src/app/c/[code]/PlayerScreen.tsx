@@ -17,8 +17,9 @@ export interface PlayerActions {
   onNightTarget: (targetId: string) => void;
   onVote: (targetId: string) => void;
   onClearVote: () => void;
-  onEnableVoice: () => void;
+  onJoinVoice: () => void;
   onEnableAudio: () => void;
+  onToggleMic: () => void;
   onSendChat: (text: string) => void;
 }
 
@@ -32,12 +33,16 @@ export function PlayerScreen({
   voiceStatus,
   voiceReason,
   audioBlocked,
+  micOn,
+  micReason,
 }: {
   view: RoomView;
   actions: PlayerActions;
   voiceStatus: VoiceStatus;
   voiceReason: string | null;
   audioBlocked: boolean;
+  micOn: boolean;
+  micReason: string | null;
 }) {
   // Room or Chat, as the comp splits it. Local, because it is a way of looking
   // at the room rather than a fact about it.
@@ -100,8 +105,11 @@ export function PlayerScreen({
             status={voiceStatus}
             reason={voiceReason}
             audioBlocked={audioBlocked}
-            onEnable={actions.onEnableVoice}
+            micOn={micOn}
+            micReason={micReason}
+            onJoin={actions.onJoinVoice}
             onEnableAudio={actions.onEnableAudio}
+            onToggleMic={actions.onToggleMic}
           />
         </>
       ) : (
@@ -167,8 +175,11 @@ export function PlayerScreen({
         status={voiceStatus}
         reason={voiceReason}
         audioBlocked={audioBlocked}
-        onEnable={actions.onEnableVoice}
+        micOn={micOn}
+        micReason={micReason}
+        onJoin={actions.onJoinVoice}
         onEnableAudio={actions.onEnableAudio}
+        onToggleMic={actions.onToggleMic}
       />
 
       <p className="nf-muted">
@@ -246,8 +257,11 @@ export function PlayerScreen({
             status={voiceStatus}
             reason={voiceReason}
             audioBlocked={audioBlocked}
-            onEnable={actions.onEnableVoice}
+            micOn={micOn}
+            micReason={micReason}
+            onJoin={actions.onJoinVoice}
             onEnableAudio={actions.onEnableAudio}
+            onToggleMic={actions.onToggleMic}
           />
         </>
       )}

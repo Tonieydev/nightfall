@@ -4,14 +4,12 @@ import { useCallback, useRef, useState } from 'react';
 import { Room, RoomEvent, Track, type LocalAudioTrack, type RemoteTrack } from 'livekit-client';
 import { CAPTURE_DEFAULTS, PUBLISH_DEFAULTS, RECONNECT } from './capture';
 
-export type VoiceStatus =
-  | 'idle'
-  | 'connecting'
-  | 'live'
-  /** In the room and hearing it, but this device's microphone was refused. */
-  | 'listening'
-  | 'unavailable'
-  | 'failed';
+/**
+ * Whether this device is in the voice room. Nothing about the microphone: that
+ * is a separate permission and a separate decision, and bundling them meant a
+ * player who would not hand over their mic could not hear the game either.
+ */
+export type VoiceStatus = 'idle' | 'connecting' | 'live' | 'unavailable' | 'failed';
 
 /**
  * Why voice is not working, in words a player can act on. A bare catch used to
@@ -51,11 +49,13 @@ function parseToken(body: unknown): VoiceTokenResponse | null {
 }
 
 /**
- * Voice is opened by one tap and never automatically, because iOS Safari
- * requires a user gesture for two separate things — capturing the microphone
- * and playing remote audio — and they must happen inside the same gesture.
- * Doing only the first is the classic failure: everyone connects, nobody hears
- * anything, and it looks like the product is broken.
+ * Joining is one tap and takes no microphone with it. Everyone in the lobby can
+ * hear each other from the moment they arrive; speaking is a second, separate
+ * decision that asks for the microphone when it is actually wanted.
+ *
+ * Never automatic, because iOS Safari requires a user gesture to play remote
+ * audio at all. The join tap spends that gesture on playback, which is the half
+ * that everybody needs.
  */
 export function useVoice(crewCode: string, playerToken: string) {
   const [status, setStatus] = useState<VoiceStatus>('idle');
@@ -68,6 +68,9 @@ export function useVoice(crewCode: string, playerToken: string) {
    * startAudio once and hoping.
    */
   const [audioBlocked, setAudioBlocked] = useState(false);
+  /** Publishing or not. Off is the state everybody starts in. */
+  const [micOn, setMicOn] = useState(false);
+  const [micReason, setMicReason] = useState<string | null>(null);
   const roomRef = useRef<Room | null>(null);
   /**
    * Where remote audio actually plays.
@@ -81,23 +84,7 @@ export function useVoice(crewCode: string, playerToken: string) {
   const sinkRef = useRef<HTMLDivElement | null>(null);
 
   const connect = useCallback(async (): Promise<void> => {
-    if (status === 'connecting') return;
-
-    // Already in the room with a refused microphone: there is nothing to
-    // connect, only a permission to ask for again. Without this the retry
-    // button falls straight through the guard below and does nothing.
-    const joined = roomRef.current;
-    if (joined !== null) {
-      if (status !== 'listening') return;
-      try {
-        await joined.localParticipant.setMicrophoneEnabled(true);
-        setReason(null);
-        setStatus('live');
-      } catch (micError) {
-        setReason(reasonFor(micError));
-      }
-      return;
-    }
+    if (status === 'connecting' || roomRef.current !== null) return;
 
     setStatus('connecting');
     setReason(null);
@@ -170,6 +157,7 @@ export function useVoice(crewCode: string, playerToken: string) {
         sinkRef.current?.remove();
         sinkRef.current = null;
         setAudioBlocked(false);
+        setMicOn(false);
         setStatus('idle');
       });
 
@@ -187,25 +175,13 @@ export function useVoice(crewCode: string, playerToken: string) {
       // the rule everywhere else applies here too: filter before the send.
       await room.connect(parsed.url ?? '', parsed.token ?? '', { autoSubscribe: false });
 
-      // Capture and playback are separate failures and separate outcomes. A
-      // refused microphone leaves this device in the room and hearing every
-      // word, so it stays connected: dropping the whole call for it throws away
-      // the half that still worked, and tells the player nothing about which
-      // half broke.
-      try {
-        // Both halves of the gesture, in the order iOS needs them. The mic
-        // prompt consumes the gesture, so playback is unlocked immediately
-        // after, inside the same call stack.
-        await room.localParticipant.setMicrophoneEnabled(true);
-        await room.startAudio();
-        setAudioBlocked(!room.canPlaybackAudio);
-        setStatus('live');
-      } catch (micError) {
-        await room.startAudio().catch(() => undefined);
-        setAudioBlocked(!room.canPlaybackAudio);
-        setReason(reasonFor(micError));
-        setStatus('listening');
-      }
+      // Playback only. No getUserMedia, so no permission prompt: joining the
+      // room is not a thing a player should have to hand their microphone over
+      // for. The gesture that got us here is spent unlocking remote audio,
+      // which is the half everybody needs.
+      await room.startAudio();
+      setAudioBlocked(!room.canPlaybackAudio);
+      setStatus('live');
     } catch (error) {
       // The room may have connected before something later threw. Leaving it
       // attached would leak a participant and make a retry the second one.
@@ -234,16 +210,43 @@ export function useVoice(crewCode: string, playerToken: string) {
     sinkRef.current = null;
     if (room !== null) await room.disconnect();
     setReason(null);
+    setMicOn(false);
+    setMicReason(null);
     setStatus('idle');
   }, []);
 
-  const setMuted = useCallback(async (muted: boolean): Promise<void> => {
+  /**
+   * Turn the microphone on or off. The first `true` is where the browser asks
+   * for permission, which is the moment the player has actually asked to speak.
+   * A refusal leaves them in the room and hearing everything.
+   */
+  const setMic = useCallback(async (on: boolean): Promise<boolean> => {
     const room = roomRef.current;
-    if (room === null) return;
-    await room.localParticipant.setMicrophoneEnabled(!muted);
+    if (room === null) return false;
+
+    try {
+      await room.localParticipant.setMicrophoneEnabled(on);
+      setMicReason(null);
+      setMicOn(on);
+      return on;
+    } catch (error) {
+      setMicReason(reasonFor(error));
+      setMicOn(false);
+      return false;
+    }
   }, []);
 
-  return { status, reason, audioBlocked, connect, enableAudio, disconnect, setMuted };
+  return {
+    status,
+    reason,
+    audioBlocked,
+    micOn,
+    micReason,
+    connect,
+    enableAudio,
+    setMic,
+    disconnect,
+  };
 }
 
 export type { LocalAudioTrack };

@@ -36,16 +36,22 @@ export function GmConsole({
   voiceStatus,
   voiceReason,
   audioBlocked,
-  onEnableVoice,
+  micOn,
+  micReason,
+  onJoin,
   onEnableAudio,
+  onToggleMic,
 }: {
   view: RoomView;
   actions: GmActions;
   voiceStatus: VoiceStatus;
   voiceReason: string | null;
   audioBlocked: boolean;
-  onEnableVoice: () => void;
+  micOn: boolean;
+  micReason: string | null;
+  onJoin: () => void;
   onEnableAudio: () => void;
+  onToggleMic: () => void;
 }) {
   // Above the early return: hooks cannot sit behind a conditional.
   const [script, setScript] = useState(true);
@@ -79,8 +85,11 @@ export function GmConsole({
           status={voiceStatus}
           reason={voiceReason}
           audioBlocked={audioBlocked}
-          onEnable={onEnableVoice}
+          micOn={micOn}
+          micReason={micReason}
+          onJoin={onJoin}
           onEnableAudio={onEnableAudio}
+          onToggleMic={onToggleMic}
         />
 
         <PhaseCard view={view} onAdvance={actions.onAdvance} />

@@ -12,32 +12,36 @@ import type { VoiceStatus } from './useVoice';
 import type { RoomView } from '@/room-store';
 
 /**
- * The indicator answers one question: can this player be heard right now. The
- * count is read off the server's projected audio row rather than off local
- * mute, because a player has to know with certainty rather than with hope.
+ * Everything this player needs to know about their voice, and the one control
+ * that changes it.
  *
- * Which message to show is decided in mic-state.ts, where it can be tested. It
- * used to be a chain of early returns here, and the chain let a device whose
- * voice never opened fall through to "Heard by 6".
+ * Joining and speaking are separate: the first tap puts them in the room with
+ * no microphone at all, and the microphone is its own toggle after that. Being
+ * muted is an ordinary state here, not a fault, because most of a game is spent
+ * listening.
  */
 export function MicRow({
   view,
   status,
   reason = null,
   audioBlocked = false,
-  onEnable,
+  micOn = false,
+  micReason = null,
+  onJoin,
   onEnableAudio,
+  onToggleMic,
 }: {
   view: RoomView;
   status: VoiceStatus;
-  /** Why voice is not working, when it is not. */
   reason?: string | null;
-  /** The browser is holding remote audio until a gesture releases it. */
   audioBlocked?: boolean;
-  onEnable: () => void;
+  micOn?: boolean;
+  micReason?: string | null;
+  onJoin: () => void;
   onEnableAudio: () => void;
+  onToggleMic: () => void;
 }) {
-  const state = micState({ view, status, reason, audioBlocked });
+  const state = micState({ view, status, reason, audioBlocked, micOn, micReason });
 
   switch (state.kind) {
     case 'budget':
@@ -51,20 +55,26 @@ export function MicRow({
       return (
         <div className="nf-mic-slot">
           <p className="nf-muted">
-            <WifiSlashIcon size={14} />{' '}
-            {state.reason ?? 'Voice could not connect on this device.'}
+            <WifiSlashIcon size={14} /> {state.reason ?? 'Could not join the room on this device.'}
           </p>
-          <button type="button" className="nf-tile btn btn-secondary" onClick={onEnable}>
-            <MicrophoneIcon size={16} />
+          <button type="button" className="nf-tile btn btn-secondary" onClick={onJoin}>
             Try again
           </button>
         </div>
       );
 
+    case 'offer':
+      return (
+        <div className="nf-mic-slot">
+          <button type="button" className="nf-tile btn btn-primary" onClick={onJoin}>
+            <SpeakerHighIcon size={16} />
+            {state.connecting ? 'Joining…' : 'Join the room'}
+          </button>
+          <p className="nf-muted">You will hear everyone. Your mic stays off until you turn it on.</p>
+        </div>
+      );
+
     case 'deaf':
-      // Primary and loud, unlike every other message here: the player is in the
-      // room, everything looks healthy and they can hear nothing at all. One
-      // tap fixes it, and nothing else on screen would ever tell them that.
       return (
         <div className="nf-mic-slot">
           <button type="button" className="nf-tile btn btn-primary" onClick={onEnableAudio}>
@@ -75,33 +85,26 @@ export function MicRow({
         </div>
       );
 
-    case 'listening':
+    // In the room, saying nothing. Most of a game looks like this.
+    case 'muted':
       return (
         <div className="nf-mic-slot">
-          <p className="nf-muted">
-            <MicrophoneSlashIcon size={14} /> You can hear the room. They cannot hear you.
-          </p>
+          <div className="nf-mic-bar" data-channel="silenced">
+            <MicrophoneSlashIcon size={17} />
+            <span className="nf-mic-lines">
+              <span className="nf-mic-label">Your mic is off</span>
+              <span className="nf-mic-hears">You can hear the room</span>
+            </span>
+            <button type="button" className="btn btn-secondary" onClick={onToggleMic}>
+              <MicrophoneIcon size={16} />
+              Turn on mic
+            </button>
+          </div>
           {state.reason === null ? null : <p className="nf-muted">{state.reason}</p>}
-          <button type="button" className="nf-tile btn btn-secondary" onClick={onEnable}>
-            <MicrophoneIcon size={16} />
-            Try the microphone again
-          </button>
         </div>
       );
 
-    case 'offer':
-      return (
-        <div className="nf-mic-slot">
-          <button type="button" className="nf-tile btn btn-primary" onClick={onEnable}>
-            <MicrophoneIcon size={16} />
-            {state.connecting ? 'Connecting…' : 'Turn on voice'}
-          </button>
-        </div>
-      );
-
-    // Live. The comp states the channel and its consequence on two lines, which
-    // is two facts a count never carried: "Heard by 2" at night does not tell a
-    // mafia speaker that the town is not among the two.
+    // Mic on. The channel and who it reaches, as the comp states them.
     case 'heard':
     case 'silenced': {
       const channel = view.you === null ? 'silenced' : channelFor(view, view.you.playerId);
@@ -114,6 +117,10 @@ export function MicRow({
             <span className="nf-mic-label">{MIC_LABEL[channel]}</span>
             <span className="nf-mic-hears">{HEARS_LABEL[channel]}</span>
           </span>
+          <button type="button" className="btn btn-secondary" onClick={onToggleMic}>
+            <MicrophoneSlashIcon size={16} />
+            Mute
+          </button>
         </div>
       );
     }
