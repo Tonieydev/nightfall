@@ -76,4 +76,13 @@ describe('a subscribed track is actually played', () => {
   it('cleans up when the room goes away', () => {
     expect(USE_VOICE).toMatch(/remove\(\)/);
   });
+
+  it('never attaches the same track twice', () => {
+    // attach() mints a NEW element on every call, and the server re-issues
+    // subscribe on every graph pass, so TrackSubscribed fires again for a track
+    // that is already playing. Two elements on one stream, a few milliseconds
+    // apart, is reverb. Three is an echo. Guarded on the SDK's own bookkeeping,
+    // which is the same array startAudio() reads.
+    expect(USE_VOICE).toMatch(/attachedElements\.length/);
+  });
 });

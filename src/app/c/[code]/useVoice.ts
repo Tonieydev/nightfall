@@ -145,6 +145,15 @@ export function useVoice(crewCode: string, playerToken: string) {
 
       room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => {
         if (track.kind !== Track.Kind.Audio) return;
+
+        // attach() mints a NEW element every call, and the server re-issues
+        // subscribe on every graph pass, so this fires again for a track that
+        // is already playing. Two elements on one stream a few milliseconds
+        // apart is reverb; three is an echo. attachedElements is the SDK's own
+        // bookkeeping and the same array startAudio() reads, so asking it is
+        // both the cheapest check and the one that cannot disagree.
+        if (track.attachedElements.length > 0) return;
+
         const element = track.attach();
         element.autoplay = true;
         sinkRef.current?.appendChild(element);
