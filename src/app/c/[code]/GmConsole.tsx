@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 import { AudioMap } from './AudioMap';
+import { DawnCard } from './DawnCard';
 import { ElectionCard } from './ElectionCard';
 import { MicRow } from './MicRow';
 import { NightActions } from './NightActions';
@@ -99,6 +100,7 @@ export function GmConsole({
         {/* Keyed on the round so it plays its rise once per verdict, and again
             next round rather than sitting still for the rest of the game. */}
         <ElectionCard key={`election-${String(game.phaseNumber)}`} view={view} />
+        <DawnCard view={view} />
         <Verdict view={view} />
         <NightActions view={view} />
         <VoteTally view={view} />

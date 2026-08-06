@@ -82,6 +82,13 @@ export interface GameState {
   night: NightState;
   dayVotes: Record<string, string>;
   lastNight: NightOutcome | null;
+  /**
+   * How many lines of the dawn narration the GM has read. The death is held
+   * back from every projection until the line that names it, so a player learns
+   * they are gone when the room hears it rather than from a roster that changed
+   * under them. Absent means none read yet.
+   */
+  dawnBeat?: number;
   winner: Team | null;
 }
 

@@ -1,4 +1,6 @@
 import {
+  advanceDawn,
+  dawnScript,
   advancePhase,
   checkWinCondition,
   resolveNight,
@@ -73,6 +75,13 @@ function withWinCheck(doc: RoomDocument, game: GameState): RoomDocument {
 function applyAdvance(doc: RoomDocument, game: GameState, now: number): RoomDocument {
   // Snapshot before the move: REVERT_PHASE restores this rather than computing
   // a backwards transition, so legal order stays only in game-core.
+  // Dawn is read a line at a time, and the same button reads it. The death is
+  // withheld from every projection until the line that names it, so the GM's
+  // tap and the room learning it are the same event rather than two.
+  if (game.phase === 'DAWN' && (game.dawnBeat ?? 0) < dawnScript(game).lines.length - 1) {
+    return { ...doc, game: advanceDawn(game), previousGame: game, phaseChangedAt: now };
+  }
+
   const resolved = resolveVoteIfDue(resolveNightIfDue(game, now));
 
   // advancePhase runs checkWinCondition on what it is given, so handing it the

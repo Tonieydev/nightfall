@@ -1,5 +1,6 @@
 import {
   advancePhase,
+  dawnScript,
   computeAudioGraph,
   projectState,
   type AudioGraph,
@@ -93,6 +94,11 @@ export interface RoomView {
   audioGraph: Record<string, string[]> | null;
 }
 
+/** Dawn with lines still unread, where the next tap reads one. */
+function midDawn(game: GameState): boolean {
+  return game.phase === 'DAWN' && (game.dawnBeat ?? 0) < dawnScript(game).lines.length - 1;
+}
+
 function projectAudio(viewerId: string, graph: AudioGraph): AudioView {
   const hears: string[] = [];
   for (const [speaker, listeners] of graph) {
@@ -144,9 +150,14 @@ export function projectRoom(
     // Asking advancePhase where we are going keeps legal order in game-core —
     // including the night roles it skips when nobody holds them. The peek is
     // discarded and advancePhase is pure, so `now` here changes nothing.
+    // Mid-dawn the button reads the next line rather than opening the day, so
+    // it has to say so: a control that promises the wrong thing is worse than
+    // one that says nothing, and the GM reads this while talking.
     advanceLabel:
       doc.game !== null && doc.gmPlayerId === viewerId && doc.game.phase !== 'GAME_OVER'
-        ? advanceLabelFor(doc.game.phase, advancePhase(doc.game, 0).phase)
+        ? midDawn(doc.game)
+          ? 'Read on'
+          : advanceLabelFor(doc.game.phase, advancePhase(doc.game, 0).phase)
         : null,
     nightKills:
       doc.game !== null && doc.gmPlayerId === viewerId ? nightKillsFor(doc.game.config) : null,

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CircleIcon, DetectiveIcon, MoonIcon, SkullIcon } from '@phosphor-icons/react';
 import { ChatPanel } from './ChatPanel';
+import { DawnCard, OutCard } from './DawnCard';
 import { Countdown } from './Countdown';
 import { ElectionCard } from './ElectionCard';
 import { MicRow } from './MicRow';
@@ -129,6 +130,11 @@ export function PlayerScreen({
             ) : null}
           </section>
           <p className="nf-card-secret">Nobody else can see this screen. Say nothing yet.</p>
+        </>
+      ) : game.phase === 'DAWN' ? (
+        <>
+          <DawnCard view={view} />
+          <OutCard view={view} />
         </>
       ) : idle ? (
         // The night, for somebody with nothing to tap. The comp holds the whole

@@ -53,5 +53,7 @@ export function advancePhase(state: GameState, now: number): GameState {
       ? { night: { mafiaVotes: {}, doctorSave: null, detectiveCheck: null } }
       : {}),
     ...(next === 'VOTE' ? { dayVotes: {} } : {}),
+    // Dawn starts untold every time it comes round.
+    ...(next === 'DAWN' ? { dawnBeat: 0 } : {}),
   });
 }

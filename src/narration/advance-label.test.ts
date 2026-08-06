@@ -134,9 +134,15 @@ describe('the button is labelled for the phase it is about to open', () => {
       if (landed === undefined) break;
 
       // The label promised on the button is the instruction that closes the
-      // phase the GM is in and opens the one the room actually lands in —
+      // phase the GM is in and opens the one the room actually lands in,
       // including when advancePhase skips a night role nobody holds.
-      expect(label, `${current} -> ${landed}`).toBe(advanceLabelFor(current, landed));
+      //
+      // Dawn is the exception: it is read a line at a time, so while lines
+      // remain the tap reads one and the button says that instead.
+      const expected =
+        current === 'DAWN' && landed === 'DAWN' ? 'Read on' : advanceLabelFor(current, landed);
+
+      expect(label, `${current} -> ${landed}`).toBe(expected);
       doc = after;
     }
   });

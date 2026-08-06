@@ -1,3 +1,4 @@
+import { dawnRevealed, dawnScript, withheldAtDawn } from './dawn.js';
 import type { Cause, GameState, NightOutcome, Phase, Player, Role, Team } from './types.js';
 
 export interface PlayerView {
@@ -29,18 +30,25 @@ export interface ViewState {
     yourPick: string | null;
   };
   detectiveResult: NightOutcome['detective'];
+  /**
+   * The night told back, only as far as the GM has read it. Everyone gets the
+   * same lines: this is the room's narration, not the GM's teleprompter, and
+   * the beat that names the dead is the beat they learn it.
+   */
+  dawn: { lines: string[]; revealed: boolean } | null;
   lastNight: NightOutcome | null;
   winner: Team | null;
 }
 
-function toView(p: Player, roleVisible: boolean): PlayerView {
+function toView(p: Player, roleVisible: boolean, withheld: boolean): PlayerView {
   return {
     id: p.id,
     name: p.name,
-    alive: p.alive,
+    // Still standing, as far as this room knows, until the GM says otherwise.
+    alive: withheld ? true : p.alive,
     role: roleVisible ? p.role : null,
-    eliminatedAtPhase: p.eliminatedAtPhase,
-    eliminatedBy: p.eliminatedBy,
+    eliminatedAtPhase: withheld ? null : p.eliminatedAtPhase,
+    eliminatedBy: withheld ? null : p.eliminatedBy,
   };
 }
 
@@ -85,6 +93,10 @@ function ownPick(state: GameState, viewer: Player | undefined): string | null {
 
 export function projectState(state: GameState, viewerId: string): ViewState {
   const viewer = state.players.find((p) => p.id === viewerId);
+  // Held back until the line that names them is read, for everyone including
+  // the person it is about. That withholding is the whole mechanic.
+  const withheld = withheldAtDawn(state);
+  const told = dawnRevealed(state);
   const isGm = viewerId === state.gmPlayerId;
   const inMafiaRoom = isGm || (viewer !== undefined && viewer.alive && viewer.role === 'MAFIA');
   const isDetective = isGm || viewer?.role === 'DETECTIVE';
@@ -96,13 +108,22 @@ export function projectState(state: GameState, viewerId: string): ViewState {
     phaseEndsAt: state.phaseEndsAt,
     viewerId,
     isGm,
-    players: state.players.map((p) => toView(p, canSeeRoleOf(state, isGm, viewer, p))),
+    players: state.players.map((p) =>
+      toView(p, canSeeRoleOf(state, isGm, viewer, p), withheld.has(p.id)),
+    ),
     dayVotes: { ...state.dayVotes },
     night: {
       mafiaVotes: inMafiaRoom ? { ...state.night.mafiaVotes } : null,
       yourPick: ownPick(state, viewer),
     },
     detectiveResult: isDetective ? (state.lastNight?.detective ?? null) : null,
+    dawn:
+      state.phase === 'DAWN'
+        ? {
+            lines: dawnScript(state).lines.slice(0, (state.dawnBeat ?? 0) + 1),
+            revealed: told,
+          }
+        : null,
     lastNight: isGm ? state.lastNight : null,
     winner: state.winner,
   };
