@@ -18,7 +18,16 @@ export interface ViewState {
   isGm: boolean;
   players: PlayerView[];
   dayVotes: Record<string, string>;
-  night: { mafiaVotes: Record<string, string> | null };
+  night: {
+    mafiaVotes: Record<string, string> | null;
+    /**
+     * This viewer's own choice this night, and nothing else. A thing they just
+     * did and already know, handed back so the screen can say it registered.
+     * Null for anyone who has not chosen, and for the GM: the doctor's save
+     * stays hidden from them until dawn, which is deliberate.
+     */
+    yourPick: string | null;
+  };
   detectiveResult: NightOutcome['detective'];
   lastNight: NightOutcome | null;
   winner: Team | null;
@@ -61,6 +70,19 @@ function canSeeRoleOf(
   return viewer.role === 'MAFIA' && subject.role === 'MAFIA';
 }
 
+/**
+ * What this viewer chose tonight, whichever role they hold. Their own action
+ * only: never another player's, and never the GM's view of anybody's.
+ */
+function ownPick(state: GameState, viewer: Player | undefined): string | null {
+  if (viewer === undefined || !viewer.alive) return null;
+
+  if (viewer.role === 'MAFIA') return state.night.mafiaVotes[viewer.id] ?? null;
+  if (viewer.role === 'DOCTOR') return state.night.doctorSave;
+  if (viewer.role === 'DETECTIVE') return state.night.detectiveCheck;
+  return null;
+}
+
 export function projectState(state: GameState, viewerId: string): ViewState {
   const viewer = state.players.find((p) => p.id === viewerId);
   const isGm = viewerId === state.gmPlayerId;
@@ -78,6 +100,7 @@ export function projectState(state: GameState, viewerId: string): ViewState {
     dayVotes: { ...state.dayVotes },
     night: {
       mafiaVotes: inMafiaRoom ? { ...state.night.mafiaVotes } : null,
+      yourPick: ownPick(state, viewer),
     },
     detectiveResult: isDetective ? (state.lastNight?.detective ?? null) : null,
     lastNight: isGm ? state.lastNight : null,

@@ -1489,3 +1489,19 @@ a {
   font-size: 0.6875rem;
   color: var(--color-neutral-500);
 }
+
+/* The one you chose, marked the way the comp marks it: the accent surface and
+   a quiet label, not a filled button. Tapping a name and getting nothing back
+   is how a player ends up tapping three more and only the last one counting. */
+.nf-tile[data-picked='true'] {
+  background: var(--color-accent-900);
+  border-color: var(--color-accent);
+}
+
+.nf-tile-mark {
+  margin-left: auto;
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent-400);
+}

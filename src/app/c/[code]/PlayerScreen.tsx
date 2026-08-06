@@ -45,6 +45,10 @@ export function PlayerScreen({
 
   const isNight = prompt !== null && game.phase !== 'VOTE';
   const myVote = view.you.playerId in game.dayVotes ? game.dayVotes[view.you.playerId] : null;
+  // The day ballot or tonight's choice, whichever this phase is asking for.
+  // Tapping a name and getting nothing back is how a player ends up tapping
+  // three more, and only the last one counts.
+  const myPick = game.phase === 'VOTE' ? myVote : game.night.yourPick;
 
   const targets = game.players.filter((p) => p.alive && p.id !== view.you?.playerId);
   // Only ever the mafia this player is already projected, never a lookup.
@@ -167,13 +171,17 @@ export function PlayerScreen({
               <button
                 key={target.id}
                 type="button"
-                className={`nf-tile btn ${myVote === target.id ? 'btn-primary' : 'btn-secondary'}`}
+                className="nf-tile btn btn-secondary"
+                data-picked={String(myPick === target.id)}
                 onClick={() => {
                   if (isNight) actions.onNightTarget(target.id);
                   else actions.onVote(target.id);
                 }}
               >
-                {target.name}
+                <span>{target.name}</span>
+                {myPick === target.id ? (
+                  <span className="nf-tile-mark">{isNight ? 'Your pick' : 'Your vote'}</span>
+                ) : null}
               </button>
             ))}
             {game.phase === 'VOTE' && myVote !== null ? (
