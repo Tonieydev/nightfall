@@ -145,6 +145,7 @@ export function Lobby({
           onClearVote: () => emit?.emit('clearVote'),
           onEnableVoice: openVoice,
           onEnableAudio: () => void voice.enableAudio(),
+          onSendChat: (text) => emit?.emit('sendChat', text),
         }}
         voiceStatus={voice.status}
         voiceReason={voice.reason}

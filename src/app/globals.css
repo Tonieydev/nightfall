@@ -1505,3 +1505,70 @@ a {
   text-transform: uppercase;
   color: var(--color-accent-400);
 }
+
+/* — chat —
+   Routed by the same graph as voice, so whoever can hear you reads this. */
+.nf-tabs {
+  width: fit-content;
+  margin-left: auto;
+  margin-bottom: var(--space-4);
+}
+
+.nf-chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 14rem;
+}
+
+.nf-chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.nf-chat-empty {
+  font-size: 0.8125rem;
+  color: var(--color-neutral-600);
+  text-wrap: pretty;
+}
+
+.nf-chat-line {
+  display: flex;
+  gap: var(--space-2);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.nf-chat-who {
+  flex: none;
+  color: var(--color-neutral-500);
+}
+
+.nf-chat-line[data-mine='true'] .nf-chat-who {
+  color: var(--color-accent-400);
+}
+
+.nf-chat-text {
+  color: var(--color-text);
+  min-width: 0;
+  text-wrap: pretty;
+}
+
+.nf-chat-composer {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.nf-chat-count {
+  margin: 0;
+  text-align: right;
+  font-size: 0.6875rem;
+  color: var(--color-neutral-600);
+}

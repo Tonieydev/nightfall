@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { CircleIcon, DetectiveIcon, MoonIcon, SkullIcon } from '@phosphor-icons/react';
+import { ChatPanel } from './ChatPanel';
 import { Countdown } from './Countdown';
 import { ElectionCard } from './ElectionCard';
 import { MicRow } from './MicRow';
@@ -16,6 +18,7 @@ export interface PlayerActions {
   onClearVote: () => void;
   onEnableVoice: () => void;
   onEnableAudio: () => void;
+  onSendChat: (text: string) => void;
 }
 
 /**
@@ -35,6 +38,10 @@ export function PlayerScreen({
   voiceReason: string | null;
   audioBlocked: boolean;
 }) {
+  // Room or Chat, as the comp splits it. Local, because it is a way of looking
+  // at the room rather than a fact about it.
+  const [tab, setTab] = useState<'room' | 'chat'>('room');
+
   const game = view.game;
   if (game === null || view.you === null) return null;
 
@@ -63,6 +70,41 @@ export function PlayerScreen({
 
   return (
     <div className="nf-card">
+      <div className="seg nf-tabs" role="tablist">
+        <button
+          type="button"
+          className="seg-opt"
+          role="tab"
+          aria-selected={tab === 'room'}
+          onClick={() => setTab('room')}
+        >
+          Room
+        </button>
+        <button
+          type="button"
+          className="seg-opt"
+          role="tab"
+          aria-selected={tab === 'chat'}
+          onClick={() => setTab('chat')}
+        >
+          Chat
+        </button>
+      </div>
+
+      {tab === 'chat' ? (
+        <>
+          <ChatPanel view={view} onSend={actions.onSendChat} />
+          <MicRow
+            view={view}
+            status={voiceStatus}
+            reason={voiceReason}
+            audioBlocked={audioBlocked}
+            onEnable={actions.onEnableVoice}
+            onEnableAudio={actions.onEnableAudio}
+          />
+        </>
+      ) : (
+        <>
       {/* The reveal is the card, and the comp gives it the whole screen: the
           name, and the job it actually asks of you. A player reading only
           "Villager" has been told what they are and not what to do with it. */}
@@ -190,6 +232,17 @@ export function PlayerScreen({
               </button>
             ) : null}
           </div>
+            </>
+          )}
+
+          <MicRow
+            view={view}
+            status={voiceStatus}
+            reason={voiceReason}
+            audioBlocked={audioBlocked}
+            onEnable={actions.onEnableVoice}
+            onEnableAudio={actions.onEnableAudio}
+          />
         </>
       )}
     </div>
