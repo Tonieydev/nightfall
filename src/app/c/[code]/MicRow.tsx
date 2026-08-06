@@ -6,6 +6,7 @@ import {
   SpeakerHighIcon,
   WifiSlashIcon,
 } from '@phosphor-icons/react';
+import { HEARS_LABEL, MIC_LABEL, channelFor } from './audio-state';
 import { micState } from './mic-state';
 import type { VoiceStatus } from './useVoice';
 import type { RoomView } from '@/room-store';
@@ -98,18 +99,23 @@ export function MicRow({
         </div>
       );
 
+    // Live. The comp states the channel and its consequence on two lines, which
+    // is two facts a count never carried: "Heard by 2" at night does not tell a
+    // mafia speaker that the town is not among the two.
     case 'heard':
-      return (
-        <p className="nf-mic-slot nf-muted">
-          <MicrophoneIcon size={14} /> Heard by {state.count}
-        </p>
-      );
+    case 'silenced': {
+      const channel = view.you === null ? 'silenced' : channelFor(view, view.you.playerId);
+      const open = channel !== 'silenced';
 
-    case 'silenced':
       return (
-        <p className="nf-mic-slot nf-muted">
-          <MicrophoneSlashIcon size={14} /> Nobody is receiving you right now
-        </p>
+        <div className="nf-mic-bar" data-channel={channel}>
+          {open ? <MicrophoneIcon size={17} /> : <MicrophoneSlashIcon size={17} />}
+          <span className="nf-mic-lines">
+            <span className="nf-mic-label">{MIC_LABEL[channel]}</span>
+            <span className="nf-mic-hears">{HEARS_LABEL[channel]}</span>
+          </span>
+        </div>
       );
+    }
   }
 }

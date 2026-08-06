@@ -1,11 +1,12 @@
 'use client';
 
-import { CircleIcon, DetectiveIcon, SkullIcon } from '@phosphor-icons/react';
+import { CircleIcon, DetectiveIcon, MoonIcon, SkullIcon } from '@phosphor-icons/react';
 import { Countdown } from './Countdown';
 import { ElectionCard } from './ElectionCard';
 import { MicRow } from './MicRow';
 import type { VoiceStatus } from './useVoice';
 import { ROLE_LABEL, actionFor } from './phase-labels';
+import { ROLE_BLURB } from '@/narration/roles';
 import { playerPhase } from '@/narration/player-phase';
 import type { RoomView } from '@/room-store';
 
@@ -46,28 +47,67 @@ export function PlayerScreen({
   const myVote = view.you.playerId in game.dayVotes ? game.dayVotes[view.you.playerId] : null;
 
   const targets = game.players.filter((p) => p.alive && p.id !== view.you?.playerId);
+  // Only ever the mafia this player is already projected, never a lookup.
+  const mafiaWithYou = game.players.filter(
+    (p) => p.role === 'MAFIA' && p.id !== view.you?.playerId,
+  );
+  // A living player at night with nothing to tap: the screen the comp holds for
+  // the moon rather than a roster they can do nothing with.
+  const idle = alive && prompt === null && game.phase.startsWith('NIGHT_');
   const votesFor = (id: string): number =>
     Object.values(game.dayVotes).filter((target) => target === id).length;
 
   return (
     <div className="nf-card">
-      {/* The phase leads. The role used to, and it is the one thing on this
-          screen guaranteed never to change, so a player watching a whole round
-          go by saw nothing move. The card keeps a permanent tag instead, and
-          takes the headline back only at the reveal, where it is the news. */}
-      <p className="nf-kicker">
-        {me === null ? (
-          'Watching'
-        ) : (
-          <span className="tag tag-neutral">{ROLE_LABEL[me.role ?? 'VILLAGER']}</span>
-        )}
-        {alive ? null : <span className="tag tag-neutral">eliminated</span>}
-      </p>
-      <h4 className={game.phase === 'ROLE_REVEAL' ? 'nf-reveal' : undefined}>{now.title}</h4>
+      {/* The reveal is the card, and the comp gives it the whole screen: the
+          name, and the job it actually asks of you. A player reading only
+          "Villager" has been told what they are and not what to do with it. */}
+      {game.phase === 'ROLE_REVEAL' && me !== null && me.role !== null ? (
+        <>
+          <section className="nf-card-reveal nf-reveal" data-mafia={String(me.role === 'MAFIA')}>
+            <p className="nf-kicker">Your card</p>
+            <p className="nf-card-role">{ROLE_LABEL[me.role]}</p>
+            <p className="nf-card-blurb">{ROLE_BLURB[me.role]}</p>
 
-      <p className="nf-phase-sub" data-waiting={String(now.waiting)}>
-        {now.line}
-      </p>
+            {me.role === 'MAFIA' && mafiaWithYou.length > 0 ? (
+              <div className="nf-card-team">
+                <p className="nf-kicker">With you</p>
+                <div className="nf-card-team-names">
+                  {mafiaWithYou.map((p) => (
+                    <span key={p.id} className="tag">
+                      {p.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </section>
+          <p className="nf-card-secret">Nobody else can see this screen. Say nothing yet.</p>
+        </>
+      ) : idle ? (
+        // The night, for somebody with nothing to tap. The comp holds the whole
+        // screen for it rather than leaving a roster to stare at.
+        <section className="nf-nightfall">
+          <MoonIcon size={46} weight="fill" />
+          <p className="nf-nightfall-title">{now.title === 'Night' ? 'The town sleeps.' : now.title}</p>
+          <p className="nf-nightfall-sub">Your mic is held by the game master.</p>
+        </section>
+      ) : (
+        <>
+          <p className="nf-kicker">
+            {me === null ? (
+              'Watching'
+            ) : (
+              <span className="tag tag-neutral">{ROLE_LABEL[me.role ?? 'VILLAGER']}</span>
+            )}
+            {alive ? null : <span className="tag tag-neutral">eliminated</span>}
+          </p>
+          <h4>{now.title}</h4>
+          <p className="nf-phase-sub" data-waiting={String(now.waiting)}>
+            {now.line}
+          </p>
+        </>
+      )}
 
       {/* Above the roster, for the same reason it is above it in the lobby. */}
       <MicRow

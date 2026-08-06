@@ -1357,3 +1357,135 @@ a {
     animation: none !important;
   }
 }
+
+/* — the player's card —
+   From the comp: the reveal is the whole screen, a name and the job it asks of
+   you. Mafia gets the accent surface; everyone else the neutral one. */
+.nf-card-reveal {
+  margin-top: var(--space-8);
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-neutral-800);
+}
+
+.nf-card-reveal[data-mafia='true'] {
+  background: var(--color-accent-900);
+  border-color: var(--color-accent-700);
+}
+
+.nf-card-reveal[data-mafia='true'] .nf-kicker {
+  color: var(--color-accent-400);
+}
+
+.nf-card-role {
+  margin: var(--space-4) 0 0;
+  font-size: 2.375rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.nf-card-blurb {
+  margin: var(--space-4) 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-neutral-400);
+  text-wrap: pretty;
+}
+
+.nf-card-team {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-divider);
+}
+
+.nf-card-team-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.nf-card-secret {
+  margin: var(--space-6) 0 0;
+  font-size: 0.75rem;
+  color: var(--color-neutral-700);
+  text-wrap: pretty;
+}
+
+/* The night, for somebody with nothing to tap. The comp holds the whole screen
+   for it rather than leaving a roster to stare at. */
+.nf-nightfall {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8) 0;
+  color: var(--color-accent-700);
+}
+
+.nf-nightfall-title {
+  margin: var(--space-8) 0 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.nf-nightfall-sub {
+  margin: var(--space-3) 0 0;
+  max-width: 24ch;
+  font-size: 0.8125rem;
+  color: var(--color-neutral-600);
+  text-wrap: pretty;
+}
+
+/* The channel and its consequence, on two lines, as the comp states them. */
+.nf-mic-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-neutral-800);
+  color: var(--color-neutral-600);
+}
+
+.nf-mic-bar[data-channel='open'] {
+  background: transparent;
+  border-color: var(--color-accent-700);
+  color: var(--color-accent);
+}
+
+.nf-mic-bar[data-channel='mafia'] {
+  background: var(--color-accent-900);
+  border-color: var(--color-accent-700);
+  color: var(--color-accent-400);
+}
+
+.nf-mic-bar[data-channel='dead'] {
+  background: transparent;
+  border-color: var(--color-neutral-600);
+  color: var(--color-neutral-300);
+}
+
+.nf-mic-lines {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nf-mic-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: currentcolor;
+}
+
+.nf-mic-hears {
+  font-size: 0.6875rem;
+  color: var(--color-neutral-500);
+}

@@ -10,6 +10,27 @@ export const CHANNEL_LABEL: Record<Channel, string> = {
 };
 
 /**
+ * What this player's microphone is doing, in the comp's words. Stated on two
+ * lines because the channel and its consequence are different facts: "Mic live"
+ * during the night, read by somebody who has forgotten the town cannot hear
+ * them, is the most expensive thing this row could get wrong.
+ */
+export const MIC_LABEL: Record<Channel, string> = {
+  open: 'Mic live',
+  mafia: 'Mic live, private',
+  dead: 'Mic live, dead channel',
+  silenced: 'Muted by the game master',
+};
+
+/** Who that actually reaches. */
+export const HEARS_LABEL: Record<Channel, string> = {
+  open: 'Everyone alive can hear you',
+  mafia: 'Only the mafia can hear you',
+  dead: 'Only the eliminated can hear you',
+  silenced: 'No one can hear you',
+};
+
+/**
  * Which room a player's microphone is actually in, named the way the GM would
  * say it. Derived from the audio graph rather than from the phase, so it cannot
  * disagree with what the server subscribed them to — the console's whole value
