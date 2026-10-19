@@ -1,4 +1,6 @@
 export { MIN_PLAYERS, assignRoles } from './assign-roles.js';
+export { HISTORY_ROUNDS, dealCards, recordRound } from './deal-cards.js';
+export type { DealConfig, DealHistory, DealtCard } from './deal-cards.js';
 export { advancePhase } from './advance-phase.js';
 export { checkWinCondition } from './check-win-condition.js';
 export { computeAudioGraph } from './compute-audio-graph.js';
