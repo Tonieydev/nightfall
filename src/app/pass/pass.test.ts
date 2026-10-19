@@ -27,6 +27,16 @@ describe('the pass-the-phone page', () => {
     expect(PAGE).not.toMatch(/setItem\([^)]*cards/);
   });
 
+  it('asks for a head count, not for names', () => {
+    expect(PAGE).not.toMatch(/placeholder=/);
+    expect(PAGE).toContain('Players');
+    expect(PAGE).toMatch(/MAX_SEATS = 30/);
+  });
+
+  it('names a card by its seat, which is what the memory is keyed on', () => {
+    expect(PAGE).toMatch(/`Player \$\{/);
+  });
+
   it('is not a second primary action on the landing page', () => {
     expect(LANDING).toContain('href="/pass"');
     expect(LANDING.match(/btn-primary/g) ?? []).toHaveLength(1);

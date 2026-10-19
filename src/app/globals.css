@@ -1741,3 +1741,9 @@ a {
 .nf-pass-facedown .nf-card-role {
   margin: 0;
 }
+
+.nf-pass-count {
+  width: 4rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

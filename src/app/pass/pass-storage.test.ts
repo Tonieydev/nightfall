@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseHistory, parseNames } from './pass-storage';
+import { parseHistory } from './pass-storage';
 
 describe('parseHistory', () => {
   it('returns [] for anything that is not a list of lists of strings', () => {
@@ -20,17 +20,5 @@ describe('parseHistory', () => {
     const raw = JSON.stringify([['a'], ['b'], ['c'], ['d'], ['e']]);
 
     expect(parseHistory(raw)).toEqual([['c'], ['d'], ['e']]);
-  });
-});
-
-describe('parseNames', () => {
-  it('returns [] for corrupt or wrongly shaped storage', () => {
-    for (const bad of [null, '{', '5', '[1]', '{"a":1}']) {
-      expect(parseNames(bad)).toEqual([]);
-    }
-  });
-
-  it('parses a stored name list', () => {
-    expect(parseNames('["Ada","Bayo"]')).toEqual(['Ada', 'Bayo']);
   });
 });

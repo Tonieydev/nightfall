@@ -2,8 +2,9 @@
 import { HISTORY_ROUNDS } from '../../game-core/index.js';
 import type { DealHistory } from '../../game-core/index.js';
 
-const HISTORY_KEY = 'nightfall.pass.history';
-const NAMES_KEY = 'nightfall.pass.names';
+// Keyed on seat labels. A separate key from the earlier name-based history, so
+// old names are never mistaken for seats.
+const HISTORY_KEY = 'nightfall.pass.seats';
 
 function parseJson(raw: unknown): unknown {
   if (typeof raw !== 'string') return null;
@@ -22,11 +23,6 @@ export function parseHistory(raw: unknown): DealHistory {
   const parsed = parseJson(raw);
   if (!Array.isArray(parsed) || !parsed.every(isStringList)) return [];
   return (parsed as string[][]).slice(-HISTORY_ROUNDS);
-}
-
-export function parseNames(raw: unknown): string[] {
-  const parsed = parseJson(raw);
-  return isStringList(parsed) ? parsed : [];
 }
 
 // Storage can be absent or throw (private windows, blocked site data); the
@@ -49,5 +45,3 @@ function write(key: string, value: unknown): void {
 
 export const readHistory = (): DealHistory => parseHistory(read(HISTORY_KEY));
 export const writeHistory = (history: DealHistory): void => write(HISTORY_KEY, history);
-export const readNames = (): string[] => parseNames(read(NAMES_KEY));
-export const writeNames = (names: string[]): void => write(NAMES_KEY, names);

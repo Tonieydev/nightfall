@@ -1,17 +1,80 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeftIcon, ArrowRightIcon, EyeIcon, MinusIcon, PlusIcon } from '@phosphor-icons/react';
 import { dealCards, recordRound } from '@/game-core';
 import type { DealtCard } from '@/game-core';
 import { ROLE_BLURB, ROLE_LABEL } from '@/narration/roles';
-import { readHistory, readNames, writeHistory, writeNames } from './pass-storage';
+import { readHistory, writeHistory } from './pass-storage';
 
 const MIN_SEATS = 5;
-const MAX_SEATS = 12;
+// In-person has no voice room to pay for, so the online 12-seat cost cap does
+// not apply here. 30 is a big living room, not a limit the server enforces.
+const MAX_SEATS = 30;
 
-const blankSeats = (count: number): string[] => Array.from({ length: count }, () => '');
+const seatLabels = (count: number): string[] =>
+  Array.from({ length: count }, (_, i) => `Player ${i + 1}`);
+
+const defaultMafia = (players: number): number => Math.max(1, Math.round(players / 4));
+
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, value));
+
+/**
+ * A typed head count. Text state rather than a number, so typing "15" does not
+ * get clamped to 5 on the way through the "1".
+ */
+function PlayerCount(props: { value: number; onChange: (next: number) => void }) {
+  const { value, onChange } = props;
+  const [text, setText] = useState(String(value));
+
+  function step(next: number): void {
+    setText(String(next));
+    onChange(next);
+  }
+
+  function edit(raw: string): void {
+    const digits = raw.replace(/\D/g, '').slice(0, 2);
+    setText(digits);
+    if (digits !== '') onChange(clamp(Number(digits), MIN_SEATS, MAX_SEATS));
+  }
+
+  return (
+    <div className="nf-pass-stepper">
+      <label htmlFor="pass-players">Players</label>
+      <div className="nf-pass-stepper-controls">
+        <button
+          type="button"
+          className="btn btn-secondary"
+          aria-label="Fewer Players"
+          disabled={value <= MIN_SEATS}
+          onClick={() => step(value - 1)}
+        >
+          <MinusIcon size={16} />
+        </button>
+        <input
+          id="pass-players"
+          className="input nf-pass-count"
+          inputMode="numeric"
+          autoComplete="off"
+          value={text}
+          onChange={(event) => edit(event.target.value)}
+          onBlur={() => setText(String(value))}
+        />
+        <button
+          type="button"
+          className="btn btn-secondary"
+          aria-label="More Players"
+          disabled={value >= MAX_SEATS}
+          onClick={() => step(value + 1)}
+        >
+          <PlusIcon size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function Stepper(props: {
   label: string;
@@ -50,8 +113,8 @@ function Stepper(props: {
 }
 
 export default function PassPage() {
-  const [names, setNames] = useState<string[]>(blankSeats(MIN_SEATS));
-  const [mafia, setMafia] = useState(1);
+  const [players, setPlayers] = useState(8);
+  const [mafia, setMafia] = useState(defaultMafia(8));
   const [doctors, setDoctors] = useState(1);
   // The dealt roles live in component state only. A refresh loses the deal
   // rather than leaving every role in storage for the next person to read.
@@ -59,33 +122,29 @@ export default function PassPage() {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
 
-  // Storage is read after mount: the server render has no localStorage.
-  useEffect(() => {
-    const saved = readNames();
-    if (saved.length >= MIN_SEATS) setNames(saved.slice(0, MAX_SEATS));
-  }, []);
-
-  const trimmed = names.map((name) => name.trim());
+  const seats = seatLabels(players);
   const config = { mafia, doctors };
 
   // The deal's own rules are the only rules: asking it, rather than restating
   // them here, keeps the button and the dealer from disagreeing.
   let problem: string | null = null;
   try {
-    dealCards(trimmed, config, [], () => 0.5);
+    dealCards(seats, config, [], () => 0.5);
   } catch (error) {
     problem = error instanceof Error ? error.message : 'these settings cannot be dealt';
   }
 
-  function setName(at: number, value: string): void {
-    setNames((current) => current.map((name, i) => (i === at ? value : name)));
+  function changePlayers(next: number): void {
+    const nextMafia = defaultMafia(next);
+    setPlayers(next);
+    setMafia(nextMafia);
+    setDoctors((current) => clamp(current, 0, next - nextMafia));
   }
 
   function deal(): void {
     const history = readHistory();
-    const dealt = dealCards(trimmed, config, history, Math.random);
+    const dealt = dealCards(seats, config, history, Math.random);
     writeHistory(recordRound(history, dealt));
-    writeNames(trimmed);
     setCards(dealt);
     setIndex(0);
     setRevealed(false);
@@ -117,49 +176,28 @@ export default function PassPage() {
         <section className="nf-pass-setup">
           <h1>Play in person</h1>
           <p className="nf-lede">
-            One phone, passed around. Each person taps to see their card in private, then hands it
-            on.
+            One phone, passed around the circle. Each person taps to see their card in private, then
+            hands it on.
           </p>
 
-          <ul className="nf-pass-names">
-            {names.map((name, at) => (
-              <li key={at}>
-                <input
-                  className="input"
-                  value={name}
-                  onChange={(event) => setName(at, event.target.value)}
-                  placeholder={`Player ${at + 1}`}
-                  autoComplete="off"
-                  maxLength={20}
-                  aria-label={`Player ${at + 1} name`}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  aria-label={`Remove player ${at + 1}`}
-                  disabled={names.length <= MIN_SEATS}
-                  onClick={() => setNames((cur) => cur.filter((_, i) => i !== at))}
-                >
-                  <MinusIcon size={16} />
-                </button>
-              </li>
-            ))}
-          </ul>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            disabled={names.length >= MAX_SEATS}
-            onClick={() => setNames((cur) => [...cur, ''])}
-          >
-            <PlusIcon size={16} />
-            Add a player
-          </button>
-
-          <Stepper label="Mafia" value={mafia} min={1} max={MAX_SEATS} onChange={setMafia} />
-          <Stepper label="Doctors" value={doctors} min={0} max={MAX_SEATS} onChange={setDoctors} />
+          <PlayerCount value={players} onChange={changePlayers} />
+          <Stepper
+            label="Mafia"
+            value={mafia}
+            min={1}
+            max={Math.max(1, Math.floor((players - 1) / 2))}
+            onChange={setMafia}
+          />
+          <Stepper
+            label="Doctors"
+            value={doctors}
+            min={0}
+            max={players - mafia}
+            onChange={setDoctors}
+          />
 
           <p className="nf-fineprint">
-            Anyone who was mafia in the last few rounds is much less likely to be again.
+            A seat that was mafia in the last few rounds is much less likely to be again, so keep the same passing order.
           </p>
           {problem === null ? null : <p className="nf-fineprint">{problem}</p>}
 
