@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRightIcon, UsersThreeIcon } from '@phosphor-icons/react';
+import { ArrowRightIcon, CardsIcon, UsersThreeIcon } from '@phosphor-icons/react';
 // The leaf module, not the '@/room-store' barrel — the barrel re-exports
 // server-only code that reaches node:crypto and cannot be bundled for a client.
 import { isCrewCode, normaliseCrewCode } from '@/room-store/crew-code';
@@ -123,6 +124,16 @@ export default function HomePage() {
                 Join
               </button>
             </div>
+          </div>
+
+          {/* For a group sharing a room and one phone, no call at all. Secondary
+              for the same reason the join field is: Create owns the eye. */}
+          <div className="nf-join">
+            <p className="nf-join-label">All in the same room?</p>
+            <Link href="/pass" className="btn btn-secondary">
+              <CardsIcon size={16} />
+              Play in person
+            </Link>
           </div>
         </div>
 

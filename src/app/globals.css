@@ -1645,3 +1645,99 @@ a {
   flex: none;
   margin-left: auto;
 }
+
+/* — play in person —
+   One phone passed around a room. Reuses the player's card for the reveal so
+   the two never look like different products. */
+.nf-pass {
+  min-height: 100dvh;
+  max-width: 26rem;
+  margin: 0 auto;
+  padding: var(--space-6);
+  background: var(--color-bg);
+}
+
+.nf-pass-back {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--color-neutral-500);
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+
+.nf-pass-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: stretch;
+  margin-top: var(--space-6);
+}
+
+.nf-pass-setup h1 {
+  margin: 0;
+  font-weight: 500;
+}
+
+.nf-pass-names {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nf-pass-names li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.nf-pass-names .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nf-pass-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-divider);
+}
+
+.nf-pass-stepper-controls {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.nf-pass-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+/* The face-down card: the whole thing is the button, so a tap anywhere on it
+   reveals, which is what a card passed hand to hand invites. */
+.nf-pass-facedown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+  min-height: 16rem;
+  padding: var(--space-8);
+  border: 1px solid var(--color-neutral-800);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.nf-pass-facedown .nf-card-role {
+  margin: 0;
+}
